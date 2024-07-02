@@ -181,6 +181,5 @@ interface INonfungiblePositionManager is IPoolInitializer {
     /// @param tokenId The ID of the token that is being burned
     function burn(uint256 tokenId) external payable;
 
-        function WETH9() external view returns (address);
-
+    function WETH9() external view returns (address);
 }
