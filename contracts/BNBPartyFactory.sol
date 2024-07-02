@@ -39,10 +39,10 @@ contract BNBPartyFactory is PoolCreation {
     function createToken(
         string calldata name,
         string calldata symbol
-    ) public payable returns (ERC20Token newToken) {
+    ) public payable returns (IERC20 newToken) {
         require(msg.value >= fee, "Insufficient BNB for fee");
         newToken = new ERC20Token(name, symbol, initialTokenAmount);
         emit TokenCreated(address(newToken), name, symbol);
-        _addInitialLiquidity(address(newToken), initialTokenAmount);
+        _addInitialLiquidity(newToken, initialTokenAmount);
     }
 }

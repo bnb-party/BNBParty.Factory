@@ -9,21 +9,17 @@ contract PoolCreation {
     uint24 public immutable fee;
     uint160 public immutable sqrtPriceLimitX96;
 
-    function _addInitialLiquidity(
-        address tokenAddress,
-        uint256 amount
-    ) internal {
-        ERC20 token = ERC20(tokenAddress);
+    function _addInitialLiquidity(IERC20 token, uint256 amount) internal {
         token.approve(address(positionManager), amount);
         positionManager.createAndInitializePoolIfNecessary(
-            tokenAddress,
+            address(token),
             positionManager.WETH9(),
             fee, // Fee tier
             sqrtPriceLimitX96
         );
         INonfungiblePositionManager.MintParams
             memory params = INonfungiblePositionManager.MintParams({
-                token0: tokenAddress,
+                token0: address(token),
                 token1: positionManager.WETH9(),
                 fee: fee, // Fee tier
                 tickLower: -887272, // Lower tick
