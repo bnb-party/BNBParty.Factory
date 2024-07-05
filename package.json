@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/The-Poolz/BNBPartyFactory.git"
   },
-  "author": "The-Poolz @ Stan Goldin, Andrew Dmytrenko",
+  "author": "Stan Goldin, Andrew Dmytrenko",
   "license": "MIT",
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
