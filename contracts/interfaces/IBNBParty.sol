@@ -13,5 +13,5 @@ interface IBNBParty {
     ) external payable returns (IERC20 newToken);
 
     /// @notice handle party swap for FLP
-    function handleSwap() external;
+    function handleSwap(address recipient) external;
 }
