@@ -40,27 +40,25 @@ contract BNBPartyFactory is BNBPartyInternal {
     function handleSwap(address recipient) external override {
         require(isParty[msg.sender], "LP is not at the party");
 
-        address token0 = IUniswapV3Pool(msg.sender).token0();
-        address token1 = IUniswapV3Pool(msg.sender).token1();
+        uint256 WBNBBalance = IERC20(WBNB).balanceOf(msg.sender);
+        if (WBNBBalance < buyLimit) return;
+
+        IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
+        // Decrease liquidity from the old pool
+        BNBPositionManager.decreaseLiquidity(
+            INonfungiblePositionManager.DecreaseLiquidityParams({
+                tokenId: poolToTokenId[msg.sender],
+                liquidity: pool.liquidity(),
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            })
+        );
+        address token0 = pool.token0();
+        address token1 = pool.token1();
         uint256 amount0 = IERC20(token0).balanceOf(msg.sender);
         uint256 amount1 = IERC20(token1).balanceOf(msg.sender);
-
-        if (
-            (token0 == WBNB && amount0 >= buyLimit) ||
-            (token1 == WBNB && amount1 >= buyLimit)
-        ) {
-            // Decrease liquidity from the old pool
-            BNBPositionManager.decreaseLiquidity(
-                INonfungiblePositionManager.DecreaseLiquidityParams({
-                    tokenId: poolToTokenId[msg.sender],
-                    liquidity: IUniswapV3Pool(msg.sender).liquidity(),
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    deadline: block.timestamp
-                })
-            );
-            // Create new LP
-            _createLP(positionManager, token0, token1, amount0, amount1);
-        }
+        // Create new LP
+        _createLP(positionManager, token0, token1, amount0, amount1);
     }
 }
