@@ -8,9 +8,11 @@ import "./interfaces/INonfungiblePositionManager.sol";
 contract BNBPartyFactory is IBNBParty {
     INonfungiblePositionManager public immutable BNBPositionManager;
     INonfungiblePositionManager public immutable positionManager;
+    mapping(address => bool) public isParty;
 
     uint256 public immutable buyLimit;
     uint256 public immutable initialTokenAmount;
+
     uint24 public immutable fee;
 
     event StartParty(
@@ -49,11 +51,15 @@ contract BNBPartyFactory is IBNBParty {
     ) public payable override returns (IERC20 newToken) {
         require(msg.value >= fee, "Insufficient BNB for fee");
         newToken = new ERC20Token(name, symbol, initialTokenAmount);
-        // emit StartParty(address(newToken), msg.sender, address(FLP));
-        // create BNB party LP
+        address liquidityPool = _createLP();
+        emit StartParty(address(newToken), msg.sender, liquidityPool);
     }
 
     function handleSwap() external override {
-        // handle swap
+        require(isParty[msg.sender], "LP is not at the party");
+    }
+
+    function _createLP() internal returns (address liquidityPool) {
+        isParty[liquidityPool] = true;
     }
 }
