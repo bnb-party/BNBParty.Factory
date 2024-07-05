@@ -2,11 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "./token/ERC20Token.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@pancakeswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "./interfaces/IBNBParty.sol";
 import "./interfaces/INonfungiblePositionManager.sol";
 
-contract BNBPartyFactory {
+contract BNBPartyFactory is IBNBParty {
     INonfungiblePositionManager public immutable BNBPositionManager;
     INonfungiblePositionManager public immutable positionManager;
 
@@ -47,14 +46,14 @@ contract BNBPartyFactory {
     function createToken(
         string calldata name,
         string calldata symbol
-    ) public payable returns (IERC20 newToken) {
+    ) public payable override returns (IERC20 newToken) {
         require(msg.value >= fee, "Insufficient BNB for fee");
         newToken = new ERC20Token(name, symbol, initialTokenAmount);
         // emit StartParty(address(newToken), msg.sender, address(FLP));
         // create BNB party LP
     }
 
-    function handleSwap() external {
+    function handleSwap() external override {
         // handle swap
     }
 }
