@@ -10,6 +10,7 @@ contract BNBPartyFactory is IBNBParty {
     INonfungiblePositionManager public immutable BNBPositionManager;
     INonfungiblePositionManager public immutable positionManager;
     mapping(address => bool) public isParty;
+    mapping(address => uint256) public poolToTokenId;
 
     address public immutable WBNB;
 
@@ -74,7 +75,16 @@ contract BNBPartyFactory is IBNBParty {
             (token0 == WBNB && amount0 >= buyLimit) ||
             (token1 == WBNB && amount1 >= buyLimit)
         ) {
-            // remove liquidity from old pool
+            // decrease liquidity from old pool
+            BNBPositionManager.decreaseLiquidity(
+                INonfungiblePositionManager.DecreaseLiquidityParams({
+                    tokenId: poolToTokenId[msg.sender],
+                    liquidity: IUniswapV3Pool(msg.sender).liquidity(),
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    deadline: block.timestamp
+                })
+            );
             // create new LP
             _createLP(positionManager, token0, token1, amount0, amount1);
         }
@@ -103,7 +113,7 @@ contract BNBPartyFactory is IBNBParty {
             sqrtPriceX96
         );
         // mint LP
-        liquidityManager.mint(
+        (poolToTokenId[liquidityPool], , , ) = liquidityManager.mint(
             INonfungiblePositionManager.MintParams({
                 token0: token0,
                 token1: token1,
