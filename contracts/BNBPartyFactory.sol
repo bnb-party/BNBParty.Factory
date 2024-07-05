@@ -45,19 +45,18 @@ contract BNBPartyFactory is BNBPartyInternal {
 
         IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
         // Decrease liquidity from the old pool
-        BNBPositionManager.decreaseLiquidity(
-            INonfungiblePositionManager.DecreaseLiquidityParams({
-                tokenId: poolToTokenId[msg.sender],
-                liquidity: pool.liquidity(),
-                amount0Min: 0,
-                amount1Min: 0,
-                deadline: block.timestamp
-            })
-        );
+        (uint256 amount0, uint256 amount1) = BNBPositionManager
+            .decreaseLiquidity(
+                INonfungiblePositionManager.DecreaseLiquidityParams({
+                    tokenId: poolToTokenId[msg.sender],
+                    liquidity: pool.liquidity(),
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    deadline: block.timestamp
+                })
+            );
         address token0 = pool.token0();
         address token1 = pool.token1();
-        uint256 amount0 = IERC20(token0).balanceOf(msg.sender);
-        uint256 amount1 = IERC20(token1).balanceOf(msg.sender);
         // Create new LP
         _createLP(positionManager, token0, token1, amount0, amount1);
     }
