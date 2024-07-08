@@ -55,4 +55,28 @@ abstract contract BNBPartyInternal is BNBPartyState {
             })
         );
     }
+
+    function _unwrapAndSendBNB(address recipient) internal {
+        WBNB.withdraw(returnAmount);
+        (bool success, ) = recipient.call{value: returnAmount}("");
+        require(success, "Transfer failed.");
+    }
+
+    function _handleLiquidity() internal {
+        // deacrease liquidity from old pool
+        IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
+        (uint256 amount0, uint256 amount1) = BNBPositionManager
+            .decreaseLiquidity(
+                INonfungiblePositionManager.DecreaseLiquidityParams({
+                    tokenId: poolToTokenId[msg.sender],
+                    liquidity: pool.liquidity(),
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    deadline: block.timestamp
+                })
+            );
+        address token1 = pool.token1();
+        // create new Liquidity Pool
+        _createLP(positionManager, token1, amount0, amount1);
+    }
 }

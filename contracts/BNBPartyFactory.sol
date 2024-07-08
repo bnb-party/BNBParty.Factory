@@ -44,25 +44,11 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
 
         uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
         if (WBNBBalance < buyLimit) return;
-        // uwrap return amount WBNB and send to recipient
-        WBNB.withdraw(returnAmount);
-        (bool success, ) = recipient.call{value: returnAmount}("");
-        require(success, "Transfer failed.");
 
-        IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
-        // Decrease liquidity from the old pool
-        (uint256 amount0, uint256 amount1) = BNBPositionManager
-            .decreaseLiquidity(
-                INonfungiblePositionManager.DecreaseLiquidityParams({
-                    tokenId: poolToTokenId[msg.sender],
-                    liquidity: pool.liquidity(),
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    deadline: block.timestamp
-                })
-            );
-        address token1 = pool.token1();
-        // Create new LP
-        _createLP(positionManager, token1, amount0, amount1);
+        // uwrap return amount WBNB and send to recipient
+        _unwrapAndSendBNB(recipient);
+
+        // handle liquidity
+        _handleLiquidity();
     }
 }
