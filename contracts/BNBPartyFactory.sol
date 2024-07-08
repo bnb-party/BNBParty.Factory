@@ -3,8 +3,9 @@ pragma solidity ^0.8.0;
 
 import "./token/ERC20Token.sol";
 import "./BNBPartyInternal.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract BNBPartyFactory is BNBPartyInternal {
+contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     constructor(
         INonfungiblePositionManager _BNBPositionManager,
         INonfungiblePositionManager _positionManager,
@@ -30,7 +31,7 @@ contract BNBPartyFactory is BNBPartyInternal {
     function createParty(
         string calldata name,
         string calldata symbol
-    ) external payable override returns (IERC20 newToken) {
+    ) external payable override nonReentrant returns (IERC20 newToken) {
         // create new token
         newToken = new ERC20Token(name, symbol, initialTokenAmount);
         // create First Liquidity Pool
@@ -38,7 +39,7 @@ contract BNBPartyFactory is BNBPartyInternal {
         emit StartParty(address(newToken), msg.sender, liquidityPool);
     }
 
-    function handleSwap(address recipient) external override {
+    function handleSwap(address recipient) external override nonReentrant {
         require(isParty[msg.sender], "LP is not at the party");
 
         uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
