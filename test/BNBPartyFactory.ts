@@ -1,8 +1,8 @@
 import { BNBPartyFactory } from "../typechain-types/contracts/BNBPartyFactory"
-import PancakeV3FactoryArtifact from "@pancakeswap/v3-core/artifacts/contracts/PancakeV3Factory.sol/PancakeV3Factory.json"
-import PancakeV3PoolArtifact from "@pancakeswap/v3-core/artifacts/contracts/PancakeV3Pool.sol/PancakeV3Pool.json"
-import PositionManagerArtifact from "@pancakeswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json"
-import SwapRouterArtifact from "@pancakeswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json"
+import { UniswapV3Factory } from "../typechain-types/@bnb-party/v3-core/contracts/UniswapV3Factory"
+import { NonfungiblePositionManager } from "../typechain-types/@bnb-party/v3-periphery/contracts//NonfungiblePositionManager"
+import { MockNonfungibleTokenPositionDescriptor } from "../typechain-types/contracts/mock/MockNonfungibleTokenPositionDescriptor"
+import { SwapRouter } from "../typechain-types/@bnb-party/v3-periphery/contracts//SwapRouter"
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
@@ -15,9 +15,9 @@ describe("BNBPartyFactory", function () {
     let signers: SignerWithAddress[]
     let bnbPartyFactory: BNBPartyFactory
     let bnbFactory: any
-    let pancakeV3Factory: any
-    let pancakeV3Pool: IUniswapV3Pool
-    let positionManager: INonfungiblePositionManager
+    let v3Factory: any
+    let positionManager: NonfungiblePositionManager
+    let tokenPositionDescriptor: MockNonfungibleTokenPositionDescriptor
     let swapRouter: any
     let weth9: any
     const fee = "100"
@@ -30,27 +30,23 @@ describe("BNBPartyFactory", function () {
     before(async () => {
         signers = await ethers.getSigners()
         // deploy PancakeV3Factory
-        const PancakeV3FactoryContract = await ethers.getContractFactory(
-            PancakeV3FactoryArtifact.abi,
-            PancakeV3FactoryArtifact.bytecode
-        )
-        pancakeV3Factory = await PancakeV3FactoryContract.deploy(signers[0].address)
+        const V3FactoryContract = await ethers.getContractFactory("UniswapV3Factory")
+        v3Factory = await V3FactoryContract.deploy(signers[0].address)
 
         // deploy WEth9
         const WETH9 = await ethers.getContractFactory(WETH9Artifact.abi, WETH9Artifact.bytecode)
         weth9 = await WETH9.deploy()
 
+        const TokenPositionDescriptor = await ethers.getContractFactory("MockNonfungibleTokenPositionDescriptor")
+        tokenPositionDescriptor = (await TokenPositionDescriptor.deploy()) as MockNonfungibleTokenPositionDescriptor
+
         // deploy positionManager
-        const PositionManagerContract = await ethers.getContractFactory(
-            PositionManagerArtifact.abi,
-            PositionManagerArtifact.bytecode
-        )
+        const PositionManagerContract = await ethers.getContractFactory("NonfungiblePositionManager")
         positionManager = (await PositionManagerContract.deploy(
-            signers[0].address,
-            await pancakeV3Factory.getAddress(),
-            await pancakeV3Factory.getAddress(),
-            await pancakeV3Factory.getAddress()
-        )) as INonfungiblePositionManager
+            await v3Factory.getAddress(),
+            await weth9.getAddress(),
+            await tokenPositionDescriptor.getAddress()
+        )) as NonfungiblePositionManager
 
         const sqrtPriceX96 = calculateSqrtPriceX96(token1Price, token0Price)
         const BNBPartyFactoryContract = await ethers.getContractFactory("BNBPartyFactory")
@@ -65,12 +61,8 @@ describe("BNBPartyFactory", function () {
             returnAmount
         )) as BNBPartyFactory
         //deploy swapRouter
-        const SwapRouterContract = await ethers.getContractFactory(SwapRouterArtifact.abi, SwapRouterArtifact.bytecode)
-        swapRouter = await SwapRouterContract.deploy(
-            signers[0].address,
-            await pancakeV3Factory.getAddress(),
-            await weth9.getAddress()
-        )
+        const SwapRouterContract = await ethers.getContractFactory("SwapRouter")
+        swapRouter = await SwapRouterContract.deploy(await v3Factory.getAddress(), await weth9.getAddress())
     })
 
     beforeEach(async () => {})

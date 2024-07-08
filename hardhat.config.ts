@@ -1,11 +1,12 @@
-import { HardhatUserConfig } from "hardhat/config";
-import '@nomicfoundation/hardhat-verify';
-import 'hardhat-gas-reporter';
-import '@typechain/hardhat';
-import 'solidity-coverage';
-import '@nomicfoundation/hardhat-network-helpers';
-import '@nomicfoundation/hardhat-ethers';
-import '@nomicfoundation/hardhat-chai-matchers';
+import { HardhatUserConfig } from "hardhat/config"
+import "@nomicfoundation/hardhat-verify"
+import "hardhat-gas-reporter"
+import "@typechain/hardhat"
+import "solidity-coverage"
+import "hardhat-dependency-compiler"
+import "@nomicfoundation/hardhat-network-helpers"
+import "@nomicfoundation/hardhat-ethers"
+import "@nomicfoundation/hardhat-chai-matchers"
 import "@truffle/dashboard-hardhat-plugin"
 
 const config: HardhatUserConfig = {
@@ -25,14 +26,21 @@ const config: HardhatUserConfig = {
             {
                 version: "0.7.6",
                 settings: {
-                    evmVersion: "istanbul",
                     optimizer: {
                         enabled: true,
                         runs: 200,
                     },
                 },
             },
-            
+            {
+                version: "0.5.15",
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 200,
+                    },
+                },
+            },
         ],
     },
     networks: {
@@ -65,10 +73,11 @@ const config: HardhatUserConfig = {
     gasReporter: {
         enabled: true,
         showMethodSig: true,
-        currency: 'USD',
-        token: 'BNB',
-        gasPriceApi: 'https://api.bscscan.com/api?module=proxy&action=eth_gasPrice&apikey=' + process.env.BSCSCAN_API_KEY,
-        coinmarketcap: process.env.CMC_API_KEY || '',
+        currency: "USD",
+        token: "BNB",
+        gasPriceApi:
+            "https://api.bscscan.com/api?module=proxy&action=eth_gasPrice&apikey=" + process.env.BSCSCAN_API_KEY,
+        coinmarketcap: process.env.CMC_API_KEY || "",
         noColors: true,
         reportFormat: "markdown",
         outputFile: "gasReport.md",
@@ -76,7 +85,14 @@ const config: HardhatUserConfig = {
         L1: "binance",
         forceTerminalOutputFormat: "terminal",
         showTimeSpent: true,
-      }
+    },
+    dependencyCompiler: {
+        paths: [
+            "@bnb-party/v3-core/contracts/UniswapV3Factory.sol",
+            "@bnb-party/v3-periphery/contracts/NonfungiblePositionManager.sol",
+            "@bnb-party/v3-periphery/contracts/SwapRouter.sol"
+        ],
+    },
 }
 
 export default config
