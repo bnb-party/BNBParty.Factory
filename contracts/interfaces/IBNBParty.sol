@@ -7,7 +7,7 @@ interface IBNBParty {
     /// @param name token name
     /// @param symbol token symbol
     /// @return newToken created token
-    function createToken(
+    function createParty(
         string calldata name,
         string calldata symbol
     ) external payable returns (IERC20 newToken);

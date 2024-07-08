@@ -12,7 +12,8 @@ contract BNBPartyFactory is BNBPartyInternal {
         uint256 _buyLimit,
         uint256 _initialTokenAmount,
         uint160 _sqrtPriceX96,
-        address _WBNB
+        IWBNB _WBNB,
+        uint256 _returnAmount
     )
         BNBPartyState(
             _BNBPositionManager,
@@ -21,27 +22,31 @@ contract BNBPartyFactory is BNBPartyInternal {
             _buyLimit,
             _initialTokenAmount,
             _sqrtPriceX96,
-            _WBNB
+            _WBNB,
+            _returnAmount
         )
     {}
 
-    function createToken(
+    function createParty(
         string calldata name,
         string calldata symbol
     ) external payable override returns (IERC20 newToken) {
-        require(msg.value >= fee, "Insufficient BNB for fee");
-
+        // create new token
         newToken = new ERC20Token(name, symbol, initialTokenAmount);
-        address liquidityPool = _createFLP(address(newToken));
-
+        // create First Liquidity Pool
+        address liquidityPool = _createFLP(newToken);
         emit StartParty(address(newToken), msg.sender, liquidityPool);
     }
 
     function handleSwap(address recipient) external override {
         require(isParty[msg.sender], "LP is not at the party");
 
-        uint256 WBNBBalance = IERC20(WBNB).balanceOf(msg.sender);
+        uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
         if (WBNBBalance < buyLimit) return;
+        // uwrap return amount WBNB and send to recipient
+        WBNB.withdraw(returnAmount);
+        (bool success, ) = recipient.call{value: returnAmount}("");
+        require(success, "Transfer failed.");
 
         IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
         // Decrease liquidity from the old pool
@@ -55,9 +60,8 @@ contract BNBPartyFactory is BNBPartyInternal {
                     deadline: block.timestamp
                 })
             );
-        address token0 = pool.token0();
         address token1 = pool.token1();
         // Create new LP
-        _createLP(positionManager, token0, token1, amount0, amount1);
+        _createLP(positionManager, token1, amount0, amount1);
     }
 }

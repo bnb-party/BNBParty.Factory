@@ -7,23 +7,32 @@ import "./BNBPartyState.sol";
 
 abstract contract BNBPartyInternal is BNBPartyState {
     function _createFLP(
-        address _token
+        IERC20 _token
     ) internal returns (address liquidityPool) {
-        uint256 amount1 = IERC20(_token).balanceOf(address(this));
-        liquidityPool = _createLP(BNBPositionManager, WBNB, _token, 0, amount1);
+        uint256 amount0 = msg.value;
+        if (amount0 > 0) {
+            // Wrap WBNB
+            WBNB.deposit{value: amount0}();
+        }
+        uint256 amount1 = _token.balanceOf(address(this));
+        liquidityPool = _createLP(
+            BNBPositionManager,
+            address(_token),
+            amount0,
+            amount1
+        );
         isParty[liquidityPool] = true;
     }
 
     function _createLP(
         INonfungiblePositionManager liquidityManager,
-        address token0,
         address token1,
         uint256 amount0,
         uint256 amount1
     ) internal returns (address liquidityPool) {
         // Create LP
         liquidityPool = liquidityManager.createAndInitializePoolIfNecessary(
-            token0,
+            address(WBNB),
             token1,
             fee,
             sqrtPriceX96
@@ -32,7 +41,7 @@ abstract contract BNBPartyInternal is BNBPartyState {
         // Mint LP
         (poolToTokenId[liquidityPool], , , ) = liquidityManager.mint(
             INonfungiblePositionManager.MintParams({
-                token0: token0,
+                token0: address(WBNB),
                 token1: token1,
                 fee: fee,
                 tickLower: -887272,
