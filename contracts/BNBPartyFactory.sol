@@ -7,8 +7,6 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     constructor(
-        INonfungiblePositionManager _BNBPositionManager,
-        INonfungiblePositionManager _positionManager,
         uint24 _fee,
         uint256 _buyLimit,
         uint256 _initialTokenAmount,
@@ -17,8 +15,6 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         uint256 _returnAmount
     )
         BNBPartyState(
-            _BNBPositionManager,
-            _positionManager,
             _fee,
             _buyLimit,
             _initialTokenAmount,

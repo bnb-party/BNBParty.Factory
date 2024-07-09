@@ -9,39 +9,59 @@ import "@nomicfoundation/hardhat-ethers"
 import "@nomicfoundation/hardhat-chai-matchers"
 import "@truffle/dashboard-hardhat-plugin"
 
+const LOW_OPTIMIZER_COMPILER_SETTINGS = {
+    version: "0.7.6",
+    settings: {
+        evmVersion: "istanbul",
+        optimizer: {
+            enabled: true,
+            runs: 2_000,
+        },
+        metadata: {
+            bytecodeHash: "none",
+        },
+    },
+}
+
+const BNB_FACTORY_COMPILER_SETTINGS = {
+    version: "0.8.24",
+    settings: {
+        evmVersion: "istanbul",
+        optimizer: {
+            enabled: true,
+            runs: 200,
+        },
+    },
+}
+
 const config: HardhatUserConfig = {
     defaultNetwork: "hardhat",
     solidity: {
         compilers: [
             {
-                version: "0.8.24",
+                version: "0.7.6",
                 settings: {
                     evmVersion: "istanbul",
                     optimizer: {
                         enabled: true,
                         runs: 200,
                     },
-                },
-            },
-            {
-                version: "0.7.6",
-                settings: {
-                    optimizer: {
-                        enabled: true,
-                        runs: 200,
+                    metadata: {
+                        bytecodeHash: "none",
                     },
                 },
-            },
-            {
-                version: "0.5.15",
-                settings: {
-                    optimizer: {
-                        enabled: true,
-                        runs: 200,
-                    },
-                },
-            },
+            }
         ],
+        overrides: {
+            "contracts/NonfungiblePositionManager.sol": LOW_OPTIMIZER_COMPILER_SETTINGS,
+            "contracts/BNBPartyFactory.sol": BNB_FACTORY_COMPILER_SETTINGS,
+            "contracts/token/ERC20Token.sol": BNB_FACTORY_COMPILER_SETTINGS,
+            "contracts/interfaces/IBNBParty.sol": BNB_FACTORY_COMPILER_SETTINGS,
+            "contracts/interfaces/INonfungiblePositionManager.sol": BNB_FACTORY_COMPILER_SETTINGS,
+            "contracts/interfaces/IPoolInitializer.sol": BNB_FACTORY_COMPILER_SETTINGS,
+            "contracts/interfaces/IUniswapV3Pool.sol": BNB_FACTORY_COMPILER_SETTINGS,
+            "contracts/interfaces/IWBNB.sol": BNB_FACTORY_COMPILER_SETTINGS,
+        },
     },
     networks: {
         hardhat: {
@@ -87,11 +107,7 @@ const config: HardhatUserConfig = {
         showTimeSpent: true,
     },
     dependencyCompiler: {
-        paths: [
-            "@bnb-party/v3-core/contracts/UniswapV3Factory.sol",
-            "@bnb-party/v3-periphery/contracts/NonfungiblePositionManager.sol",
-            "@bnb-party/v3-periphery/contracts/SwapRouter.sol"
-        ],
+        paths: ["@bnb-party/v3-core/contracts/UniswapV3Factory.sol"],
     },
 }
 
