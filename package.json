@@ -18,6 +18,7 @@
     "@nomicfoundation/hardhat-ethers": "^3.0.5",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
     "@nomicfoundation/hardhat-verify": "^2.0.6",
+    "hardhat-dependency-compiler": "1.1.1",
     "@truffle/dashboard-hardhat-plugin": "^0.2.15",
     "ethers": "^6.12.0",
     "hardhat-gas-reporter": "^2.1.1",
@@ -35,7 +36,9 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
-    "@pancakeswap/v3-core": "^1.0.2",
-    "@pancakeswap/v3-periphery": "^1.0.2"
+    "@bnb-party/v3-core": "^1.0.4",
+    "@bnb-party/v3-periphery": "^1.0.5",
+    "@uniswap/lib": "^4.0.1-alpha",
+    "@uniswap/v3-core": "^1.0.0"
   }
 }

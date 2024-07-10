@@ -2,64 +2,59 @@
 pragma solidity ^0.8.0;
 
 import "./token/ERC20Token.sol";
-import "./interfaces/IBNBParty.sol";
-import "./interfaces/INonfungiblePositionManager.sol";
+import "./BNBPartyInternal.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract BNBPartyFactory is IBNBParty {
-    INonfungiblePositionManager public immutable BNBPositionManager;
-    INonfungiblePositionManager public immutable positionManager;
-    mapping(address => bool) public isParty;
-
-    uint256 public immutable buyLimit;
-    uint256 public immutable initialTokenAmount;
-
-    uint24 public immutable fee;
-
-    event StartParty(
-        address indexed tokenAddress,
-        address indexed owner,
-        address indexed FLPAddress
-    );
-
+contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     constructor(
-        INonfungiblePositionManager _BNBPositionManager,
-        INonfungiblePositionManager _positionManager,
-        uint24 _fee,
-        uint256 _buyLimit,
-        uint256 _initialTokenAmount
-    ) {
-        require(
-            address(_BNBPositionManager) != address(0),
-            "BNBPositionManager is zero address"
-        );
-        require(
-            address(_positionManager) != address(0),
-            "positionManager is zero address"
-        );
-        require(_buyLimit > 0, "buyLimit is zero");
-        require(_initialTokenAmount > 0, "initialTokenAmount is zero");
-        BNBPositionManager = _BNBPositionManager;
-        positionManager = _positionManager;
-        fee = _fee;
-        buyLimit = _buyLimit;
-        initialTokenAmount = _initialTokenAmount;
-    }
+        uint256 _partyTarget,
+        uint256 _createTokenFee,
+        uint24 _partyLpFee,
+        uint24 _lpFee,
+        uint256 _initialTokenAmount,
+        uint160 _sqrtPriceX96,
+        IWBNB _WBNB,
+        uint256 _bonusTargetReach,
+        uint256 _bonusPartyCreator,
+        int24 _tickLower,
+        int24 _tickUpper
+    )
+        BNBPartyState(
+            _partyTarget,
+            _createTokenFee,
+            _partyLpFee,
+            _lpFee,
+            _initialTokenAmount,
+            _sqrtPriceX96,
+            _WBNB,
+            _bonusTargetReach,
+            _bonusPartyCreator,
+            _tickLower,
+            _tickUpper
+        )
+    {}
 
-    function createToken(
+    function createParty(
         string calldata name,
         string calldata symbol
-    ) public payable override returns (IERC20 newToken) {
-        require(msg.value >= fee, "Insufficient BNB for fee");
+    ) external payable override nonReentrant returns (IERC20 newToken) {
+        // create new token
         newToken = new ERC20Token(name, symbol, initialTokenAmount);
-        address liquidityPool = _createLP();
+        // create First Liquidity Pool
+        address liquidityPool = _createFLP(address(newToken));
         emit StartParty(address(newToken), msg.sender, liquidityPool);
     }
 
-    function handleSwap() external override {
+    function handleSwap(address recipient) external override nonReentrant {
         require(isParty[msg.sender], "LP is not at the party");
-    }
 
-    function _createLP() internal returns (address liquidityPool) {
-        isParty[liquidityPool] = true;
+        uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
+        if (WBNBBalance < partyTarget) return;
+
+        // uwrap return amount WBNB and send to recipient
+        _unwrapAndSendBNB(recipient);
+
+        // handle liquidity
+        _handleLiquidity();
     }
 }
