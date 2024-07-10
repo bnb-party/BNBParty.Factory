@@ -36,8 +36,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
-    "@bnb-party/v3-core": "^1.0.2",
-    "@bnb-party/v3-periphery": "^1.0.3",
+    "@bnb-party/v3-core": "^1.0.4",
+    "@bnb-party/v3-periphery": "^1.0.5",
     "@uniswap/lib": "^4.0.1-alpha",
     "@uniswap/v3-core": "^1.0.0"
   }

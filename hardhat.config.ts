@@ -15,7 +15,7 @@ const LOW_OPTIMIZER_COMPILER_SETTINGS = {
         evmVersion: "istanbul",
         optimizer: {
             enabled: true,
-            runs: 2_000,
+            runs: 200,
         },
         metadata: {
             bytecodeHash: "none",
@@ -38,6 +38,7 @@ const config: HardhatUserConfig = {
     defaultNetwork: "hardhat",
     solidity: {
         compilers: [
+            BNB_FACTORY_COMPILER_SETTINGS,
             {
                 version: "0.7.6",
                 settings: {
@@ -53,14 +54,10 @@ const config: HardhatUserConfig = {
             }
         ],
         overrides: {
-            "contracts/NonfungiblePositionManager.sol": LOW_OPTIMIZER_COMPILER_SETTINGS,
-            "contracts/BNBPartyFactory.sol": BNB_FACTORY_COMPILER_SETTINGS,
-            "contracts/token/ERC20Token.sol": BNB_FACTORY_COMPILER_SETTINGS,
-            "contracts/interfaces/IBNBParty.sol": BNB_FACTORY_COMPILER_SETTINGS,
-            "contracts/interfaces/INonfungiblePositionManager.sol": BNB_FACTORY_COMPILER_SETTINGS,
-            "contracts/interfaces/IPoolInitializer.sol": BNB_FACTORY_COMPILER_SETTINGS,
-            "contracts/interfaces/IUniswapV3Pool.sol": BNB_FACTORY_COMPILER_SETTINGS,
-            "contracts/interfaces/IWBNB.sol": BNB_FACTORY_COMPILER_SETTINGS,
+            "@bnb-party/v3-periphery/contracts/NonfungiblePositionManager.sol": LOW_OPTIMIZER_COMPILER_SETTINGS,
+            "@bnb-party/v3-periphery/contracts/libraries/PoolAddress.sol": LOW_OPTIMIZER_COMPILER_SETTINGS,
+            "@bnb-party/v3-periphery/contracts/libraries/ChainId.sol": LOW_OPTIMIZER_COMPILER_SETTINGS,
+            "@bnb-party/v3-core/contracts/libraries/TickBitmap.sol": LOW_OPTIMIZER_COMPILER_SETTINGS
         },
     },
     networks: {
@@ -107,8 +104,12 @@ const config: HardhatUserConfig = {
         showTimeSpent: true,
     },
     dependencyCompiler: {
-        paths: ["@bnb-party/v3-core/contracts/UniswapV3Factory.sol"],
-    },
+        paths: [
+            "@bnb-party/v3-core/contracts/UniswapV3Factory.sol",
+            "@bnb-party/v3-periphery/contracts/NonfungiblePositionManager.sol",
+            "@bnb-party/v3-periphery/contracts/SwapRouter.sol"
+        ],
+    }
 }
 
 export default config

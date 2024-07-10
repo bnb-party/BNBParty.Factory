@@ -7,20 +7,30 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     constructor(
-        uint24 _fee,
-        uint256 _buyLimit,
+        uint256 _partyTarget,
+        uint256 _createTokenFee,
+        uint24 _partyLpFee,
+        uint24 _lpFee,
         uint256 _initialTokenAmount,
         uint160 _sqrtPriceX96,
         IWBNB _WBNB,
-        uint256 _returnAmount
+        uint256 _bonusTargetReach,
+        uint256 _bonusPartyCreator,
+        int24 _tickLower,
+        int24 _tickUpper
     )
         BNBPartyState(
-            _fee,
-            _buyLimit,
+            _partyTarget,
+            _createTokenFee,
+            _partyLpFee,
+            _lpFee,
             _initialTokenAmount,
             _sqrtPriceX96,
             _WBNB,
-            _returnAmount
+            _bonusTargetReach,
+            _bonusPartyCreator,
+            _tickLower,
+            _tickUpper
         )
     {}
 
@@ -31,7 +41,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         // create new token
         newToken = new ERC20Token(name, symbol, initialTokenAmount);
         // create First Liquidity Pool
-        address liquidityPool = _createFLP(newToken);
+        address liquidityPool = _createFLP(address(newToken));
         emit StartParty(address(newToken), msg.sender, liquidityPool);
     }
 
@@ -39,7 +49,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         require(isParty[msg.sender], "LP is not at the party");
 
         uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
-        if (WBNBBalance < buyLimit) return;
+        if (WBNBBalance < partyTarget) return;
 
         // uwrap return amount WBNB and send to recipient
         _unwrapAndSendBNB(recipient);
