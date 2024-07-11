@@ -15,20 +15,7 @@ async function main() {
     const initialTokenAmount = "10000000000000000000000000"
     const sqrtPriceX96 = "25052911542910170730777872"
     const tWBNB = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd"
-    // deploy BNBPartyFactory contract
-    console.log(
-        partyTarget,
-        tokenCreationFee,
-        FeeAmount.HIGH,
-        FeeAmount.HIGH,
-        initialTokenAmount,
-        sqrtPriceX96,
-        tWBNB,
-        returnFeeAmount,
-        bonusFee,
-        "-92200",
-        "0"
-    )
+
     const BNBPartyFactoryContract = await ethers.getContractFactory("BNBPartyFactory")
     const bnbPartyFactory = await BNBPartyFactoryContract.deploy(
         partyTarget,
