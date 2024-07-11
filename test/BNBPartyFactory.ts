@@ -6,11 +6,7 @@ import { SwapRouter } from "../typechain-types/@bnb-party/v3-periphery/contracts
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
-import { ERC20Token } from "../typechain-types/"
-import { INonfungiblePositionManager } from "../typechain-types/"
-import { IUniswapV3Pool } from "../typechain-types/"
 import WETH9Artifact from "./WETH9/WETH9.json"
-import { time } from "@nomicfoundation/hardhat-network-helpers"
 import { bytecode } from "../artifacts/@bnb-party/v3-core/contracts/UniswapV3Pool.sol/UniswapV3Pool.json"
 import { keccak256 } from "ethers"
 import { token } from "../typechain-types/contracts"
@@ -56,8 +52,8 @@ describe("BNBPartyFactory", function () {
     const returnFeeAmount = ethers.parseUnits("1", 17)
     const bonusFee = ethers.parseUnits("1", 16)
     const initialTokenAmount = "10000000000000000000000000"
-    let token0: ERC20Token
-    let token1: ERC20Token
+    const name = "Party"
+    const symbol = "Token"
     const sqrtPriceX96 = "250553781928115428981508556680446"
 
     before(async () => {
@@ -67,24 +63,21 @@ describe("BNBPartyFactory", function () {
         const WETH9 = await ethers.getContractFactory(WETH9Artifact.abi, WETH9Artifact.bytecode)
         weth9 = await WETH9.deploy()
 
-        const token = await ethers.getContractFactory("ERC20Token")
-        token0 = await token.deploy("Token", "TKN", initialTokenAmount)
-
-        token1 = await token.deploy("BNB", "BNB", initialTokenAmount)
-
         const BNBPartyFactoryContract = await ethers.getContractFactory("BNBPartyFactory")
         bnbPartyFactory = (await BNBPartyFactoryContract.deploy(
-            partyTarget,
-            tokenCreationFee,
-            FeeAmount.HIGH,
-            FeeAmount.HIGH,
-            initialTokenAmount,
-            sqrtPriceX96,
-            await weth9.getAddress(),
-            returnFeeAmount,
-            bonusFee,
-            "-92200",
-            "0"
+            {
+                partyTarget: partyTarget,
+                createTokenFee: tokenCreationFee,
+                partyLpFee: FeeAmount.HIGH,
+                lpFee: FeeAmount.HIGH,
+                initialTokenAmount: initialTokenAmount,
+                sqrtPriceX96: sqrtPriceX96,
+                bonusTargetReach: returnFeeAmount,
+                bonusPartyCreator: bonusFee,
+                tickLower: "-92200",
+                tickUpper: "0",
+            },
+            await weth9.getAddress()
         )) as BNBPartyFactory
         // deploy PancakeV3Factory
         const V3FactoryContract = await ethers.getContractFactory("UniswapV3Factory")
@@ -114,30 +107,25 @@ describe("BNBPartyFactory", function () {
     beforeEach(async () => {})
 
     it("should deploy BNBPartyFactory", async function () {
-        expect(await bnbPartyFactory.partyTarget()).to.equal(partyTarget)
-        expect(await bnbPartyFactory.initialTokenAmount()).to.equal(initialTokenAmount)
-        expect(await bnbPartyFactory.sqrtPriceX96()).to.equal(sqrtPriceX96)
+        expect((await bnbPartyFactory.party()).partyTarget).to.equal(partyTarget)
+        expect((await bnbPartyFactory.party()).initialTokenAmount).to.equal(initialTokenAmount)
+        expect((await bnbPartyFactory.party()).sqrtPriceX96).to.equal(sqrtPriceX96)
         expect(await bnbPartyFactory.WBNB()).to.equal(await weth9.getAddress())
-        expect(await bnbPartyFactory.bonusTargetReach()).to.equal(returnFeeAmount)
-        expect(await bnbPartyFactory.bonusPartyCreator()).to.equal(bonusFee)
-        expect(await bnbPartyFactory.lpFee()).to.equal(FeeAmount.HIGH)
-        expect(await bnbPartyFactory.partyLPFee()).to.equal(FeeAmount.HIGH)
-        expect(await bnbPartyFactory.createTokenFee()).to.equal(tokenCreationFee)
-        expect(await bnbPartyFactory.tickUpper()).to.equal("0")
-        expect(await bnbPartyFactory.tickLower()).to.equal("-92200")
+        expect((await bnbPartyFactory.party()).bonusTargetReach).to.equal(returnFeeAmount)
+        expect((await bnbPartyFactory.party()).bonusPartyCreator).to.equal(bonusFee)
+        expect((await bnbPartyFactory.party()).lpFee).to.equal(FeeAmount.HIGH)
+        expect((await bnbPartyFactory.party()).partyLpFee).to.equal(FeeAmount.HIGH)
+        expect((await bnbPartyFactory.party()).createTokenFee).to.equal(tokenCreationFee)
+        expect((await bnbPartyFactory.party()).tickUpper).to.equal("0")
+        expect((await bnbPartyFactory.party()).tickLower).to.equal("-92200")
     })
 
     it("should create party LP", async function () {
-        const name = "Party"
-        const symbol = "Token"
         await bnbPartyFactory.createParty(name, symbol)
-
         expect(await positionManager.totalSupply()).to.equal(1)
     })
 
     it("bnb factory is owner of the party LP", async () => {
-        const name = "Party"
-        const symbol = "Token"
         await bnbPartyFactory.createParty(name, symbol)
         const tokenId = (await positionManager.totalSupply()) - 1n
         const owner = await positionManager.ownerOf(tokenId)
