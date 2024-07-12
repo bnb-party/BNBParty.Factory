@@ -14,20 +14,23 @@ abstract contract BNBPartyInternal is BNBPartyState {
             : (address(WBNB), _token);
         uint256 amount0;
         uint256 amount1;
-        if (IERC20(tokenA).balanceOf(address(this)) == initialTokenAmount) {
-            amount0 = initialTokenAmount;
+        if (IERC20(tokenA).balanceOf(address(this)) == party.initialTokenAmount) {
+            amount0 = party.initialTokenAmount;
         } else {
-            amount1 = initialTokenAmount;
+            amount1 = party.initialTokenAmount;
         }
 
-        IERC20(_token).approve(address(BNBPositionManager), initialTokenAmount);
+        IERC20(_token).approve(
+            address(BNBPositionManager),
+            party.initialTokenAmount
+        );
         liquidityPool = _createLP(
             BNBPositionManager,
             tokenA,
             tokenB,
             amount0,
             amount1,
-            partyLPFee
+            party.partyLpFee
         );
         isParty[liquidityPool] = true;
     }
@@ -45,7 +48,7 @@ abstract contract BNBPartyInternal is BNBPartyState {
             token0,
             token1,
             fee,
-            sqrtPriceX96
+            party.sqrtPriceX96
         );
 
         // Mint LP
@@ -54,8 +57,8 @@ abstract contract BNBPartyInternal is BNBPartyState {
                 token0: token0,
                 token1: token1,
                 fee: fee,
-                tickLower: tickLower,
-                tickUpper: tickUpper,
+                tickLower: party.tickLower,
+                tickUpper: party.tickUpper,
                 amount0Desired: amount0,
                 amount1Desired: amount1,
                 amount0Min: 0,
@@ -67,8 +70,8 @@ abstract contract BNBPartyInternal is BNBPartyState {
     }
 
     function _unwrapAndSendBNB(address recipient) internal {
-        WBNB.withdraw(returnAmount);
-        (bool success, ) = recipient.call{value: returnAmount}("");
+        WBNB.withdraw(party.bonusTargetReach);
+        (bool success, ) = recipient.call{value: party.bonusTargetReach}("");
         require(success, "Transfer failed.");
     }
 
@@ -91,6 +94,6 @@ abstract contract BNBPartyInternal is BNBPartyState {
         IERC20(token0).approve(address(positionManager), amount0);
         IERC20(token1).approve(address(positionManager), amount1);
         // create new Liquidity Pool
-        //_createLP(positionManager, token0, token1, amount0, amount1, lpFee);
+        _createLP(positionManager, token0, token1, amount0, amount1, party.lpFee);
     }
 }
