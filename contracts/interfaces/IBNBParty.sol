@@ -14,8 +14,21 @@ interface IBNBParty {
 
     /// @notice handle party swap for FLP
     function handleSwap(address recipient) external;
-    
-    /// @notice event emitted when a party is started 
+
+    struct Party {
+        uint256 partyTarget;
+        uint256 createTokenFee;
+        uint24 partyLpFee;
+        uint24 lpFee;
+        uint256 initialTokenAmount;
+        uint160 sqrtPriceX96;
+        uint256 bonusTargetReach;
+        uint256 bonusPartyCreator;
+        int24 tickLower;
+        int24 tickUpper;
+    }
+
+    /// @notice event emitted when a party is started
     /// @param tokenAddress ERC20 token address
     /// @param owner the owner of the party
     /// @param FLPAddress the address of the Liquidity Pool

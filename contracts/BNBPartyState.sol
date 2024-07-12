@@ -12,53 +12,20 @@ abstract contract BNBPartyState is IBNBParty, Ownable {
     mapping(address => bool) public isParty; // LiquidityPool => isParty
     mapping(address => uint256) public lpToTokenId; // LiquidityPool => nft tokenId
 
+    Party public party;
+
     IWBNB public immutable WBNB;
 
-    uint256 public immutable partyTarget;
-    uint256 public immutable initialTokenAmount;
-    uint256 public immutable returnAmount;
-
-    uint256 public immutable createTokenFee;
-    uint24 public immutable partyLPFee;
-    uint24 public immutable lpFee;
-
-    int24 public immutable tickLower;
-    int24 public immutable tickUpper;
-    uint160 public immutable sqrtPriceX96;
-    uint256 public immutable bonusTargetReach;
-    uint256 public immutable bonusPartyCreator;
-
-    constructor(
-        uint256 _partyTarget,
-        uint256 _createTokenFee,
-        uint24 _partyLpFee,
-        uint24 _lpFee,
-        uint256 _initialTokenAmount,
-        uint160 _sqrtPriceX96,
-        IWBNB _WBNB,
-        uint256 _bonusTargetReach,
-        uint256 _bonusPartyCreator,
-        int24 _tickLower,
-        int24 _tickUpper
-    ) Ownable(_msgSender()) {
-        require(_partyTarget > 0, "buyLimit is zero");
-        require(_initialTokenAmount > 0, "initialTokenAmount is zero");
+    constructor(Party memory _party, IWBNB _WBNB) Ownable(_msgSender()) {
+        require(_party.partyTarget > 0, "buyLimit is zero");
+        require(_party.initialTokenAmount > 0, "initialTokenAmount is zero");
         require(
-            _partyTarget > _bonusPartyCreator,
+            _party.partyTarget > _party.bonusPartyCreator,
             "partyTarget is less than bonusParty"
         );
-        lpFee = _lpFee;
-        partyTarget = _partyTarget;
-        initialTokenAmount = _initialTokenAmount;
-        sqrtPriceX96 = _sqrtPriceX96;
-        partyLPFee = _partyLpFee;
+        require(_party.sqrtPriceX96 > 0, "sqrtPriceX96 is zero");
+        party = _party;
         WBNB = _WBNB;
-        returnAmount = _bonusPartyCreator;
-        createTokenFee = _createTokenFee;
-        bonusTargetReach = _bonusTargetReach;
-        bonusPartyCreator = _bonusPartyCreator;
-        tickLower = _tickLower;
-        tickUpper = _tickUpper;
     }
 
     function setNonfungiblePositionManager(
