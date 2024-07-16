@@ -9,7 +9,7 @@ on:
 
 jobs:
     build:
-        uses: The-Poolz/solidity-workflows/.github/workflows/build.yml@issue-10
+        uses: The-Poolz/solidity-workflows/.github/workflows/build.yml@v0.6.0
         secrets:
             codecov_token: ${{ secrets.CODECOV_TOKEN }}
             bscscan_api_key: ${{ secrets.BSCSCAN_API_KEY }}
