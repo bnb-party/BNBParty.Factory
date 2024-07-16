@@ -8,6 +8,7 @@ import { MockNonfungibleTokenPositionDescriptor } from "../typechain-types/contr
 import { SwapRouter } from "../typechain-types/@bnb-party/v3-periphery/contracts/SwapRouter"
 import { AbiCoder, keccak256 } from "ethers"
 import WETH9Artifact from "./WETH9/WETH9.json"
+import FactoryArtifact from "@bnb-party/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json"
 import { bytecode } from "../artifacts/@bnb-party/v3-core/contracts/UniswapV3Pool.sol/UniswapV3Pool.json"
 
 enum FeeAmount {
@@ -69,7 +70,7 @@ describe("BNBPartyFactory", function () {
         )) as BNBPartyFactory
 
         // Deploy Uniswap V3 Factory
-        const V3FactoryContract = await ethers.getContractFactory("UniswapV3Factory")
+        const V3FactoryContract = await ethers.getContractFactory(FactoryArtifact.abi, FactoryArtifact.bytecode)
         v3Factory = (await V3FactoryContract.deploy(await bnbPartyFactory.getAddress())) as UniswapV3Factory
 
         // Deploy Token Position Descriptor

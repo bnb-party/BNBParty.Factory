@@ -1,0 +1,5 @@
+{
+    "detectors_to_exclude": "solc-version,similar-names",
+    "filter_paths": "node_modules/@bnb-party,contracts/mock/,contracts/mocks,node_modules/@ironblocks/firewall-consumer/contracts/,node_modules/@poolzfinance/poolz-helper-v2",
+    "compile_force_framework": "hardhat"
+}
