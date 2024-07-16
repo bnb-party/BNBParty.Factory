@@ -8,18 +8,9 @@ on:
         types: [opened, synchronize, reopened]
 
 jobs:
-    setup:
-        uses: The-Poolz/solidity-workflows/.github/workflows/setup.yml@v0.6.0
-
-    test:
-        needs: setup
-        uses: The-Poolz/solidity-workflows/.github/workflows/gas-test.yml@v0.6.0
-        secrets:
-            bscscan_api_key: ${{ secrets.BSCSCAN_API_KEY }}
-            cmc_api_key: ${{ secrets.CMC_API_KEY }}
-
-    coverage-test:
-        needs: setup
-        uses: The-Poolz/solidity-workflows/.github/workflows/coverage-test.yml@v0.6.0
+    build:
+        uses: The-Poolz/solidity-workflows/.github/workflows/build.yml@issue-10
         secrets:
             codecov_token: ${{ secrets.CODECOV_TOKEN }}
+            bscscan_api_key: ${{ secrets.BSCSCAN_API_KEY }}
+            cmc_api_key: ${{ secrets.CMC_API_KEY }}

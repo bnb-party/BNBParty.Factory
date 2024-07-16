@@ -3,7 +3,6 @@ import "@nomicfoundation/hardhat-verify"
 import "hardhat-gas-reporter"
 import "@typechain/hardhat"
 import "solidity-coverage"
-import "hardhat-dependency-compiler"
 import "@nomicfoundation/hardhat-network-helpers"
 import "@nomicfoundation/hardhat-ethers"
 import "@nomicfoundation/hardhat-chai-matchers"
@@ -51,13 +50,13 @@ const config: HardhatUserConfig = {
                         bytecodeHash: "none",
                     },
                 },
-            }
+            },
         ],
         overrides: {
             "@bnb-party/v3-periphery/contracts/NonfungiblePositionManager.sol": LOW_OPTIMIZER_COMPILER_SETTINGS,
             "@bnb-party/v3-periphery/contracts/libraries/PoolAddress.sol": LOW_OPTIMIZER_COMPILER_SETTINGS,
             "@bnb-party/v3-periphery/contracts/libraries/ChainId.sol": LOW_OPTIMIZER_COMPILER_SETTINGS,
-            "@bnb-party/v3-core/contracts/libraries/TickBitmap.sol": LOW_OPTIMIZER_COMPILER_SETTINGS
+            "@bnb-party/v3-core/contracts/libraries/TickBitmap.sol": LOW_OPTIMIZER_COMPILER_SETTINGS,
         },
     },
     networks: {
@@ -103,13 +102,6 @@ const config: HardhatUserConfig = {
         forceTerminalOutputFormat: "terminal",
         showTimeSpent: true,
     },
-    dependencyCompiler: {
-        paths: [
-            "@bnb-party/v3-core/contracts/UniswapV3Factory.sol",
-            "@bnb-party/v3-periphery/contracts/NonfungiblePositionManager.sol",
-            "@bnb-party/v3-periphery/contracts/SwapRouter.sol"
-        ],
-    }
 }
 
 export default config
