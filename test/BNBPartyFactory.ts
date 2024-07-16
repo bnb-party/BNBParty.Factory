@@ -122,22 +122,20 @@ describe("BNBPartyFactory", function () {
 
     describe("Smart Router", function () {
         let tokenId: string
+        let deadline: number
+        let position: any
+        let MEME: string
 
         before(async () => {
             tokenId = (await positionManager.totalSupply()).toString()
+            deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
+            position = await positionManager.positions(tokenId)
+            MEME = position.token1
         })
 
         it("BNB -> WBNB -> MEME exactInput call", async () => {
             const amountIn = ethers.parseUnits("1", 18)
-            const position = await positionManager.positions(tokenId)
-            const token1 = position.token1
-            const deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
-
-            const path = ethers.concat([
-                ethers.zeroPadValue(await weth9.getAddress(), 20),
-                ethers.zeroPadValue(ethers.toBeHex(FeeAmount.HIGH), 3),
-                ethers.zeroPadValue(token1, 20),
-            ])
+            const path = getDataHexString(await weth9.getAddress(), MEME)
 
             const params = {
                 path: path,
@@ -146,7 +144,7 @@ describe("BNBPartyFactory", function () {
                 amountIn: amountIn,
                 amountOutMinimum: "0",
             }
-            const token1Contract = await ethers.getContractAt("ERC20", token1)
+            const token1Contract = await ethers.getContractAt("ERC20", MEME)
             await weth9.approve(await swapRouter.getAddress(), amountIn)
 
             const balanceBefore = await token1Contract.balanceOf(await signers[0].getAddress())
@@ -158,15 +156,8 @@ describe("BNBPartyFactory", function () {
 
         it("MEME -> WBNB -> BNB multicall", async function () {
             const amountIn = ethers.parseUnits("1", 17)
-            const position = await positionManager.positions(tokenId)
             const MEME = position.token1
-            const deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
-
-            const path = ethers.concat([
-                ethers.zeroPadValue(MEME, 20),
-                ethers.zeroPadValue(ethers.toBeHex(FeeAmount.HIGH), 3),
-                ethers.zeroPadValue(await weth9.getAddress(), 20),
-            ])
+            const path = getDataHexString(MEME, await weth9.getAddress())
 
             const params = {
                 path: path,
@@ -193,17 +184,8 @@ describe("BNBPartyFactory", function () {
 
         it("WBNB -> MEME exactInput call", async () => {
             const amountIn = ethers.parseUnits("1", 17)
-            const position = await positionManager.positions(tokenId)
-            const token0 = position.token0
-            const token1 = position.token1
             const amountOutMinimum = 0 // For testing, accept any amount out
-
-            // Manually encode the path using ethers v6
-            const path = ethers.concat([
-                ethers.zeroPadValue(token0, 20),
-                ethers.zeroPadValue(ethers.toBeHex(FeeAmount.HIGH), 3),
-                ethers.zeroPadValue(token1, 20),
-            ])
+            const path = getDataHexString(await weth9.getAddress(), MEME)
 
             const deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
             await weth9.deposit({ value: amountIn })
@@ -217,7 +199,7 @@ describe("BNBPartyFactory", function () {
                 amountOutMinimum: amountOutMinimum,
             }
 
-            const token1Contract = await ethers.getContractAt("ERC20Token", token1)
+            const token1Contract = await ethers.getContractAt("ERC20Token", MEME)
 
             const balanceBefore = await token1Contract.balanceOf(await signers[0].getAddress())
             await swapRouter.exactInput(params)
@@ -225,5 +207,13 @@ describe("BNBPartyFactory", function () {
 
             expect(balanceAfter).to.be.gt(balanceBefore)
         })
+
+        function getDataHexString(token0: string, token1: string) {
+            return ethers.concat([
+                ethers.zeroPadValue(token0, 20),
+                ethers.zeroPadValue(ethers.toBeHex(FeeAmount.HIGH), 3),
+                ethers.zeroPadValue(token1, 20),
+            ])
+        }
     })
 })
