@@ -1,12 +1,13 @@
 import { expect } from "chai"
 import { ethers } from "hardhat"
+import { IWBNB } from "../typechain-types/contracts/interfaces/IWBNB"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { BNBPartyFactory } from "../typechain-types/contracts/BNBPartyFactory"
 import { UniswapV3Factory } from "../typechain-types/@bnb-party/v3-core/contracts/UniswapV3Factory"
 import { NonfungiblePositionManager } from "../typechain-types/@bnb-party/v3-periphery/contracts/NonfungiblePositionManager"
 import { MockNonfungibleTokenPositionDescriptor } from "../typechain-types/contracts/mock/MockNonfungibleTokenPositionDescriptor"
 import { SwapRouter } from "../typechain-types/@bnb-party/v3-periphery/contracts/SwapRouter"
-import { AbiCoder, keccak256 } from "ethers"
+import { keccak256 } from "ethers"
 import WETH9Artifact from "./WETH9/WETH9.json"
 import { bytecode } from "../artifacts/@bnb-party/v3-core/contracts/UniswapV3Pool.sol/UniswapV3Pool.json"
 
@@ -14,12 +15,6 @@ enum FeeAmount {
     LOW = 500,
     MEDIUM = 3000,
     HIGH = 10000,
-}
-
-const TICK_SPACINGS: { [amount in FeeAmount]: number } = {
-    [FeeAmount.LOW]: 10,
-    [FeeAmount.MEDIUM]: 60,
-    [FeeAmount.HIGH]: 200,
 }
 
 const POOL_BYTECODE_HASH = keccak256(bytecode)
@@ -32,8 +27,7 @@ describe("BNBPartyFactory", function () {
     let positionManager: NonfungiblePositionManager
     let tokenPositionDescriptor: MockNonfungibleTokenPositionDescriptor
     let swapRouter: SwapRouter
-    let weth9: any
-    let tokenId: string
+    let weth9: IWBNB
     const partyTarget = ethers.parseEther("100")
     const tokenCreationFee = ethers.parseUnits("1", 17)
     const returnFeeAmount = ethers.parseUnits("1", 17)
@@ -48,7 +42,7 @@ describe("BNBPartyFactory", function () {
 
         // Deploy WETH9
         const WETH9 = await ethers.getContractFactory(WETH9Artifact.abi, WETH9Artifact.bytecode)
-        weth9 = await WETH9.deploy()
+        weth9 = (await WETH9.deploy()) as IWBNB
 
         // Deploy BNBPartyFactory
         const BNBPartyFactoryContract = await ethers.getContractFactory("BNBPartyFactory")
@@ -98,9 +92,7 @@ describe("BNBPartyFactory", function () {
         )
     })
 
-    beforeEach(async () => {
-        tokenId = (await positionManager.totalSupply()).toString()
-    })
+    beforeEach(async () => {})
 
     it("should deploy BNBPartyFactory", async function () {
         expect((await bnbPartyFactory.party()).partyTarget).to.equal(partyTarget)
@@ -128,38 +120,110 @@ describe("BNBPartyFactory", function () {
         expect(owner).to.equal(await bnbPartyFactory.getAddress())
     })
 
-    it("should swap tokens", async () => {
-        const amountIn = ethers.parseUnits("1", 17)
-        const position = await positionManager.positions(tokenId)
-        const token0 = position.token0
-        const token1 = position.token1
-        const amountOutMinimum = 0 // For testing, accept any amount out
+    describe("Smart Router", function () {
+        let tokenId: string
 
-        // Manually encode the path using ethers v6
-        const path = ethers.concat([
-            ethers.zeroPadValue(token0, 20),
-            ethers.zeroPadValue(ethers.toBeHex(FeeAmount.HIGH), 3),
-            ethers.zeroPadValue(token1, 20),
-        ])
+        before(async () => {
+            tokenId = (await positionManager.totalSupply()).toString()
+        })
 
-        const deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
-        await weth9.deposit({ value: amountIn })
-        await weth9.approve(await swapRouter.getAddress(), amountIn)
+        it("BNB -> WBNB -> MEME exactInput call", async () => {
+            const amountIn = ethers.parseUnits("1", 18)
+            const position = await positionManager.positions(tokenId)
+            const token1 = position.token1
+            const deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
 
-        const params = {
-            path: path,
-            recipient: await signers[0].getAddress(),
-            deadline: deadline,
-            amountIn: amountIn,
-            amountOutMinimum: amountOutMinimum,
-        }
+            const path = ethers.concat([
+                ethers.zeroPadValue(await weth9.getAddress(), 20),
+                ethers.zeroPadValue(ethers.toBeHex(FeeAmount.HIGH), 3),
+                ethers.zeroPadValue(token1, 20),
+            ])
 
-        const token1Contract = await ethers.getContractAt("ERC20Token", token1)
+            const params = {
+                path: path,
+                recipient: await signers[0].getAddress(),
+                deadline: deadline,
+                amountIn: amountIn,
+                amountOutMinimum: "0",
+            }
+            const token1Contract = await ethers.getContractAt("ERC20", token1)
+            await weth9.approve(await swapRouter.getAddress(), amountIn)
 
-        const balanceBefore = await token1Contract.balanceOf(await signers[0].getAddress())
-        await swapRouter.exactInput(params)
-        const balanceAfter = await token1Contract.balanceOf(await signers[0].getAddress())
+            const balanceBefore = await token1Contract.balanceOf(await signers[0].getAddress())
+            await expect(await swapRouter.exactInput(params, { value: amountIn })).to.emit(weth9, "Deposit")
+            const balanceAfter = await token1Contract.balanceOf(await signers[0].getAddress())
 
-        expect(balanceAfter).to.be.gt(balanceBefore)
+            expect(balanceAfter).to.be.gt(balanceBefore)
+        })
+
+        it("MEME -> WBNB -> BNB multicall", async function () {
+            const amountIn = ethers.parseUnits("1", 17)
+            const position = await positionManager.positions(tokenId)
+            const MEME = position.token1
+            const deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
+
+            const path = ethers.concat([
+                ethers.zeroPadValue(MEME, 20),
+                ethers.zeroPadValue(ethers.toBeHex(FeeAmount.HIGH), 3),
+                ethers.zeroPadValue(await weth9.getAddress(), 20),
+            ])
+
+            const params = {
+                path: path,
+                recipient: ethers.ZeroAddress,
+                deadline: deadline,
+                amountIn: amountIn,
+                amountOutMinimum: "0",
+            }
+
+            const token1Contract = await ethers.getContractAt("ERC20", MEME)
+            await token1Contract.approve(await swapRouter.getAddress(), amountIn)
+
+            const exactInputData = swapRouter.interface.encodeFunctionData("exactInput", [params])
+            // Encode the unwrapWETH9 call to convert WETH to ETH
+            const unwrapWETH9Data = swapRouter.interface.encodeFunctionData("unwrapWETH9", [
+                "0",
+                await signers[1].getAddress(),
+            ])
+            const balanceBefore = await ethers.provider.getBalance(await signers[1].getAddress())
+            await expect(await swapRouter.multicall([exactInputData, unwrapWETH9Data])).to.emit(weth9, "Withdrawal")
+            const balanceAfter = await ethers.provider.getBalance(await signers[1].getAddress())
+            expect(balanceAfter).to.be.gt(balanceBefore)
+        })
+
+        it("WBNB -> MEME exactInput call", async () => {
+            const amountIn = ethers.parseUnits("1", 17)
+            const position = await positionManager.positions(tokenId)
+            const token0 = position.token0
+            const token1 = position.token1
+            const amountOutMinimum = 0 // For testing, accept any amount out
+
+            // Manually encode the path using ethers v6
+            const path = ethers.concat([
+                ethers.zeroPadValue(token0, 20),
+                ethers.zeroPadValue(ethers.toBeHex(FeeAmount.HIGH), 3),
+                ethers.zeroPadValue(token1, 20),
+            ])
+
+            const deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
+            await weth9.deposit({ value: amountIn })
+            await weth9.approve(await swapRouter.getAddress(), amountIn)
+
+            const params = {
+                path: path,
+                recipient: await signers[0].getAddress(),
+                deadline: deadline,
+                amountIn: amountIn,
+                amountOutMinimum: amountOutMinimum,
+            }
+
+            const token1Contract = await ethers.getContractAt("ERC20Token", token1)
+
+            const balanceBefore = await token1Contract.balanceOf(await signers[0].getAddress())
+            await swapRouter.exactInput(params)
+            const balanceAfter = await token1Contract.balanceOf(await signers[0].getAddress())
+
+            expect(balanceAfter).to.be.gt(balanceBefore)
+        })
     })
 })
