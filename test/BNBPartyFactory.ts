@@ -252,6 +252,20 @@ describe("BNBPartyFactory", function () {
             expect(liquidityPoolBalance).to.be.equal(amountIn - tokenCreationFee)
         })
 
+        it("Should increase user tokens with excess party fee", async () => {
+            const amountIn = ethers.parseUnits("1", 17)
+            const tx = await bnbPartyFactory.createParty(name, symbol, { value: amountIn })
+            await tx.wait()
+            const events = await bnbPartyFactory.queryFilter(
+                bnbPartyFactory.filters["StartParty(address,address,address)"]
+            )
+            const tokenAddress = events[events.length - 1].args.tokenAddress
+            const token = await ethers.getContractAt("ERC20Token", tokenAddress)
+
+            const balance = await token.balanceOf(await signers[0].getAddress())
+            expect(balance).to.be.gt(0)
+        })
+
         function getDataHexString(token0: string, token1: string) {
             return ethers.concat([
                 ethers.zeroPadValue(token0, 20),
