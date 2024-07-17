@@ -30,7 +30,7 @@ describe("BNBPartyFactory", function () {
     let swapRouter: SwapRouter
     let weth9: IWBNB
     const partyTarget = ethers.parseEther("100")
-    const tokenCreationFee = ethers.parseUnits("1", 17)
+    const tokenCreationFee = ethers.parseUnits("1", 16)
     const returnFeeAmount = ethers.parseUnits("1", 17)
     const bonusFee = ethers.parseUnits("1", 16)
     const initialTokenAmount = "10000000000000000000000000"
@@ -91,6 +91,8 @@ describe("BNBPartyFactory", function () {
             await positionManager.getAddress(),
             await positionManager.getAddress()
         )
+        // Set Swap Router in BNBPartyFactory
+        await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
     })
 
     beforeEach(async () => {})
@@ -110,15 +112,40 @@ describe("BNBPartyFactory", function () {
     })
 
     it("should create party LP", async function () {
-        await bnbPartyFactory.createParty(name, symbol)
+        await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
         expect(await positionManager.totalSupply()).to.equal(1)
     })
 
     it("bnb factory is owner of the party LP", async () => {
-        await bnbPartyFactory.createParty(name, symbol)
+        await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
         const tokenId = (await positionManager.totalSupply()) - 1n
         const owner = await positionManager.ownerOf(tokenId)
         expect(owner).to.equal(await bnbPartyFactory.getAddress())
+    })
+
+    it("should revert if not enough BNB is sent", async function () {
+        await expect(bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee - 1n })).to.be.revertedWith(
+            "BNBPartyFactory: insufficient BNB"
+        )
+    })
+
+    it("should revert to Create Party if position manager is not set", async function () {
+        await bnbPartyFactory.setNonfungiblePositionManager(ethers.ZeroAddress, ethers.ZeroAddress)
+        await expect(bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })).to.be.revertedWith(
+            "BNBPartyFactory: BNBPositionManager not set"
+        )
+        await bnbPartyFactory.setNonfungiblePositionManager(
+            await positionManager.getAddress(),
+            await positionManager.getAddress()
+        )
+    })
+
+    it("should revert if swap router is not set", async function () {
+        await bnbPartyFactory.setSwapRouter(ethers.ZeroAddress)
+        await expect(bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })).to.be.revertedWith(
+            "BNBPartyFactory: swapRouter not set"
+        )
+        await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
     })
 
     describe("Smart Router", function () {

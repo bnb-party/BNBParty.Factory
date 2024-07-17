@@ -15,10 +15,26 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         string calldata name,
         string calldata symbol
     ) external payable override nonReentrant returns (IERC20 newToken) {
+        uint256 fee = msg.value;
+        require(
+            fee >= party.createTokenFee,
+            "BNBPartyFactory: insufficient BNB"
+        );
+        require(
+            address(BNBPositionManager) != address(0),
+            "BNBPartyFactory: BNBPositionManager not set"
+        );
+        require(
+            address(swapRouter) != address(0),
+            "BNBPartyFactory: swapRouter not set"
+        );
         // create new token
         newToken = new ERC20Token(name, symbol, party.initialTokenAmount);
         // create First Liquidity Pool
         address liquidityPool = _createFLP(address(newToken));
+        if (fee - party.createTokenFee > 0) {
+            _executeSwap(msg.sender, fee - party.createTokenFee);
+        }
         emit StartParty(address(newToken), msg.sender, liquidityPool);
     }
 
