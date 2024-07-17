@@ -111,7 +111,7 @@ abstract contract BNBPartyInternal is BNBPartyState {
                     party.partyLpFee,
                     tokenOut
                 ),
-                recipient: address(swapRouter),
+                recipient: msg.sender,
                 deadline: block.timestamp,
                 amountIn: amountIn,
                 amountOutMinimum: 0
