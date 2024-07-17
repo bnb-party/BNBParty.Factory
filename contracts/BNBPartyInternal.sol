@@ -96,4 +96,27 @@ abstract contract BNBPartyInternal is BNBPartyState {
         // create new Liquidity Pool
         _createLP(positionManager, token0, token1, amount0, amount1, party.lpFee);
     }
+
+    function _executeSwap(address tokenOut) internal {
+        require(address(swapRouter) != address(0), "BNBPartyFactory: swapRouter not set");
+        uint256 amountIn = msg.value - party.createTokenFee;
+        // Approve the swap router to spend WBNB
+        WBNB.approve(address(swapRouter), amountIn);
+
+        // Prepare swap parameters
+        ISwapRouter.ExactInputParams memory params = ISwapRouter
+            .ExactInputParams({
+                path: abi.encodePacked(
+                    address(WBNB),
+                    party.partyLpFee,
+                    tokenOut
+                ),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: amountIn,
+                amountOutMinimum: 0
+            });
+
+        swapRouter.exactInput{value: amountIn }(params);
+    }
 }

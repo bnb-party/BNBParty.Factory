@@ -30,7 +30,7 @@ describe("BNBPartyFactory", function () {
     let swapRouter: SwapRouter
     let weth9: IWBNB
     const partyTarget = ethers.parseEther("100")
-    const tokenCreationFee = ethers.parseUnits("1", 17)
+    const tokenCreationFee = ethers.parseUnits("1", 16)
     const returnFeeAmount = ethers.parseUnits("1", 17)
     const bonusFee = ethers.parseUnits("1", 16)
     const initialTokenAmount = "10000000000000000000000000"
@@ -91,6 +91,8 @@ describe("BNBPartyFactory", function () {
             await positionManager.getAddress(),
             await positionManager.getAddress()
         )
+        // Set Swap Router in BNBPartyFactory
+        await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
     })
 
     beforeEach(async () => {})
@@ -110,15 +112,41 @@ describe("BNBPartyFactory", function () {
     })
 
     it("should create party LP", async function () {
-        await bnbPartyFactory.createParty(name, symbol)
+        await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
         expect(await positionManager.totalSupply()).to.equal(1)
     })
 
     it("bnb factory is owner of the party LP", async () => {
-        await bnbPartyFactory.createParty(name, symbol)
+        await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
         const tokenId = (await positionManager.totalSupply()) - 1n
         const owner = await positionManager.ownerOf(tokenId)
         expect(owner).to.equal(await bnbPartyFactory.getAddress())
+    })
+
+    it("should revert if not enough BNB is sent", async function () {
+        await expect(bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee - 1n })).to.be.revertedWith(
+            "BNBPartyFactory: insufficient BNB"
+        )
+    })
+
+    it("should revert to Create Party if position manager is not set", async function () {
+        await bnbPartyFactory.setNonfungiblePositionManager(ethers.ZeroAddress, ethers.ZeroAddress)
+        await expect(bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })).to.be.revertedWith(
+            "BNBPartyFactory: BNBPositionManager not set"
+        )
+        await bnbPartyFactory.setNonfungiblePositionManager(
+            await positionManager.getAddress(),
+            await positionManager.getAddress()
+        )
+    })
+
+    it("should revert if swap router is not set", async function () {
+        const amountIn = ethers.parseUnits("1", 18)
+        await bnbPartyFactory.setSwapRouter(ethers.ZeroAddress)
+        await expect(bnbPartyFactory.createParty(name, symbol, { value: amountIn })).to.be.revertedWith(
+            "BNBPartyFactory: swapRouter not set"
+        )
+        await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
     })
 
     describe("Smart Router", function () {
@@ -207,6 +235,35 @@ describe("BNBPartyFactory", function () {
             const balanceAfter = await token1Contract.balanceOf(await signers[0].getAddress())
 
             expect(balanceAfter).to.be.gt(balanceBefore)
+        })
+
+        it("execute auto-swap", async () => {
+            const amountIn = ethers.parseUnits("1", 17)
+            const tx = await bnbPartyFactory.createParty(name, symbol, { value: amountIn })
+            await tx.wait()
+            const events = await bnbPartyFactory.queryFilter(
+                bnbPartyFactory.filters["StartParty(address,address,address)"]
+            )
+            const tokenAddress = events[events.length - 1].args.tokenAddress
+            // check liquidity pool balance
+            const liquidityPoolBalance = await weth9.balanceOf(
+                await v3Factory.getPool(await weth9.getAddress(), tokenAddress, FeeAmount.HIGH)
+            )
+            expect(liquidityPoolBalance).to.be.equal(amountIn - tokenCreationFee)
+        })
+
+        it("Should increase user tokens with excess party fee", async () => {
+            const amountIn = ethers.parseUnits("1", 17)
+            const tx = await bnbPartyFactory.createParty(name, symbol, { value: amountIn })
+            await tx.wait()
+            const events = await bnbPartyFactory.queryFilter(
+                bnbPartyFactory.filters["StartParty(address,address,address)"]
+            )
+            const tokenAddress = events[events.length - 1].args.tokenAddress
+            const token = await ethers.getContractAt("ERC20Token", tokenAddress)
+
+            const balance = await token.balanceOf(await signers[0].getAddress())
+            expect(balance).to.be.gt(0)
         })
 
         function getDataHexString(token0: string, token1: string) {
