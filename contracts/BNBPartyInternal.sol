@@ -100,8 +100,6 @@ abstract contract BNBPartyInternal is BNBPartyState {
     function _executeSwap(address tokenOut) internal {
         require(address(swapRouter) != address(0), "BNBPartyFactory: swapRouter not set");
         uint256 amountIn = msg.value - party.createTokenFee;
-        // Approve the swap router to spend WBNB
-        WBNB.approve(address(swapRouter), amountIn);
 
         // Prepare swap parameters
         ISwapRouter.ExactInputParams memory params = ISwapRouter

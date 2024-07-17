@@ -174,7 +174,6 @@ describe("BNBPartyFactory", function () {
                 amountOutMinimum: "0",
             }
             const token1Contract = await ethers.getContractAt("ERC20", MEME)
-            await weth9.approve(await swapRouter.getAddress(), amountIn)
 
             const balanceBefore = await token1Contract.balanceOf(await signers[0].getAddress())
             await expect(await swapRouter.exactInput(params, { value: amountIn })).to.emit(weth9, "Deposit")
