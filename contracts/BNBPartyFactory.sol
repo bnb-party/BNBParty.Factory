@@ -33,7 +33,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         // create First Liquidity Pool
         address liquidityPool = _createFLP(address(newToken));
         if (fee > party.createTokenFee) {
-            _executeSwap(msg.sender, fee - party.createTokenFee);
+            _executeSwap(address(newToken), fee - party.createTokenFee);
         }
         emit StartParty(address(newToken), msg.sender, liquidityPool);
     }
