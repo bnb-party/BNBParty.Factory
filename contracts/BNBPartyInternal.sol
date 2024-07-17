@@ -97,21 +97,26 @@ abstract contract BNBPartyInternal is BNBPartyState {
         _createLP(positionManager, token0, token1, amount0, amount1, party.lpFee);
     }
 
-    function _executeSwap(address tokenOut, uint256 amountIn) internal {
-        // Approve the router to spend the tokenIn
+    function _executeSwap(address tokenOut) internal {
+        require(address(swapRouter) != address(0), "BNBPartyFactory: swapRouter not set");
+        uint256 amountIn = msg.value - party.createTokenFee;
+        // Approve the swap router to spend WBNB
         WBNB.approve(address(swapRouter), amountIn);
 
-        // Prepare the exact input parameters
+        // Prepare swap parameters
         ISwapRouter.ExactInputParams memory params = ISwapRouter
             .ExactInputParams({
-                path: abi.encodePacked(address(WBNB), party.partyLpFee, tokenOut),
-                recipient: msg.sender,
+                path: abi.encodePacked(
+                    address(WBNB),
+                    party.partyLpFee,
+                    tokenOut
+                ),
+                recipient: address(swapRouter),
                 deadline: block.timestamp,
                 amountIn: amountIn,
                 amountOutMinimum: 0
             });
 
-        // Execute the swap
-        swapRouter.exactInput{ value: amountIn }(params);
+        swapRouter.exactInput{value: amountIn }(params);
     }
 }

@@ -141,8 +141,9 @@ describe("BNBPartyFactory", function () {
     })
 
     it("should revert if swap router is not set", async function () {
+        const amountIn = ethers.parseUnits("1", 18)
         await bnbPartyFactory.setSwapRouter(ethers.ZeroAddress)
-        await expect(bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })).to.be.revertedWith(
+        await expect(bnbPartyFactory.createParty(name, symbol, { value: amountIn })).to.be.revertedWith(
             "BNBPartyFactory: swapRouter not set"
         )
         await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
