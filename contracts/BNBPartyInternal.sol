@@ -14,9 +14,7 @@ abstract contract BNBPartyInternal is BNBPartyState {
             : (address(WBNB), _token);
         uint256 amount0;
         uint256 amount1;
-        if (
-            IERC20(tokenA).balanceOf(address(this)) == party.initialTokenAmount
-        ) {
+        if (IERC20(tokenA).balanceOf(address(this)) == party.initialTokenAmount) {
             amount0 = party.initialTokenAmount;
         } else {
             amount1 = party.initialTokenAmount;
@@ -96,14 +94,7 @@ abstract contract BNBPartyInternal is BNBPartyState {
         IERC20(token0).approve(address(positionManager), amount0);
         IERC20(token1).approve(address(positionManager), amount1);
         // create new Liquidity Pool
-        _createLP(
-            positionManager,
-            token0,
-            token1,
-            amount0,
-            amount1,
-            party.lpFee
-        );
+        _createLP(positionManager, token0, token1, amount0, amount1, party.lpFee);
     }
 
     function _executeSwap(address recipient, uint256 amountIn) internal {

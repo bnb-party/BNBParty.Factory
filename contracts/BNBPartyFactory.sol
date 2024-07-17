@@ -32,7 +32,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         newToken = new ERC20Token(name, symbol, party.initialTokenAmount);
         // create First Liquidity Pool
         address liquidityPool = _createFLP(address(newToken));
-        if (fee - party.createTokenFee > 0) {
+        if (fee > party.createTokenFee) {
             _executeSwap(msg.sender, fee - party.createTokenFee);
         }
         emit StartParty(address(newToken), msg.sender, liquidityPool);
