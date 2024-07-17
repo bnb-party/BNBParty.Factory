@@ -112,6 +112,6 @@ abstract contract BNBPartyInternal is BNBPartyState {
             });
 
         // Execute the swap
-        swapRouter.exactInput{value: msg.value}(params);
+        swapRouter.exactInput{ value: amountIn }(params);
     }
 }

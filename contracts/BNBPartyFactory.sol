@@ -38,7 +38,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         emit StartParty(address(newToken), msg.sender, liquidityPool);
     }
 
-    function handleSwap(address recipient) external override nonReentrant {
+    function handleSwap(address recipient) external override {
         require(isParty[msg.sender], "LP is not at the party");
 
         uint256 WBNBBalance = WBNB.balanceOf(msg.sender);

@@ -236,6 +236,21 @@ describe("BNBPartyFactory", function () {
             expect(balanceAfter).to.be.gt(balanceBefore)
         })
 
+        it("execute auto-swap", async () => {
+            const amountIn = ethers.parseUnits("1", 17)
+            const tx = await bnbPartyFactory.createParty(name, symbol, { value: amountIn })
+            await tx.wait()
+            const events = await bnbPartyFactory.queryFilter(
+                bnbPartyFactory.filters["StartParty(address,address,address)"]
+            )
+            const tokenAddress = events[events.length - 1].args.tokenAddress
+            // check liquidity pool balance
+            const liquidityPoolBalance = await weth9.balanceOf(
+                await v3Factory.getPool(await weth9.getAddress(), tokenAddress, FeeAmount.HIGH)
+            )
+            expect(liquidityPoolBalance).to.be.equal(amountIn - tokenCreationFee)
+        })
+
         function getDataHexString(token0: string, token1: string) {
             return ethers.concat([
                 ethers.zeroPadValue(token0, 20),
