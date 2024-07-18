@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./token/ERC20Token.sol";
 import "./BNBPartyInternal.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@bnb-party/v3-periphery/contracts/interfaces/IPeripheryPayments.sol";
 
 contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     constructor(
@@ -44,5 +45,40 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
 
         // handle liquidity
         _handleLiquidity();
+    }
+
+    function joinParty(
+        address tokenOut,
+        uint256 amountOutMinimum,
+        uint256 deadline
+    ) external payable {
+        _executeSwap(
+            address(WBNB),
+            tokenOut,
+            msg.sender,
+            amountOutMinimum,
+            deadline,
+            msg.value
+        );
+    }
+
+    function leaveParty(
+        address tokenIn,
+        uint256 amountIn,
+        uint256 amountOutMinimum,
+        uint256 deadline
+    ) external {
+        _executeSwap(
+            tokenIn,
+            address(WBNB),
+            address(swapRouter),
+            amountOutMinimum,
+            deadline,
+            amountIn
+        );
+        IPeripheryPayments(address(swapRouter)).unwrapWETH9(
+            amountOutMinimum,
+            msg.sender
+        );
     }
 }
