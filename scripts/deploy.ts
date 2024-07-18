@@ -9,8 +9,8 @@ enum FeeAmount {
 // deploy BNBPartyFactory contract
 async function main() {
     const partyTarget = ethers.parseEther("100")
-    const tokenCreationFee = ethers.parseUnits("1", 17)
-    const returnFeeAmount = ethers.parseUnits("1", 17)
+    const tokenCreationFee = ethers.parseUnits("1", 16)
+    const returnFeeAmount = ethers.parseUnits("1", 16)
     const bonusFee = ethers.parseUnits("1", 16)
     const initialTokenAmount = "10000000000000000000000000"
     const sqrtPriceX96 = "25052911542910170730777872"
@@ -18,17 +18,19 @@ async function main() {
 
     const BNBPartyFactoryContract = await ethers.getContractFactory("BNBPartyFactory")
     const bnbPartyFactory = await BNBPartyFactoryContract.deploy(
-        partyTarget,
-        tokenCreationFee,
-        FeeAmount.HIGH,
-        FeeAmount.HIGH,
-        initialTokenAmount,
-        sqrtPriceX96,
-        tWBNB,
-        returnFeeAmount,
-        bonusFee,
-        "-92200",
-        "0"
+        {
+            partyTarget: partyTarget,
+            createTokenFee: tokenCreationFee,
+            partyLpFee: FeeAmount.HIGH,
+            lpFee: FeeAmount.HIGH,
+            initialTokenAmount: initialTokenAmount,
+            sqrtPriceX96: sqrtPriceX96,
+            bonusTargetReach: returnFeeAmount,
+            bonusPartyCreator: bonusFee,
+            tickLower: "-92200",
+            tickUpper: "0",
+        },
+        tWBNB
     )
     console.log("BNBPartyFactory deployed to:", await bnbPartyFactory.getAddress())
 
@@ -61,7 +63,7 @@ async function main() {
 
     const name = "Party"
     const symbol = "Token"
-    await bnbPartyFactory.createParty(name, symbol)
+    await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
 }
 
 main().catch((error) => {
