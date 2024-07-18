@@ -154,12 +154,59 @@ describe("BNBPartyFactory", function () {
         let deadline: number
         let position: any
         let MEME: string
+        let lpAddress: string
 
         before(async () => {
             tokenId = (await positionManager.totalSupply()).toString()
             deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
             position = await positionManager.positions(tokenId)
             MEME = position.token1
+            lpAddress = await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
+        })
+
+        it("should increase wbnb on party lp after join party", async () => {
+            const amountIn = ethers.parseUnits("5", 17)
+
+            const lpBalanceBefore = await weth9.balanceOf(lpAddress)
+            await bnbPartyFactory.joinParty(MEME, 0, deadline, { value: amountIn })
+            const lpBalanceAfter = await weth9.balanceOf(lpAddress)
+
+            expect(lpBalanceAfter).to.be.equal(lpBalanceBefore + amountIn)
+        })
+
+        it("user should receive meme token after join party", async () => {
+            const amountIn = ethers.parseUnits("5", 17)
+            const tokenOutContract = await ethers.getContractAt("ERC20", MEME)
+
+            const balanceBefore = await tokenOutContract.balanceOf(await signers[0].getAddress())
+            await bnbPartyFactory.joinParty(MEME, 0, deadline, { value: amountIn })
+            const balanceAfter = await tokenOutContract.balanceOf(await signers[0].getAddress())
+
+            expect(balanceAfter).to.be.gt(balanceBefore)
+        })
+
+        it("user should receive bnb after leave party", async () => {
+            const amountIn = ethers.parseUnits("1", 16)
+            const tokenOutContract = await ethers.getContractAt("ERC20", MEME)
+            // approve token
+            await tokenOutContract.approve(await bnbPartyFactory.getAddress(), amountIn)
+            const bnbBalanceBefore = await ethers.provider.getBalance(await signers[0].getAddress())
+            await bnbPartyFactory.leaveParty(MEME, amountIn, 0, deadline)
+            const bnbBalanceAfter = await ethers.provider.getBalance(await signers[0].getAddress())
+            expect(bnbBalanceAfter).to.be.gt(bnbBalanceBefore)
+        })
+
+        it("should deacrease wbnb on party lp after leave party", async () => {
+            const amountIn = ethers.parseUnits("1", 16)
+            const tokenOutContract = await ethers.getContractAt("ERC20", MEME)
+            // approve token
+            await tokenOutContract.approve(await bnbPartyFactory.getAddress(), amountIn)
+
+            const lpBalanceBefore = await weth9.balanceOf(lpAddress)
+            await bnbPartyFactory.leaveParty(MEME, amountIn, 0, deadline)
+            const lpBalanceAfter = await weth9.balanceOf(lpAddress)
+
+            expect(lpBalanceBefore).to.be.gt(lpBalanceAfter)
         })
 
         it("BNB -> WBNB -> MEME exactInput call", async () => {
@@ -244,10 +291,9 @@ describe("BNBPartyFactory", function () {
                 bnbPartyFactory.filters["StartParty(address,address,address)"]
             )
             const tokenAddress = events[events.length - 1].args.tokenAddress
+            const lpAddress = await v3Factory.getPool(await weth9.getAddress(), tokenAddress, FeeAmount.HIGH)
             // check liquidity pool balance
-            const liquidityPoolBalance = await weth9.balanceOf(
-                await v3Factory.getPool(await weth9.getAddress(), tokenAddress, FeeAmount.HIGH)
-            )
+            const liquidityPoolBalance = await weth9.balanceOf(lpAddress)
             expect(liquidityPoolBalance).to.be.equal(amountIn - tokenCreationFee)
         })
 
