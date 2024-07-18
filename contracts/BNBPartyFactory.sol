@@ -54,7 +54,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         address tokenOut,
         uint256 amountOutMinimum,
         uint256 deadline
-    ) external payable notZeroAddress(tokenOut) notZeroAmount(msg.value) {
+    ) external payable notZeroAddress(tokenOut) notZeroValue {
         _executeSwap(
             address(WBNB),
             tokenOut,

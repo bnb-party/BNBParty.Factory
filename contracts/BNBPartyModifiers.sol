@@ -23,4 +23,9 @@ abstract contract BNBPartyModifiers is BNBPartyState {
         if (_amount == 0) revert ZeroAmount();
         _;
     }
+
+    modifier notZeroValue() {
+        if (msg.value == 0) revert ZeroAmount();
+        _;
+    }
 }
