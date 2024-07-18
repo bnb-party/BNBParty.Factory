@@ -123,6 +123,6 @@ abstract contract BNBPartyInternal is BNBPartyState {
                 amountOutMinimum: amountOutMinimum
             });
 
-        swapRouter.exactInput{value: amountIn}(params);
+        swapRouter.exactInput{value: amountIn }(params);
     }
 }

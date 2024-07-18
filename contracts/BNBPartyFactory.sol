@@ -4,9 +4,12 @@ pragma solidity ^0.8.0;
 import "./token/ERC20Token.sol";
 import "./BNBPartyInternal.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@bnb-party/v3-periphery/contracts/interfaces/IPeripheryPayments.sol";
 
 contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
     constructor(
         Party memory _party,
         IWBNB _WBNB
@@ -63,13 +66,15 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     }
 
     function leaveParty(
-        address tokenIn,
+        IERC20 tokenIn,
         uint256 amountIn,
         uint256 amountOutMinimum,
         uint256 deadline
     ) external {
+        tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
+        tokenIn.safeIncreaseAllowance(address(swapRouter), amountIn);
         _executeSwap(
-            tokenIn,
+            address(tokenIn),
             address(WBNB),
             address(swapRouter),
             amountOutMinimum,
