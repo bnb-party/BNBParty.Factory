@@ -20,13 +20,21 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
     IWBNB public immutable WBNB;
 
     constructor(Party memory _party, IWBNB _WBNB) Ownable(_msgSender()) {
-        require(_party.partyTarget > 0, "buyLimit is zero");
-        require(_party.initialTokenAmount > 0, "initialTokenAmount is zero");
-        require(
-            _party.partyTarget > _party.bonusPartyCreator,
-            "partyTarget is less than bonusParty"
-        );
-        require(_party.sqrtPriceX96 > 0, "sqrtPriceX96 is zero");
+        if (address(_WBNB) == address(0)) {
+            revert ZeroAddress();
+        }
+        if (_party.partyTarget == 0) {
+            revert ZeroAmount();
+        }
+        if (_party.initialTokenAmount == 0) {
+            revert ZeroAmount();
+        }
+        if (_party.partyTarget <= _party.bonusPartyCreator) {
+            revert BonusGreaterThanTarget();
+        }
+        if (_party.sqrtPriceX96 == 0) {
+            revert ZeroAmount();
+        }
         party = _party;
         WBNB = _WBNB;
     }
@@ -35,20 +43,17 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         INonfungiblePositionManager _BNBPositionManager,
         INonfungiblePositionManager _positionManager
     ) external onlyOwner {
-        require(
-            _BNBPositionManager != BNBPositionManager &&
-                _positionManager != positionManager,
-            "BNBPartyFactory: positionManager already set"
-        );
+        if (_BNBPositionManager == BNBPositionManager && _positionManager == positionManager) {
+            revert PositionManagerAlreadySet();
+        }
         positionManager = _positionManager;
         BNBPositionManager = _BNBPositionManager;
     }
 
     function setSwapRouter(ISwapRouter _swapRouter) external onlyOwner {
-        require(
-            _swapRouter != swapRouter,
-            "BNBPartyFactory: swapRouter already set"
-        );
+        if (_swapRouter == swapRouter) {
+            revert SwapRouterAlreadySet();
+        }
         swapRouter = _swapRouter;
     }
 }

@@ -18,15 +18,15 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     function createParty(
         string calldata name,
         string calldata symbol
-    ) external payable override nonReentrant returns (IERC20 newToken) {
-        require(
-            msg.value >= party.createTokenFee,
-            "BNBPartyFactory: insufficient BNB"
-        );
-        require(
-            address(BNBPositionManager) != address(0),
-            "BNBPartyFactory: BNBPositionManager not set"
-        );
+    )
+        external
+        payable
+        override
+        nonReentrant
+        insufficientBNB
+        notZeroAddress(address(BNBPositionManager))
+        returns (IERC20 newToken)
+    {
         // create new token
         newToken = new ERC20Token(name, symbol, party.initialTokenAmount);
         // create First Liquidity Pool
@@ -37,9 +37,9 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         emit StartParty(address(newToken), msg.sender, liquidityPool);
     }
 
-    function handleSwap(address recipient) external override {
-        require(isParty[msg.sender], "LP is not at the party");
-
+    function handleSwap(
+        address recipient
+    ) external override onlyParty notZeroAddress(recipient) {
         uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
         if (WBNBBalance < party.partyTarget) return;
 
@@ -52,33 +52,29 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
 
     function joinParty(
         address tokenOut,
-        uint256 amountOutMinimum,
-        uint256 deadline
-    ) external payable {
+        uint256 amountOutMinimum
+    ) external payable notZeroAddress(tokenOut) notZeroValue {
         _executeSwap(
             address(WBNB),
             tokenOut,
             msg.sender,
             amountOutMinimum,
-            deadline,
             msg.value
         );
     }
 
     function leaveParty(
-        IERC20 tokenIn,
+        address tokenIn,
         uint256 amountIn,
-        uint256 amountOutMinimum,
-        uint256 deadline
-    ) external {
-        tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
-        tokenIn.safeIncreaseAllowance(address(swapRouter), amountIn);
+        uint256 amountOutMinimum
+    ) external notZeroAddress(tokenIn) notZeroAmount(amountIn) {
+        IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
+        IERC20(tokenIn).safeIncreaseAllowance(address(swapRouter), amountIn);
         _executeSwap(
-            address(tokenIn),
+            tokenIn,
             address(WBNB),
             address(swapRouter),
             amountOutMinimum,
-            deadline,
             amountIn
         );
         IPeripheryPayments(address(swapRouter)).unwrapWETH9(
