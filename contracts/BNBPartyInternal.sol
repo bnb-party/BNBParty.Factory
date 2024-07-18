@@ -100,7 +100,7 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
 
     function _executeSwap(address tokenOut) internal {
         uint256 amountIn = msg.value - party.createTokenFee;
-        _executeSwap(address(WBNB), tokenOut, msg.sender, 0, block.timestamp, amountIn);
+        _executeSwap(address(WBNB), tokenOut, msg.sender, 0, amountIn);
     }
 
     function _executeSwap(
@@ -108,14 +108,13 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
         address tokenOut,
         address recipient,
         uint256 amountOutMinimum,
-        uint256 deadline,
         uint256 amountIn
     ) internal notZeroAddress(address(swapRouter)) {
         ISwapRouter.ExactInputParams memory params = ISwapRouter
             .ExactInputParams({
                 path: abi.encodePacked(tokenIn, party.partyLpFee, tokenOut),
                 recipient: recipient,
-                deadline: deadline,
+                deadline: block.timestamp,
                 amountIn: amountIn,
                 amountOutMinimum: amountOutMinimum
             });

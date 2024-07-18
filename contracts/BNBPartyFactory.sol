@@ -52,15 +52,13 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
 
     function joinParty(
         address tokenOut,
-        uint256 amountOutMinimum,
-        uint256 deadline
+        uint256 amountOutMinimum
     ) external payable notZeroAddress(tokenOut) notZeroValue {
         _executeSwap(
             address(WBNB),
             tokenOut,
             msg.sender,
             amountOutMinimum,
-            deadline,
             msg.value
         );
     }
@@ -68,8 +66,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     function leaveParty(
         address tokenIn,
         uint256 amountIn,
-        uint256 amountOutMinimum,
-        uint256 deadline
+        uint256 amountOutMinimum
     ) external notZeroAddress(tokenIn) notZeroAmount(amountIn) {
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
         IERC20(tokenIn).safeIncreaseAllowance(address(swapRouter), amountIn);
@@ -78,7 +75,6 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
             address(WBNB),
             address(swapRouter),
             amountOutMinimum,
-            deadline,
             amountIn
         );
         IPeripheryPayments(address(swapRouter)).unwrapWETH9(

@@ -169,7 +169,7 @@ describe("BNBPartyFactory", function () {
             const amountIn = ethers.parseUnits("5", 17)
 
             const lpBalanceBefore = await weth9.balanceOf(lpAddress)
-            await bnbPartyFactory.joinParty(MEME, 0, deadline, { value: amountIn })
+            await bnbPartyFactory.joinParty(MEME, 0, { value: amountIn })
             const lpBalanceAfter = await weth9.balanceOf(lpAddress)
 
             expect(lpBalanceAfter).to.be.equal(lpBalanceBefore + amountIn)
@@ -180,7 +180,7 @@ describe("BNBPartyFactory", function () {
             const tokenOutContract = await ethers.getContractAt("ERC20", MEME)
 
             const balanceBefore = await tokenOutContract.balanceOf(await signers[0].getAddress())
-            await bnbPartyFactory.joinParty(MEME, 0, deadline, { value: amountIn })
+            await bnbPartyFactory.joinParty(MEME, 0, { value: amountIn })
             const balanceAfter = await tokenOutContract.balanceOf(await signers[0].getAddress())
 
             expect(balanceAfter).to.be.gt(balanceBefore)
@@ -192,7 +192,7 @@ describe("BNBPartyFactory", function () {
             // approve token
             await tokenOutContract.approve(await bnbPartyFactory.getAddress(), amountIn)
             const bnbBalanceBefore = await ethers.provider.getBalance(await signers[0].getAddress())
-            await bnbPartyFactory.leaveParty(MEME, amountIn, 0, deadline)
+            await bnbPartyFactory.leaveParty(MEME, amountIn, 0)
             const bnbBalanceAfter = await ethers.provider.getBalance(await signers[0].getAddress())
             expect(bnbBalanceAfter).to.be.gt(bnbBalanceBefore)
         })
@@ -204,7 +204,7 @@ describe("BNBPartyFactory", function () {
             await tokenOutContract.approve(await bnbPartyFactory.getAddress(), amountIn)
 
             const lpBalanceBefore = await weth9.balanceOf(lpAddress)
-            await bnbPartyFactory.leaveParty(MEME, amountIn, 0, deadline)
+            await bnbPartyFactory.leaveParty(MEME, amountIn, 0)
             const lpBalanceAfter = await weth9.balanceOf(lpAddress)
 
             expect(lpBalanceBefore).to.be.gt(lpBalanceAfter)
@@ -314,19 +314,19 @@ describe("BNBPartyFactory", function () {
 
         it("should revert tokenOut zero address on join party", async () => {
             await expect(
-                bnbPartyFactory.joinParty(ethers.ZeroAddress, 0, deadline, { value: ethers.parseUnits("1", 17) })
+                bnbPartyFactory.joinParty(ethers.ZeroAddress, 0, { value: ethers.parseUnits("1", 17) })
             ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAddress")
         })
 
         it("should revert zero msg.value on join party", async () => {
-            await expect(bnbPartyFactory.joinParty(MEME, 0, deadline)).to.be.revertedWithCustomError(
+            await expect(bnbPartyFactory.joinParty(MEME, 0)).to.be.revertedWithCustomError(
                 bnbPartyFactory,
                 "ZeroAmount"
             )
         })
 
         it('should revert if "amountIn" is zero on leave party', async () => {
-            await expect(bnbPartyFactory.leaveParty(MEME, 0, 0, deadline)).to.be.revertedWithCustomError(
+            await expect(bnbPartyFactory.leaveParty(MEME, 0, 0)).to.be.revertedWithCustomError(
                 bnbPartyFactory,
                 "ZeroAmount"
             )
@@ -334,7 +334,7 @@ describe("BNBPartyFactory", function () {
 
         it("should revert if tokenOut zero address on leave party", async () => {
             await expect(
-                bnbPartyFactory.leaveParty(ethers.ZeroAddress, ethers.parseUnits("1", 16), 0, deadline)
+                bnbPartyFactory.leaveParty(ethers.ZeroAddress, ethers.parseUnits("1", 16), 0)
             ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAddress")
         })
 
