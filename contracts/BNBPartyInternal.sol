@@ -3,8 +3,9 @@ pragma solidity ^0.8.0;
 
 import "./token/ERC20Token.sol";
 import "./interfaces/IUniswapV3Pool.sol";
-import "./BNBPartyState.sol";
-abstract contract BNBPartyInternal is BNBPartyState {
+import "./BNBPartyModifiers.sol";
+
+abstract contract BNBPartyInternal is BNBPartyModifiers {
     function _createFLP(
         address _token
     ) internal returns (address liquidityPool) {
@@ -109,11 +110,7 @@ abstract contract BNBPartyInternal is BNBPartyState {
         uint256 amountOutMinimum,
         uint256 deadline,
         uint256 amountIn
-    ) internal {
-        require(
-            address(swapRouter) != address(0),
-            "BNBPartyFactory: swapRouter not set"
-        );
+    ) internal notZeroAddress(address(swapRouter)) {
         ISwapRouter.ExactInputParams memory params = ISwapRouter
             .ExactInputParams({
                 path: abi.encodePacked(tokenIn, party.partyLpFee, tokenOut),

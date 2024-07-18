@@ -124,16 +124,16 @@ describe("BNBPartyFactory", function () {
     })
 
     it("should revert if not enough BNB is sent", async function () {
-        await expect(bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee - 1n })).to.be.revertedWith(
-            "BNBPartyFactory: insufficient BNB"
-        )
+        await expect(
+            bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee - 1n })
+        ).to.be.revertedWithCustomError(bnbPartyFactory, "InsufficientBNB")
     })
 
     it("should revert to Create Party if position manager is not set", async function () {
         await bnbPartyFactory.setNonfungiblePositionManager(ethers.ZeroAddress, ethers.ZeroAddress)
-        await expect(bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })).to.be.revertedWith(
-            "BNBPartyFactory: BNBPositionManager not set"
-        )
+        await expect(
+            bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
+        ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAddress")
         await bnbPartyFactory.setNonfungiblePositionManager(
             await positionManager.getAddress(),
             await positionManager.getAddress()
@@ -143,8 +143,9 @@ describe("BNBPartyFactory", function () {
     it("should revert if swap router is not set", async function () {
         const amountIn = ethers.parseUnits("1", 18)
         await bnbPartyFactory.setSwapRouter(ethers.ZeroAddress)
-        await expect(bnbPartyFactory.createParty(name, symbol, { value: amountIn })).to.be.revertedWith(
-            "BNBPartyFactory: swapRouter not set"
+        await expect(bnbPartyFactory.createParty(name, symbol, { value: amountIn })).to.be.revertedWithCustomError(
+            bnbPartyFactory,
+            "ZeroAddress"
         )
         await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
     })
@@ -297,7 +298,7 @@ describe("BNBPartyFactory", function () {
             expect(liquidityPoolBalance).to.be.equal(amountIn - tokenCreationFee)
         })
 
-        it("Should increase user tokens with excess party fee", async () => {
+        it("should increase user tokens with excess party fee", async () => {
             const amountIn = ethers.parseUnits("1", 17)
             const tx = await bnbPartyFactory.createParty(name, symbol, { value: amountIn })
             await tx.wait()
@@ -309,6 +310,32 @@ describe("BNBPartyFactory", function () {
 
             const balance = await token.balanceOf(await signers[0].getAddress())
             expect(balance).to.be.gt(0)
+        })
+
+        it("should revert tokenOut zero address on join party", async () => {
+            await expect(
+                bnbPartyFactory.joinParty(ethers.ZeroAddress, 0, deadline, { value: ethers.parseUnits("1", 17) })
+            ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAddress")
+        })
+
+        it("should revert zero msg.value on join party", async () => {
+            await expect(bnbPartyFactory.joinParty(MEME, 0, deadline)).to.be.revertedWithCustomError(
+                bnbPartyFactory,
+                "ZeroAmount"
+            )
+        })
+
+        it('should revert if "amountIn" is zero on leave party', async () => {
+            await expect(bnbPartyFactory.leaveParty(MEME, 0, 0, deadline)).to.be.revertedWithCustomError(
+                bnbPartyFactory,
+                "ZeroAmount"
+            )
+        })
+
+        it("should revert if tokenOut zero address on leave party", async () => {
+            await expect(
+                bnbPartyFactory.leaveParty(ethers.ZeroAddress, ethers.parseUnits("1", 16), 0, deadline)
+            ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAddress")
         })
 
         function getDataHexString(token0: string, token1: string) {

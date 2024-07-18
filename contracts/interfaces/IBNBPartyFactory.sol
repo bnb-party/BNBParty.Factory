@@ -37,4 +37,13 @@ interface IBNBPartyFactory {
         address indexed owner,
         address indexed FLPAddress
     );
+
+    error InsufficientBNB();
+    error ZeroAddress();
+    error ZeroAmount();
+    error BonusGreaterThanTarget();
+    error PositionManagerNotSet();
+    error PositionManagerAlreadySet();
+    error SwapRouterAlreadySet();
+    error LPNotAtParty();
 }
