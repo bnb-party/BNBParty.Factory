@@ -162,6 +162,31 @@ describe("BNBPartyFactory", function () {
             MEME = position.token1
         })
 
+        it("should increase wbnb on party lp after join party", async () => {
+            const amountIn = ethers.parseUnits("5", 17)
+
+            const lpBalanceBefore = await weth9.balanceOf(
+                await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
+            )
+            await bnbPartyFactory.joinParty(MEME, 0, deadline, { value: amountIn })
+            const lpBalanceAfter = await weth9.balanceOf(
+                await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
+            )
+
+            expect(lpBalanceAfter).to.be.equal(lpBalanceBefore + amountIn)
+        })
+
+        it("user should receive meme token after join party", async () => {
+            const amountIn = ethers.parseUnits("5", 17)
+            const tokenOutContract = await ethers.getContractAt("ERC20", MEME)
+
+            const balanceBefore = await tokenOutContract.balanceOf(await signers[0].getAddress())
+            await bnbPartyFactory.joinParty(MEME, 0, deadline, { value: amountIn })
+            const balanceAfter = await tokenOutContract.balanceOf(await signers[0].getAddress())
+
+            expect(balanceAfter).to.be.gt(balanceBefore)
+        })
+
         it("BNB -> WBNB -> MEME exactInput call", async () => {
             const amountIn = ethers.parseUnits("1", 18)
             const path = getDataHexString(await weth9.getAddress(), MEME)
