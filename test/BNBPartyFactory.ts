@@ -3,6 +3,7 @@ import { ethers } from "hardhat"
 import { IWBNB } from "../typechain-types/contracts/interfaces/IWBNB"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { BNBPartyFactory } from "../typechain-types/contracts/BNBPartyFactory"
+import { ERC20 } from "../typechain-types"
 import { UniswapV3Factory } from "../typechain-types/@bnb-party/v3-core/contracts/UniswapV3Factory"
 import { NonfungiblePositionManager } from "../typechain-types/@bnb-party/v3-periphery/contracts/NonfungiblePositionManager"
 import { MockNonfungibleTokenPositionDescriptor } from "../typechain-types/contracts/mock/MockNonfungibleTokenPositionDescriptor"
@@ -123,6 +124,13 @@ describe("BNBPartyFactory", function () {
         expect(owner).to.equal(await bnbPartyFactory.getAddress())
     })
 
+    it("should pay fee for token and lp creation", async function () {
+        const balanceBefore = await ethers.provider.getBalance(await bnbPartyFactory.getAddress())
+        await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
+        const balanceAfter = await ethers.provider.getBalance(await bnbPartyFactory.getAddress())
+        expect(balanceAfter).to.be.equal(balanceBefore + tokenCreationFee)
+    })
+
     it("should revert if not enough BNB is sent", async function () {
         await expect(
             bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee - 1n })
@@ -156,6 +164,7 @@ describe("BNBPartyFactory", function () {
         let position: any
         let MEME: string
         let lpAddress: string
+        let MEMEToken: ERC20
 
         before(async () => {
             tokenId = (await positionManager.totalSupply()).toString()
@@ -163,6 +172,9 @@ describe("BNBPartyFactory", function () {
             position = await positionManager.positions(tokenId)
             MEME = position.token1
             lpAddress = await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
+            MEMEToken = await ethers.getContractAt("ERC20", MEME)
+            await MEMEToken.approve(await bnbPartyFactory.getAddress(), ethers.parseEther("100"))
+            await MEMEToken.approve(await swapRouter.getAddress(), ethers.parseEther("100"))
         })
 
         it("should increase wbnb on party lp after join party", async () => {
@@ -177,31 +189,36 @@ describe("BNBPartyFactory", function () {
 
         it("user should receive meme token after join party", async () => {
             const amountIn = ethers.parseUnits("5", 17)
-            const tokenOutContract = await ethers.getContractAt("ERC20", MEME)
 
-            const balanceBefore = await tokenOutContract.balanceOf(await signers[0].getAddress())
+            const balanceBefore = await MEMEToken.balanceOf(await signers[0].getAddress())
             await bnbPartyFactory.joinParty(MEME, 0, { value: amountIn })
-            const balanceAfter = await tokenOutContract.balanceOf(await signers[0].getAddress())
+            const balanceAfter = await MEMEToken.balanceOf(await signers[0].getAddress())
 
             expect(balanceAfter).to.be.gt(balanceBefore)
         })
 
         it("user should receive bnb after leave party", async () => {
-            const amountIn = ethers.parseUnits("1", 16)
-            const tokenOutContract = await ethers.getContractAt("ERC20", MEME)
+            const amountIn = ethers.parseUnits("5", 16)
             // approve token
-            await tokenOutContract.approve(await bnbPartyFactory.getAddress(), amountIn)
             const bnbBalanceBefore = await ethers.provider.getBalance(await signers[0].getAddress())
             await bnbPartyFactory.leaveParty(MEME, amountIn, 0)
             const bnbBalanceAfter = await ethers.provider.getBalance(await signers[0].getAddress())
             expect(bnbBalanceAfter).to.be.gt(bnbBalanceBefore)
         })
 
+        it("swap router should send all bnb balance after leave party", async () => {
+            const amountIn = ethers.parseUnits("1", 16)
+            // approve token
+            const balanceBefore = await ethers.provider.getBalance(await swapRouter.getAddress())
+            const bnbPartyBefore = await ethers.provider.getBalance(await bnbPartyFactory.getAddress())
+            await bnbPartyFactory.leaveParty(MEME, amountIn, 0)
+            const bnbBalance = await ethers.provider.getBalance(await swapRouter.getAddress())
+            const balanceAfter = await ethers.provider.getBalance(await bnbPartyFactory.getAddress())
+            expect(bnbBalance).to.be.equal(0)
+        })
+
         it("should deacrease wbnb on party lp after leave party", async () => {
             const amountIn = ethers.parseUnits("1", 16)
-            const tokenOutContract = await ethers.getContractAt("ERC20", MEME)
-            // approve token
-            await tokenOutContract.approve(await bnbPartyFactory.getAddress(), amountIn)
 
             const lpBalanceBefore = await weth9.balanceOf(lpAddress)
             await bnbPartyFactory.leaveParty(MEME, amountIn, 0)
@@ -221,11 +238,10 @@ describe("BNBPartyFactory", function () {
                 amountIn: amountIn,
                 amountOutMinimum: "0",
             }
-            const token1Contract = await ethers.getContractAt("ERC20", MEME)
 
-            const balanceBefore = await token1Contract.balanceOf(await signers[0].getAddress())
+            const balanceBefore = await MEMEToken.balanceOf(await signers[0].getAddress())
             await expect(await swapRouter.exactInput(params, { value: amountIn })).to.emit(weth9, "Deposit")
-            const balanceAfter = await token1Contract.balanceOf(await signers[0].getAddress())
+            const balanceAfter = await MEMEToken.balanceOf(await signers[0].getAddress())
 
             expect(balanceAfter).to.be.gt(balanceBefore)
         })
@@ -242,9 +258,6 @@ describe("BNBPartyFactory", function () {
                 amountIn: amountIn,
                 amountOutMinimum: "0",
             }
-
-            const token1Contract = await ethers.getContractAt("ERC20", MEME)
-            await token1Contract.approve(await swapRouter.getAddress(), amountIn)
 
             const exactInputData = swapRouter.interface.encodeFunctionData("exactInput", [params])
             // Encode the unwrapWETH9 call to convert WETH to ETH
@@ -275,11 +288,9 @@ describe("BNBPartyFactory", function () {
                 amountOutMinimum: amountOutMinimum,
             }
 
-            const token1Contract = await ethers.getContractAt("ERC20Token", MEME)
-
-            const balanceBefore = await token1Contract.balanceOf(await signers[0].getAddress())
+            const balanceBefore = await MEMEToken.balanceOf(await signers[0].getAddress())
             await swapRouter.exactInput(params)
-            const balanceAfter = await token1Contract.balanceOf(await signers[0].getAddress())
+            const balanceAfter = await MEMEToken.balanceOf(await signers[0].getAddress())
 
             expect(balanceAfter).to.be.gt(balanceBefore)
         })

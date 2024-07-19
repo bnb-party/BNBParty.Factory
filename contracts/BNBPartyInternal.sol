@@ -119,6 +119,6 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
                 amountOutMinimum: amountOutMinimum
             });
 
-        swapRouter.exactInput{value: amountIn }(params);
+        swapRouter.exactInput{value: msg.value > 0 ? amountIn : 0}(params);
     }
 }
