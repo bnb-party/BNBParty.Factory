@@ -38,6 +38,16 @@ interface IBNBPartyFactory {
         address indexed FLPAddress
     );
 
+    /// @notice event emitted when a party is joined
+    /// @param liquidityPool the address of the Liquidity Pool
+    /// @param amount0 the amount of token0
+    /// @param amount1 the amount of token1
+    event WithdrawLPfee(
+        address indexed liquidityPool,
+        uint256 amount0,
+        uint256 amount1
+    );
+
     error InsufficientBNB();
     error ZeroAddress();
     error ZeroAmount();
