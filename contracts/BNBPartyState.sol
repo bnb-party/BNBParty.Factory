@@ -57,7 +57,7 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         swapRouter = _swapRouter;
     }
 
-    // BNB withdraw fee
+    /// @notice Withdraws the fee from token creation
     function withdrawFee() external onlyOwner {
         if (address(this).balance == 0) {
             revert ZeroAmount();
@@ -65,21 +65,37 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         payable(msg.sender).transfer(address(this).balance);
     }
 
-    function withdrawPartyLPfee(
+    /// @notice Withdraws the LP fee from the party
+    function withdrawPartyLPFee(
         address[] memory liquidityPools
     ) external onlyOwner {
         if (liquidityPools.length == 0) {
             revert ZeroLength();
         }
         for (uint256 i = 0; i < liquidityPools.length; ++i) {
-            BNBPositionManager.collect(
-                INonfungiblePositionManager.CollectParams({
-                    tokenId: lpToTokenId[liquidityPools[i]],
-                    recipient: msg.sender,
-                    amount0Max: type(uint128).max,
-                    amount1Max: type(uint128).max
-                })
-            );
+            _collectFee(liquidityPools[i], true);
         }
+    }
+
+    /// @notice Withdraws the LP fee from second liquidity pool 
+    function withdrawLPFee(address[] memory liquidityPools) external onlyOwner {
+        if (liquidityPools.length == 0) {
+            revert ZeroLength();
+        }
+        for (uint256 i = 0; i < liquidityPools.length; ++i) {
+            _collectFee(liquidityPools[i], false);
+        }
+    }
+
+    function _collectFee(address liquidityPool, bool isPartyManager) internal {
+        INonfungiblePositionManager manager = isPartyManager ? BNBPositionManager : positionManager;
+        manager.collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: lpToTokenId[liquidityPool],
+                recipient: msg.sender,
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            })
+        );
     }
 }
