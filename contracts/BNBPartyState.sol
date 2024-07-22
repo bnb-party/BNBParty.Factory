@@ -88,6 +88,9 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
     }
 
     function _collectFee(address liquidityPool, bool isPartyManager) internal {
+        if(liquidityPool == address(0)) {
+            revert ZeroAddress();
+        }
         INonfungiblePositionManager manager = isPartyManager ? BNBPositionManager : positionManager;
         manager.collect(
             INonfungiblePositionManager.CollectParams({
