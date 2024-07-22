@@ -329,6 +329,7 @@ describe("BNBPartyFactory", function () {
         it("should create second liquidity pool", async () => {
             await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
             await bnbPartyFactory.joinParty(MEME, 0, { value: partyTarget })
+            expect(await positionManager.totalSupply()).to.equal(1)
         })
 
         it("should revert tokenOut zero address on join party", async () => {
