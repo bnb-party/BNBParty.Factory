@@ -56,14 +56,29 @@ async function main() {
     console.log("SwapRouter deployed to:", await swapRouter.getAddress())
 
     // set positionManager
-    await bnbPartyFactory.setNonfungiblePositionManager(
+    let tx = await bnbPartyFactory.setNonfungiblePositionManager(
         await positionManager.getAddress(),
         await positionManager.getAddress()
     )
-
+    await tx.wait()
+    console.log("PositionManager set to BNBPartyFactory")
+    // set swapRouter
+    tx = await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
+    await tx.wait()
+    console.log("SwapRouter set to BNBPartyFactory")
     const name = "Party"
     const symbol = "Token"
-    await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
+    tx = await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
+    await tx.wait()
+    console.log("Party created")
+    // auto-swap
+    tx = await bnbPartyFactory.createParty(name, symbol, {
+        value: tokenCreationFee + 10000000000000n,
+        gasPrice: ethers.parseUnits("6", "gwei"),
+        gasLimit: 50_000_000,
+    })
+    await tx.wait()
+    console.log("auto-swap party created")
 }
 
 main().catch((error) => {
