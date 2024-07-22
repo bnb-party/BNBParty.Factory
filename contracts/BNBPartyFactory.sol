@@ -44,7 +44,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         if (WBNBBalance < party.partyTarget) return;
 
         // uwrap return amount WBNB and send to recipient
-        _unwrapAndSendBNB(recipient);
+        //_unwrapAndSendBNB(recipient);
 
         // handle liquidity
         _handleLiquidity();

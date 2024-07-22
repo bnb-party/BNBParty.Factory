@@ -4,15 +4,13 @@ pragma solidity ^0.8.0;
 import "./token/ERC20Token.sol";
 import "./interfaces/IUniswapV3Pool.sol";
 import "./BNBPartyModifiers.sol";
+import "hardhat/console.sol";
 
 abstract contract BNBPartyInternal is BNBPartyModifiers {
     function _createFLP(
         address _token
     ) internal returns (address liquidityPool) {
-        // tokenA < tokenB
-        (address tokenA, address tokenB) = _token < address(WBNB)
-            ? (_token, address(WBNB))
-            : (address(WBNB), _token);
+        (address tokenA, address tokenB, uint160 sqrtPrice) = _getTokenPairAndPrice(_token);
         uint256 amount0;
         uint256 amount1;
         if (IERC20(tokenA).balanceOf(address(this)) == party.initialTokenAmount) {
@@ -20,7 +18,6 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
         } else {
             amount1 = party.initialTokenAmount;
         }
-
         IERC20(_token).approve(
             address(BNBPositionManager),
             party.initialTokenAmount
@@ -31,6 +28,7 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
             tokenB,
             amount0,
             amount1,
+            sqrtPrice,
             party.partyLpFee
         );
         isParty[liquidityPool] = true;
@@ -42,6 +40,7 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
         address token1,
         uint256 amount0,
         uint256 amount1,
+        uint160 sqrtPriceX96,
         uint24 fee
     ) internal returns (address liquidityPool) {
         // Create LP
@@ -49,7 +48,7 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
             token0,
             token1,
             fee,
-            party.sqrtPriceX96
+            sqrtPriceX96
         );
 
         // Mint LP
@@ -77,8 +76,8 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
     }
 
     function _handleLiquidity() internal {
-        // deacrease liquidity from old pool
         IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
+        (uint160 sqrtPriceX96,,,,,,) = pool.slot0();
         (uint256 amount0, uint256 amount1) = BNBPositionManager
             .decreaseLiquidity(
                 INonfungiblePositionManager.DecreaseLiquidityParams({
@@ -91,11 +90,19 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
             );
         address token0 = pool.token0();
         address token1 = pool.token1();
+        BNBPositionManager.collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: lpToTokenId[msg.sender],
+                recipient: address(this),
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            })
+        );
         // approve new LP
         IERC20(token0).approve(address(positionManager), amount0);
         IERC20(token1).approve(address(positionManager), amount1);
         // create new Liquidity Pool
-        _createLP(positionManager, token0, token1, amount0, amount1, party.lpFee);
+        _createLP(positionManager, token0, token1, amount0, amount1, sqrtPriceX96, party.lpFee);
     }
 
     function _executeSwap(address tokenOut) internal {
@@ -120,5 +127,27 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
             });
         uint256 value = msg.value > 0 ? amountIn : 0;
         swapRouter.exactInput{value: value}(params);
+    }
+
+    function _getTokenPairAndPrice(
+        address _token
+    )
+        internal
+        view
+        returns (address tokenA, address tokenB, uint160 sqrtPrice)
+    {
+        if (_token < address(WBNB)) {
+            tokenA = _token;
+            tokenB = address(WBNB);
+            sqrtPrice = party.sqrtPriceX96;
+        } else {
+            tokenA = address(WBNB);
+            tokenB = _token;
+            sqrtPrice = _reverseSqrtPrice();
+        }
+    }
+
+    function _reverseSqrtPrice() internal view returns (uint160) {
+        return uint160((1 << 192) / party.sqrtPriceX96);
     }
 }
