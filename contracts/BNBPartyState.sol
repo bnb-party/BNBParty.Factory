@@ -65,15 +65,21 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         payable(msg.sender).transfer(address(this).balance);
     }
 
-    function withdrawPartyLPfee(address liquidityPool) external onlyOwner {
-        (uint256 amount0, uint256 amount1) = BNBPositionManager.collect(
-            INonfungiblePositionManager.CollectParams({
-                tokenId: lpToTokenId[liquidityPool],
-                recipient: msg.sender,
-                amount0Max: type(uint128).max,
-                amount1Max: type(uint128).max
-            })
-        );
-        emit WithdrawLPfee(liquidityPool, amount0, amount1);
+    function withdrawPartyLPfee(
+        address[] memory liquidityPools
+    ) external onlyOwner {
+        if (liquidityPools.length == 0) {
+            revert ZeroLength();
+        }
+        for (uint256 i = 0; i < liquidityPools.length; ++i) {
+            BNBPositionManager.collect(
+                INonfungiblePositionManager.CollectParams({
+                    tokenId: lpToTokenId[liquidityPools[i]],
+                    recipient: msg.sender,
+                    amount0Max: type(uint128).max,
+                    amount1Max: type(uint128).max
+                })
+            );
+        }
     }
 }
