@@ -13,7 +13,7 @@ interface IBNBPartyFactory {
     ) external payable returns (IERC20 newToken);
 
     /// @notice handle party swap for FLP
-    function handleSwap(address recipient) external;
+    function handleSwap(address recipient) external payable;
 
     struct Party {
         uint256 partyTarget;
@@ -24,6 +24,7 @@ interface IBNBPartyFactory {
         uint160 sqrtPriceX96;
         uint256 bonusTargetReach;
         uint256 bonusPartyCreator;
+        uint256 targetReachFee;
         int24 tickLower;
         int24 tickUpper;
     }
@@ -38,6 +39,11 @@ interface IBNBPartyFactory {
         address indexed FLPAddress
     );
 
+    /// @notice event emitted when a bonus is sent
+    /// @param recipient the recipient of the bonus
+    /// @param amount the amount of the bonus
+    event SendBonus(address indexed recipient, uint256 amount);
+
     error InsufficientBNB();
     error ZeroAddress();
     error ZeroAmount();
@@ -46,4 +52,5 @@ interface IBNBPartyFactory {
     error PositionManagerAlreadySet();
     error SwapRouterAlreadySet();
     error LPNotAtParty();
+    error BonusAmountTransferFailed();
 }

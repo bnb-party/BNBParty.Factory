@@ -68,13 +68,20 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
         );
     }
 
-    function _unwrapAndSendBNB(address recipient) internal {
-        WBNB.withdraw(party.bonusTargetReach);
-        (bool success, ) = recipient.call{value: party.bonusTargetReach}("");
-        require(success, "Transfer failed.");
+    function _unwrapAndSendBNB(
+        address recipient
+    ) internal returns (uint256 bonusAmount) {
+        bonusAmount = party.bonusTargetReach + party.bonusPartyCreator + party.targetReachFee;
+        WBNB.withdraw(bonusAmount);
+        if (recipient == lpToCreator[msg.sender]) {
+            payable(recipient).transfer(bonusAmount);
+        } else {
+            payable(recipient).transfer(party.bonusTargetReach);
+            payable(lpToCreator[msg.sender]).transfer(party.bonusPartyCreator);
+        }
     }
 
-    function _handleLiquidity() internal {
+    function _handleLiquidity(address recipient) internal {
         IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         (uint256 amount0, uint256 amount1) = BNBPositionManager
@@ -97,6 +104,9 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
                 amount1Max: uint128(amount1)
             })
         );
+        // send bonus BNB to LP creator
+        token0 == address(WBNB) ? amount0 -= _unwrapAndSendBNB(recipient) : amount1 -= _unwrapAndSendBNB(recipient);
+
         // approve new LP
         IERC20(token0).approve(address(positionManager), amount0);
         IERC20(token1).approve(address(positionManager), amount1);
@@ -142,4 +152,8 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
     function _reverseSqrtPrice(uint160 sqrtPriceX96) internal pure returns (uint160 reverseSqrtPriceX96) {
         reverseSqrtPriceX96 = uint160((1 << 192) / sqrtPriceX96);
     }
+
+    receive() external payable {}
+
+    fallback() external payable {}
 }

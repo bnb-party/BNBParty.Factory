@@ -14,6 +14,7 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
     ISwapRouter public swapRouter; // V3 swap router
     mapping(address => bool) public isParty; // LiquidityPool => isParty
     mapping(address => uint256) public lpToTokenId; // LiquidityPool => nft tokenId
+    mapping(address => address) public lpToCreator; // LiquidityPool => LPCreator
 
     Party public party;
 

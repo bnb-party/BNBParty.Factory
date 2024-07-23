@@ -31,6 +31,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         newToken = new ERC20Token(name, symbol, party.initialTokenAmount);
         // create First Liquidity Pool
         address liquidityPool = _createFLP(address(newToken));
+        lpToCreator[liquidityPool] = msg.sender; 
         if (msg.value > party.createTokenFee) {
             _executeSwap(address(newToken));
         }
@@ -39,15 +40,12 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
 
     function handleSwap(
         address recipient
-    ) external override onlyParty notZeroAddress(recipient) {
+    ) external payable override onlyParty notZeroAddress(recipient) {
         uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
         if (WBNBBalance < party.partyTarget) return;
 
-        // uwrap return amount WBNB and send to recipient
-        //_unwrapAndSendBNB(recipient);
-
         // handle liquidity
-        _handleLiquidity();
+        _handleLiquidity(recipient);
     }
 
     function joinParty(

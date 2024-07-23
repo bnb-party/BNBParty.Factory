@@ -36,6 +36,7 @@ describe("BNBPartyFactory", function () {
     const tokenCreationFee = ethers.parseUnits("1", 16)
     const returnFeeAmount = ethers.parseUnits("1", 17)
     const bonusFee = ethers.parseUnits("1", 16)
+    const targetReachFee = ethers.parseUnits("1", 17)
     const initialTokenAmount = "10000000000000000000000000"
     const name = "Party"
     const symbol = "Token"
@@ -60,6 +61,7 @@ describe("BNBPartyFactory", function () {
                 sqrtPriceX96: sqrtPriceX96,
                 bonusTargetReach: returnFeeAmount,
                 bonusPartyCreator: bonusFee,
+                targetReachFee: targetReachFee,
                 tickLower: "-92200", // ,887272
                 tickUpper: "0",
             },
