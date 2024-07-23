@@ -72,13 +72,19 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
         address recipient
     ) internal returns (uint256 bonusAmount) {
         bonusAmount = party.bonusTargetReach + party.bonusPartyCreator + party.targetReachFee;
+        address creator = lpToCreator[msg.sender];
         WBNB.withdraw(bonusAmount);
-        if (recipient == lpToCreator[msg.sender]) {
-            payable(recipient).transfer(bonusAmount);
+        if (recipient == creator) {
+            _transferBNB(recipient, bonusAmount);
         } else {
-            payable(recipient).transfer(party.bonusTargetReach);
-            payable(lpToCreator[msg.sender]).transfer(party.bonusPartyCreator);
+            _transferBNB(recipient, party.bonusTargetReach);
+            _transferBNB(creator, party.bonusPartyCreator);
         }
+    }
+
+    function _transferBNB(address recipient, uint256 amount) private {
+        payable(recipient).transfer(amount);
+        emit TransferOutBNB(recipient, amount);
     }
 
     function _handleLiquidity(address recipient) internal {

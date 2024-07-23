@@ -39,10 +39,10 @@ interface IBNBPartyFactory {
         address indexed FLPAddress
     );
 
-    /// @notice event emitted when a bonus is sent
-    /// @param recipient the recipient of the bonus
-    /// @param amount the amount of the bonus
-    event SendBonus(address indexed recipient, uint256 amount);
+    /// @notice event emitted when a party is ended
+    /// @param to the address of the recipient
+    /// @param amount the amount of BNB transferred
+    event TransferOutBNB(address indexed to, uint256 amount);
 
     error InsufficientBNB();
     error ZeroAddress();
