@@ -76,7 +76,7 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
 
     function _handleLiquidity() internal {
         IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
-        (uint160 sqrtPriceX96,,,,,,) = pool.slot0();
+        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         (uint256 amount0, uint256 amount1) = BNBPositionManager
             .decreaseLiquidity(
                 INonfungiblePositionManager.DecreaseLiquidityParams({
@@ -93,8 +93,8 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
             INonfungiblePositionManager.CollectParams({
                 tokenId: lpToTokenId[msg.sender],
                 recipient: address(this),
-                amount0Max: type(uint128).max,
-                amount1Max: type(uint128).max
+                amount0Max: uint128(amount0), // collect without fee amount
+                amount1Max: uint128(amount1)
             })
         );
         // approve new LP
@@ -130,23 +130,16 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
 
     function _getTokenPairAndPrice(
         address _token
-    )
-        internal
-        view
-        returns (address tokenA, address tokenB, uint160 sqrtPrice)
-    {
+    ) internal view returns (address, address, uint160) {
         if (_token < address(WBNB)) {
-            tokenA = _token;
-            tokenB = address(WBNB);
-            sqrtPrice = party.sqrtPriceX96;
-        } else {
-            tokenA = address(WBNB);
-            tokenB = _token;
-            sqrtPrice = _reverseSqrtPrice();
+            return (_token, address(WBNB), party.sqrtPriceX96);
+        }
+        else {
+            return (address(WBNB), _token, _reverseSqrtPrice(party.sqrtPriceX96));
         }
     }
 
-    function _reverseSqrtPrice() internal view returns (uint160) {
-        return uint160((1 << 192) / party.sqrtPriceX96);
+    function _reverseSqrtPrice(uint160 sqrtPriceX96) internal pure returns (uint160 reverseSqrtPriceX96) {
+        reverseSqrtPriceX96 = uint160((1 << 192) / sqrtPriceX96);
     }
 }
