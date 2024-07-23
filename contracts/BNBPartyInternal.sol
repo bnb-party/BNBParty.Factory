@@ -160,6 +160,4 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
     }
 
     receive() external payable {}
-
-    fallback() external payable {}
 }
