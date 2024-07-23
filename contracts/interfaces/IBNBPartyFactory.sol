@@ -13,7 +13,7 @@ interface IBNBPartyFactory {
     ) external payable returns (IERC20 newToken);
 
     /// @notice handle party swap for FLP
-    function handleSwap(address recipient) external payable;
+    function handleSwap(address recipient) external;
 
     struct Party {
         uint256 partyTarget;

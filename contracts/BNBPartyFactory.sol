@@ -40,7 +40,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
 
     function handleSwap(
         address recipient
-    ) external payable override onlyParty notZeroAddress(recipient) {
+    ) external override onlyParty notZeroAddress(recipient) {
         uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
         if (WBNBBalance < party.partyTarget) return;
 
