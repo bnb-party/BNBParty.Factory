@@ -328,12 +328,6 @@ describe("BNBPartyFactory", function () {
             expect(balance).to.be.gt(0)
         })
 
-        it("should create second liquidity pool", async () => {
-            await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
-            await bnbPartyFactory.joinParty(MEME, 0, { value: partyTarget })
-            expect(await positionManager.totalSupply()).to.equal(1)
-        })
-
         it("should revert tokenOut zero address on join party", async () => {
             await expect(
                 bnbPartyFactory.joinParty(ethers.ZeroAddress, 0, { value: ethers.parseUnits("1", 17) })
@@ -369,5 +363,14 @@ describe("BNBPartyFactory", function () {
         }
     })
 
-    describe("Second Liquidity Pool", function () {})
+    describe("Second Liquidity Pool", function () {
+        it("should create second liquidity pool", async () => {
+            const tokenId = (await BNBPositionManager.totalSupply()).toString()
+            const position = await BNBPositionManager.positions(tokenId)
+            const MEME = position.token1
+            await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
+            await bnbPartyFactory.joinParty(MEME, 0, { value: partyTarget })
+            expect(await positionManager.totalSupply()).to.equal(1)
+        })
+    })
 })
