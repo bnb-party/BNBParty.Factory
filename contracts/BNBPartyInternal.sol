@@ -81,7 +81,11 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
     }
 
     function _transferBNB(address recipient, uint256 amount) private {
-        payable(recipient).transfer(amount);
+        // Use call to send BNB
+        (bool success, ) = recipient.call{value: amount}("");
+        if (!success) {
+            revert BonusAmountTransferFailed();
+        }
         emit TransferOutBNB(recipient, amount);
     }
 
