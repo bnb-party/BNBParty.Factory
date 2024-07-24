@@ -10,6 +10,8 @@ import "@bnb-party/v3-periphery/contracts/interfaces/IPeripheryPayments.sol";
 contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
+    receive() external payable {}
+
     constructor(
         Party memory _party,
         IWBNB _WBNB
@@ -31,6 +33,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         newToken = new ERC20Token(name, symbol, party.initialTokenAmount);
         // create First Liquidity Pool
         address liquidityPool = _createFLP(address(newToken));
+        lpToCreator[liquidityPool] = msg.sender; 
         if (msg.value > party.createTokenFee) {
             _executeSwap(address(newToken));
         }
@@ -43,11 +46,8 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
         if (WBNBBalance < party.partyTarget) return;
 
-        // uwrap return amount WBNB and send to recipient
-        _unwrapAndSendBNB(recipient);
-
         // handle liquidity
-        _handleLiquidity();
+        _handleLiquidity(recipient);
     }
 
     function joinParty(
