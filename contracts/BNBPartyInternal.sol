@@ -114,11 +114,11 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
             })
         );
 
-        uint256 bonusAmount = party.bonusTargetReach + party.bonusPartyCreator + party.targetReachFee;
+        uint256 unwrapAmount = party.bonusTargetReach + party.bonusPartyCreator + party.targetReachFee;
         if (token0 == address(WBNB)) {
-            amount0 -= bonusAmount;
+            amount0 -= unwrapAmount;
         } else {
-            amount1 -= bonusAmount;
+            amount1 -= unwrapAmount;
         }
 
         IERC20(token0).approve(address(positionManager), amount0);
@@ -128,7 +128,7 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
         _createLP(positionManager, token0, token1, amount0, amount1, sqrtPriceX96, party.lpFee);
 
         // Send bonuses
-        _unwrapAndSendBNB(recipient, bonusAmount);
+        _unwrapAndSendBNB(recipient, unwrapAmount);
     }
 
     function _executeSwap(address tokenOut) internal {
