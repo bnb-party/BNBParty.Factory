@@ -68,12 +68,11 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
         );
     }
 
-    function _unwrapAndSendBNB(address recipient, uint256 bonusAmount) internal {
+    function _unwrapAndSendBNB(address recipient, uint256 unwrapAmount) internal {
         address creator = lpToCreator[msg.sender];
-
-        WBNB.withdraw(bonusAmount);
+        WBNB.withdraw(unwrapAmount);
         if (recipient == creator) {
-            _transferBNB(recipient, bonusAmount);
+            _transferBNB(recipient, party.bonusTargetReach + party.bonusPartyCreator);
         } else {
             _transferBNB(recipient, party.bonusTargetReach);
             _transferBNB(creator, party.bonusPartyCreator);
