@@ -10,6 +10,8 @@ import "@bnb-party/v3-periphery/contracts/interfaces/IPeripheryPayments.sol";
 contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
+    receive() external payable {}
+
     constructor(
         Party memory _party,
         IWBNB _WBNB

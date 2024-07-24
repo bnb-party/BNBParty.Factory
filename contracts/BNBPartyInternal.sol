@@ -68,11 +68,9 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
         );
     }
 
-    function _unwrapAndSendBNB(
-        address recipient
-    ) internal returns (uint256 bonusAmount) {
-        bonusAmount = party.bonusTargetReach + party.bonusPartyCreator + party.targetReachFee;
+    function _unwrapAndSendBNB(address recipient, uint256 bonusAmount) internal {
         address creator = lpToCreator[msg.sender];
+
         WBNB.withdraw(bonusAmount);
         if (recipient == creator) {
             _transferBNB(recipient, bonusAmount);
@@ -90,34 +88,44 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
     function _handleLiquidity(address recipient) internal {
         IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
-        (uint256 amount0, uint256 amount1) = BNBPositionManager
-            .decreaseLiquidity(
-                INonfungiblePositionManager.DecreaseLiquidityParams({
-                    tokenId: lpToTokenId[msg.sender],
-                    liquidity: pool.liquidity(),
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    deadline: block.timestamp
-                })
-            );
         address token0 = pool.token0();
         address token1 = pool.token1();
+
+        // Decrease liquidity and collect tokens
+        (uint256 amount0, uint256 amount1) = BNBPositionManager.decreaseLiquidity(
+            INonfungiblePositionManager.DecreaseLiquidityParams({
+                tokenId: lpToTokenId[msg.sender],
+                liquidity: pool.liquidity(),
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            })
+        );
+
         BNBPositionManager.collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: lpToTokenId[msg.sender],
                 recipient: address(this),
-                amount0Max: uint128(amount0), // collect without fee amount
+                amount0Max: uint128(amount0),
                 amount1Max: uint128(amount1)
             })
         );
-        // send bonus BNB to LP creator
-        token0 == address(WBNB) ? amount0 -= _unwrapAndSendBNB(recipient) : amount1 -= _unwrapAndSendBNB(recipient);
 
-        // approve new LP
+        uint256 bonusAmount = party.bonusTargetReach + party.bonusPartyCreator + party.targetReachFee;
+        if (token0 == address(WBNB)) {
+            amount0 -= bonusAmount;
+        } else {
+            amount1 -= bonusAmount;
+        }
+
         IERC20(token0).approve(address(positionManager), amount0);
         IERC20(token1).approve(address(positionManager), amount1);
-        // create new Liquidity Pool
+
+        // Create new Liquidity Pool
         _createLP(positionManager, token0, token1, amount0, amount1, sqrtPriceX96, party.lpFee);
+
+        // Send bonuses
+        _unwrapAndSendBNB(recipient, bonusAmount);
     }
 
     function _executeSwap(address tokenOut) internal {
@@ -158,6 +166,4 @@ abstract contract BNBPartyInternal is BNBPartyModifiers {
     function _reverseSqrtPrice(uint160 sqrtPriceX96) internal pure returns (uint160 reverseSqrtPriceX96) {
         reverseSqrtPriceX96 = uint160((1 << 192) / sqrtPriceX96);
     }
-
-    receive() external payable {}
 }

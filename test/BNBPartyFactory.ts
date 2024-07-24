@@ -364,10 +364,17 @@ describe("BNBPartyFactory", function () {
     })
 
     describe("Second Liquidity Pool", function () {
+        let MEME: string
+        let tokenId: string
+        let position: any
+
+        before(async () => {
+            tokenId = (await BNBPositionManager.totalSupply()).toString()
+            position = await BNBPositionManager.positions(tokenId)
+            MEME = position.token1
+        })
+
         it("should create second liquidity pool", async () => {
-            const tokenId = (await BNBPositionManager.totalSupply()).toString()
-            const position = await BNBPositionManager.positions(tokenId)
-            const MEME = position.token1
             await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
             await bnbPartyFactory.joinParty(MEME, 0, { value: partyTarget })
             expect(await positionManager.totalSupply()).to.equal(1)
