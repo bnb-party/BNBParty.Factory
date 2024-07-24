@@ -30,7 +30,7 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         if (_party.initialTokenAmount == 0) {
             revert ZeroAmount();
         }
-        if (_party.partyTarget <= _party.bonusPartyCreator) {
+        if (_party.partyTarget <= (_party.bonusPartyCreator + _party.bonusTargetReach + _party.targetReachFee)) {
             revert BonusGreaterThanTarget();
         }
         if (_party.sqrtPriceX96 == 0) {
