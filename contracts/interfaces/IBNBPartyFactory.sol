@@ -52,5 +52,6 @@ interface IBNBPartyFactory {
     error PositionManagerAlreadySet();
     error SwapRouterAlreadySet();
     error LPNotAtParty();
+    error ZeroLength();
     error BonusAmountTransferFailed();
 }
