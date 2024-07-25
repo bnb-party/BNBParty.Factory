@@ -24,6 +24,7 @@ interface IBNBPartyFactory {
         uint160 sqrtPriceX96;
         uint256 bonusTargetReach;
         uint256 bonusPartyCreator;
+        uint256 targetReachFee;
         int24 tickLower;
         int24 tickUpper;
     }
@@ -38,6 +39,11 @@ interface IBNBPartyFactory {
         address indexed FLPAddress
     );
 
+    /// @notice event emitted when a party is ended
+    /// @param to the address of the recipient
+    /// @param amount the amount of BNB transferred
+    event TransferOutBNB(address indexed to, uint256 amount);
+
     error InsufficientBNB();
     error ZeroAddress();
     error ZeroAmount();
@@ -47,4 +53,5 @@ interface IBNBPartyFactory {
     error SwapRouterAlreadySet();
     error LPNotAtParty();
     error ZeroLength();
+    error BonusAmountTransferFailed();
 }
