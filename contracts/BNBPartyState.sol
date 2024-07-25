@@ -71,16 +71,16 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
     function withdrawPartyLPFee(
         address[] calldata liquidityPools
     ) external onlyOwner {
-        withdrawLPFees(liquidityPools, BNBPositionManager);
+        _withdrawLPFees(liquidityPools, BNBPositionManager);
     }
 
     /// @notice Withdraws the LP fee from the Pancakeswap V3
     function withdrawLPFee(address[] calldata liquidityPools) external onlyOwner {
-        withdrawLPFees(liquidityPools, positionManager);
+        _withdrawLPFees(liquidityPools, positionManager);
     }
 
     /// @notice Withdraws the LP fee
-    function withdrawLPFees(
+    function _withdrawLPFees(
         address[] calldata liquidityPools,
         INonfungiblePositionManager manager
     ) internal {

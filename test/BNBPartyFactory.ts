@@ -42,13 +42,10 @@ describe("BNBPartyFactory", function () {
     const symbol = "Token"
     const sqrtPriceX96 = "25052911542910170730777872"
 
-    before(async () => {
-        signers = await ethers.getSigners()
-
+    async function deployContracts() {
         // Deploy WETH9
         const WETH9 = await ethers.getContractFactory(WETH9Artifact.abi, WETH9Artifact.bytecode)
         weth9 = (await WETH9.deploy()) as IWBNB
-
         // Deploy BNBPartyFactory
         const BNBPartyFactoryContract = await ethers.getContractFactory("BNBPartyFactory")
         bnbPartyFactory = (await BNBPartyFactoryContract.deploy(
@@ -62,7 +59,7 @@ describe("BNBPartyFactory", function () {
                 bonusTargetReach: returnFeeAmount,
                 bonusPartyCreator: bonusFee,
                 targetReachFee: targetReachFee,
-                tickLower: "-92200", // ,887272
+                tickLower: "-92200",
                 tickUpper: "0",
             },
             await weth9.getAddress()
@@ -106,6 +103,11 @@ describe("BNBPartyFactory", function () {
         )
         // Set Swap Router in BNBPartyFactory
         await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
+    }
+
+    before(async () => {
+        signers = await ethers.getSigners()
+        await deployContracts()
     })
 
     it("should deploy BNBPartyFactory", async function () {
@@ -411,6 +413,44 @@ describe("BNBPartyFactory", function () {
             const balance = await weth9.balanceOf(lpAddress)
             const percentFee = ethers.parseEther("0.9")
             expect(balance).to.be.equal(partyTarget - returnFeeAmount - bonusFee - targetReachFee - percentFee - 1n)
+        })
+    })
+
+    describe("Withdraw fees", function () {
+        let MEME: string
+        let tokenId: string
+        let position: any
+
+        beforeEach(async () => {
+            await deployContracts()
+        })
+
+        it("should withdraw token creation fee", async () => {
+            const numbersOfParties = 5n
+            for (let i = 0; i < numbersOfParties; ++i) {
+                await bnbPartyFactory.connect(signers[1]).createParty(name, symbol, { value: tokenCreationFee })
+            }
+            const balanceBefore = await ethers.provider.getBalance(await signers[0].getAddress())
+            const tx: any = await bnbPartyFactory.withdrawFee()
+            const txReceipt = await tx.wait()
+            const gasCost = ethers.toBigInt(txReceipt.gasUsed) * ethers.toBigInt(tx.gasPrice)
+            const balanceAfter = await ethers.provider.getBalance(await signers[0].getAddress())
+            expect(balanceAfter).to.be.equal(balanceBefore - gasCost + tokenCreationFee * numbersOfParties)
+        })
+
+        it("should withdraw party fee", async () => {
+            await bnbPartyFactory.connect(signers[1]).createParty(name, symbol, { value: tokenCreationFee })
+            tokenId = (await BNBPositionManager.totalSupply()).toString()
+            position = await BNBPositionManager.positions(tokenId)
+            MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
+            await bnbPartyFactory.connect(signers[1]).joinParty(MEME, 0, { value: ethers.parseEther("10") })
+            // 1% bnb party fee 10 ether = 0.1 ether
+            const expectedFee = ethers.parseEther("0.1")
+            const balanceBefore = await weth9.balanceOf(await signers[0].getAddress())
+            const partyLP = await v3PartyFactory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
+            await bnbPartyFactory.withdrawPartyLPFee([partyLP])
+            const balanceAfter = await weth9.balanceOf(await signers[0].getAddress())
+            expect(balanceAfter).to.be.equal(balanceBefore + expectedFee - 1n)
         })
     })
 })
