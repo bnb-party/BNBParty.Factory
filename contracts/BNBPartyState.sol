@@ -64,6 +64,7 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
             revert ZeroAmount();
         }
         payable(msg.sender).transfer(address(this).balance);
+        emit TransferOutBNB(msg.sender, address(this).balance);
     }
 
 

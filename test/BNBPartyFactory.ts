@@ -30,6 +30,7 @@ describe("BNBPartyFactory", function () {
     let positionManager: NonfungiblePositionManager
     let BNBPositionManager: NonfungiblePositionManager
     let tokenPositionDescriptor: MockNonfungibleTokenPositionDescriptor
+    let BNBSwapRouter: SwapRouter
     let swapRouter: SwapRouter
     let weth9: IWBNB
     const partyTarget = ethers.parseEther("90")
@@ -91,8 +92,13 @@ describe("BNBPartyFactory", function () {
 
         // Deploy Swap Router
         const SwapRouterContract = await ethers.getContractFactory("SwapRouter")
-        swapRouter = (await SwapRouterContract.deploy(
+        BNBSwapRouter = (await SwapRouterContract.deploy(
             await v3PartyFactory.getAddress(),
+            await weth9.getAddress()
+        )) as SwapRouter
+
+        swapRouter = (await SwapRouterContract.deploy(
+            await v3Factory.getAddress(),
             await weth9.getAddress()
         )) as SwapRouter
 
@@ -102,7 +108,7 @@ describe("BNBPartyFactory", function () {
             await positionManager.getAddress()
         )
         // Set Swap Router in BNBPartyFactory
-        await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
+        await bnbPartyFactory.setSwapRouter(await BNBSwapRouter.getAddress())
     }
 
     before(async () => {
@@ -167,7 +173,7 @@ describe("BNBPartyFactory", function () {
             bnbPartyFactory,
             "ZeroAddress"
         )
-        await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
+        await bnbPartyFactory.setSwapRouter(await BNBSwapRouter.getAddress())
     })
 
     describe("Smart Router", function () {
@@ -186,7 +192,7 @@ describe("BNBPartyFactory", function () {
             lpAddress = await v3PartyFactory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
             MEMEToken = await ethers.getContractAt("ERC20", MEME)
             await MEMEToken.approve(await bnbPartyFactory.getAddress(), ethers.parseEther("100"))
-            await MEMEToken.approve(await swapRouter.getAddress(), ethers.parseEther("100"))
+            await MEMEToken.approve(await BNBSwapRouter.getAddress(), ethers.parseEther("100"))
         })
 
         it("should increase wbnb on party lp after join party", async () => {
@@ -220,7 +226,7 @@ describe("BNBPartyFactory", function () {
         it("swap router should send all bnb balance after leave party", async () => {
             const amountIn = ethers.parseUnits("1", 16)
             await bnbPartyFactory.leaveParty(MEME, amountIn, 0)
-            const bnbBalance = await ethers.provider.getBalance(await swapRouter.getAddress())
+            const bnbBalance = await ethers.provider.getBalance(await BNBSwapRouter.getAddress())
             expect(bnbBalance).to.be.equal(0)
         })
 
@@ -247,7 +253,7 @@ describe("BNBPartyFactory", function () {
             }
 
             const balanceBefore = await MEMEToken.balanceOf(await signers[0].getAddress())
-            await expect(await swapRouter.exactInput(params, { value: amountIn })).to.emit(weth9, "Deposit")
+            await expect(await BNBSwapRouter.exactInput(params, { value: amountIn })).to.emit(weth9, "Deposit")
             const balanceAfter = await MEMEToken.balanceOf(await signers[0].getAddress())
 
             expect(balanceAfter).to.be.gt(balanceBefore)
@@ -266,14 +272,14 @@ describe("BNBPartyFactory", function () {
                 amountOutMinimum: "0",
             }
 
-            const exactInputData = swapRouter.interface.encodeFunctionData("exactInput", [params])
+            const exactInputData = BNBSwapRouter.interface.encodeFunctionData("exactInput", [params])
             // Encode the unwrapWETH9 call to convert WETH to ETH
-            const unwrapWETH9Data = swapRouter.interface.encodeFunctionData("unwrapWETH9", [
+            const unwrapWETH9Data = BNBSwapRouter.interface.encodeFunctionData("unwrapWETH9", [
                 "0",
                 await signers[1].getAddress(),
             ])
             const balanceBefore = await ethers.provider.getBalance(await signers[1].getAddress())
-            await expect(await swapRouter.multicall([exactInputData, unwrapWETH9Data])).to.emit(weth9, "Withdrawal")
+            await expect(await BNBSwapRouter.multicall([exactInputData, unwrapWETH9Data])).to.emit(weth9, "Withdrawal")
             const balanceAfter = await ethers.provider.getBalance(await signers[1].getAddress())
             expect(balanceAfter).to.be.gt(balanceBefore)
         })
@@ -285,7 +291,7 @@ describe("BNBPartyFactory", function () {
 
             const deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
             await weth9.deposit({ value: amountIn })
-            await weth9.approve(await swapRouter.getAddress(), amountIn)
+            await weth9.approve(await BNBSwapRouter.getAddress(), amountIn)
 
             const params = {
                 path: path,
@@ -296,7 +302,7 @@ describe("BNBPartyFactory", function () {
             }
 
             const balanceBefore = await MEMEToken.balanceOf(await signers[0].getAddress())
-            await swapRouter.exactInput(params)
+            await BNBSwapRouter.exactInput(params)
             const balanceAfter = await MEMEToken.balanceOf(await signers[0].getAddress())
 
             expect(balanceAfter).to.be.gt(balanceBefore)
@@ -355,14 +361,6 @@ describe("BNBPartyFactory", function () {
                 bnbPartyFactory.leaveParty(ethers.ZeroAddress, ethers.parseUnits("1", 16), 0)
             ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAddress")
         })
-
-        function getDataHexString(token0: string, token1: string) {
-            return ethers.concat([
-                ethers.zeroPadValue(token0, 20),
-                ethers.zeroPadValue(ethers.toBeHex(FeeAmount.HIGH), 3),
-                ethers.zeroPadValue(token1, 20),
-            ])
-        }
     })
 
     describe("Second Liquidity Pool", function () {
@@ -452,5 +450,36 @@ describe("BNBPartyFactory", function () {
             const balanceAfter = await weth9.balanceOf(await signers[0].getAddress())
             expect(balanceAfter).to.be.equal(balanceBefore + expectedFee - 1n)
         })
+
+        it("should revert LPNotAtParty", async () => {
+            await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
+            tokenId = (await BNBPositionManager.totalSupply()).toString()
+            position = await BNBPositionManager.positions(tokenId)
+            MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
+            await bnbPartyFactory.connect(signers[1]).joinParty(MEME, 0, { value: partyTarget })
+            // do swap from second LP
+            const amountIn = ethers.parseUnits("1", 17)
+            const amountOutMinimum = 0 // For testing, accept any amount out
+            const path = getDataHexString(await weth9.getAddress(), MEME)
+            const deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
+            const params = {
+                path: path,
+                recipient: await signers[0].getAddress(),
+                deadline: deadline,
+                amountIn: amountIn,
+                amountOutMinimum: amountOutMinimum,
+            }
+            await expect(
+                swapRouter.connect(signers[1]).exactInput(params, { value: amountIn })
+            ).to.be.revertedWithCustomError(bnbPartyFactory, "LPNotAtParty")
+        })
     })
 })
+
+function getDataHexString(token0: string, token1: string) {
+    return ethers.concat([
+        ethers.zeroPadValue(token0, 20),
+        ethers.zeroPadValue(ethers.toBeHex(FeeAmount.HIGH), 3),
+        ethers.zeroPadValue(token1, 20),
+    ])
+}
