@@ -30,7 +30,12 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         if (_party.initialTokenAmount == 0) {
             revert ZeroAmount();
         }
-        if (_party.partyTarget <= (_party.bonusPartyCreator + _party.bonusTargetReach + _party.targetReachFee)) {
+        if (
+            _party.partyTarget <=
+            (_party.bonusPartyCreator +
+                _party.bonusTargetReach +
+                _party.targetReachFee)
+        ) {
             revert BonusGreaterThanTarget();
         }
         if (_party.sqrtPriceX96 == 0) {
@@ -44,7 +49,10 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         INonfungiblePositionManager _BNBPositionManager,
         INonfungiblePositionManager _positionManager
     ) external onlyOwner {
-        if (_BNBPositionManager == BNBPositionManager && _positionManager == positionManager) {
+        if (
+            _BNBPositionManager == BNBPositionManager &&
+            _positionManager == positionManager
+        ) {
             revert PositionManagerAlreadySet();
         }
         positionManager = _positionManager;
@@ -66,33 +74,39 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         payable(msg.sender).transfer(address(this).balance);
     }
 
-    /// @notice Withdraws the LP fee from the party
+
+    /// @notice Withdraws the LP fee from the BNB Party
     function withdrawPartyLPFee(
-        address[] memory liquidityPools
+        address[] calldata liquidityPools
     ) external onlyOwner {
+        withdrawLPFees(liquidityPools, BNBPositionManager);
+    }
+
+    /// @notice Withdraws the LP fee from the Pancakeswap V3
+    function withdrawLPFee(address[] calldata liquidityPools) external onlyOwner {
+        withdrawLPFees(liquidityPools, positionManager);
+    }
+
+    /// @notice Withdraws the LP fee
+    function withdrawLPFees(
+        address[] calldata liquidityPools,
+        INonfungiblePositionManager manager
+    ) internal {
         if (liquidityPools.length == 0) {
             revert ZeroLength();
         }
         for (uint256 i = 0; i < liquidityPools.length; ++i) {
-            _collectFee(liquidityPools[i], true);
+            _collectFee(liquidityPools[i], manager);
         }
     }
-
-    /// @notice Withdraws the LP fee from second liquidity pool 
-    function withdrawLPFee(address[] memory liquidityPools) external onlyOwner {
-        if (liquidityPools.length == 0) {
-            revert ZeroLength();
-        }
-        for (uint256 i = 0; i < liquidityPools.length; ++i) {
-            _collectFee(liquidityPools[i], false);
-        }
-    }
-
-    function _collectFee(address liquidityPool, bool isPartyManager) internal {
-        if(liquidityPool == address(0)) {
+    
+    function _collectFee(
+        address liquidityPool,
+        INonfungiblePositionManager manager
+    ) internal {
+        if (liquidityPool == address(0)) {
             revert ZeroAddress();
         }
-        INonfungiblePositionManager manager = isPartyManager ? BNBPositionManager : positionManager;
         manager.collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: lpToTokenId[liquidityPool],
