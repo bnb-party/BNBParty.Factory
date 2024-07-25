@@ -30,12 +30,7 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         if (_party.initialTokenAmount == 0) {
             revert ZeroAmount();
         }
-        if (
-            _party.partyTarget <=
-            (_party.bonusPartyCreator +
-                _party.bonusTargetReach +
-                _party.targetReachFee)
-        ) {
+        if (_party.partyTarget <= (_party.bonusPartyCreator + _party.bonusTargetReach + _party.targetReachFee)) {
             revert BonusGreaterThanTarget();
         }
         if (_party.sqrtPriceX96 == 0) {
@@ -49,10 +44,7 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         INonfungiblePositionManager _BNBPositionManager,
         INonfungiblePositionManager _positionManager
     ) external onlyOwner {
-        if (
-            _BNBPositionManager == BNBPositionManager &&
-            _positionManager == positionManager
-        ) {
+        if (_BNBPositionManager == BNBPositionManager && _positionManager == positionManager) {
             revert PositionManagerAlreadySet();
         }
         positionManager = _positionManager;
