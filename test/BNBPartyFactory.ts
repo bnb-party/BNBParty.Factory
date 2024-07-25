@@ -473,6 +473,10 @@ describe("BNBPartyFactory", function () {
                 swapRouter.connect(signers[1]).exactInput(params, { value: amountIn })
             ).to.be.revertedWithCustomError(bnbPartyFactory, "LPNotAtParty")
         })
+
+        it("should revert zero lenght array", async () => {
+            await expect(bnbPartyFactory.withdrawLPFee([])).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroLength")
+        })
     })
 })
 
