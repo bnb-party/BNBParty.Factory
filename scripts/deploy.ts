@@ -8,13 +8,15 @@ enum FeeAmount {
 
 // deploy BNBPartyFactory contract
 async function main() {
-    const partyTarget = ethers.parseEther("100")
+    const partyTarget = ethers.parseEther("1.1")
     const tokenCreationFee = ethers.parseUnits("1", 16)
-    const returnFeeAmount = ethers.parseUnits("1", 16)
-    const bonusFee = ethers.parseUnits("1", 16)
+    const returnFeeAmount = ethers.parseUnits("2", 16)
+    const bonusFee = ethers.parseUnits("1", 17)
     const initialTokenAmount = "10000000000000000000000000"
     const sqrtPriceX96 = "25052911542910170730777872"
+    const targetReachFee = ethers.parseUnits("1", 17)
     const tWBNB = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd"
+    const pancakeSwapManager = "0x427bF5b37357632377eCbEC9de3626C71A5396c1"
 
     const BNBPartyFactoryContract = await ethers.getContractFactory("BNBPartyFactory")
     const bnbPartyFactory = await BNBPartyFactoryContract.deploy(
@@ -27,6 +29,7 @@ async function main() {
             sqrtPriceX96: sqrtPriceX96,
             bonusTargetReach: returnFeeAmount,
             bonusPartyCreator: bonusFee,
+            targetReachFee: targetReachFee,
             tickLower: "-92200",
             tickUpper: "0",
         },
@@ -56,10 +59,7 @@ async function main() {
     console.log("SwapRouter deployed to:", await swapRouter.getAddress())
 
     // set positionManager
-    let tx = await bnbPartyFactory.setNonfungiblePositionManager(
-        await positionManager.getAddress(),
-        await positionManager.getAddress()
-    )
+    let tx = await bnbPartyFactory.setNonfungiblePositionManager(await positionManager.getAddress(), pancakeSwapManager)
     await tx.wait()
     console.log("PositionManager set to BNBPartyFactory")
     // set swapRouter
