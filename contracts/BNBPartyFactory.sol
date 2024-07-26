@@ -43,8 +43,18 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     function handleSwap(
         address recipient
     ) external override onlyParty notZeroAddress(recipient) {
-        uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
-        if (WBNBBalance < party.partyTarget) return;
+        uint256 fullAmount = WBNB.balanceOf(msg.sender);
+        uint256 fee = 0;
+        if (_isToken0WBNB(IUniswapV3Pool(msg.sender))) {
+            (, , , , , , , , , , fee, ) = BNBPositionManager.positions(
+                lpToTokenId[msg.sender]
+            );
+        } else {
+            (, , , , , , , , , , , fee) = BNBPositionManager.positions(
+                lpToTokenId[msg.sender]
+            );
+        }
+        if (fullAmount - fee < party.partyTarget) return;
 
         // handle liquidity
         _handleLiquidity(recipient);

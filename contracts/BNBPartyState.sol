@@ -6,6 +6,7 @@ import "@bnb-party/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 import "./interfaces/INonfungiblePositionManager.sol";
 import "./interfaces/IBNBPartyFactory.sol";
+import "./interfaces/IUniswapV3Pool.sol";
 import "./interfaces/IWBNB.sol";
 
 abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
@@ -40,6 +41,17 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         WBNB = _WBNB;
     }
 
+    function isToken0WBNB(IUniswapV3Pool liquidtyPool) public view returns (bool) {
+        if (liquidtyPool == IUniswapV3Pool(address(0))) {
+            revert ZeroAddress();
+        }
+        return _isToken0WBNB(liquidtyPool);
+    }
+
+    function _isToken0WBNB(IUniswapV3Pool liquidtyPool) internal view returns (bool) {
+        return liquidtyPool.token0() == address(WBNB);
+    }
+
     function setNonfungiblePositionManager(
         INonfungiblePositionManager _BNBPositionManager,
         INonfungiblePositionManager _positionManager
@@ -67,7 +79,6 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         emit TransferOutBNB(msg.sender, address(this).balance);
     }
 
-
     /// @notice Withdraws the LP fee from the BNB Party
     function withdrawPartyLPFee(
         address[] calldata liquidityPools
@@ -92,7 +103,7 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
             _collectFee(liquidityPools[i], manager);
         }
     }
-    
+
     function _collectFee(
         address liquidityPool,
         INonfungiblePositionManager manager
