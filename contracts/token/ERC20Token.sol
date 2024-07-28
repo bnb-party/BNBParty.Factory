@@ -6,10 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 contract ERC20Token is ERC20, ERC20Burnable {
     constructor(
-        string memory _name,
-        string memory _symbol,
+        string memory name,
+        string memory symbol,
         uint256 initialAmount
-    ) ERC20(_name, _symbol) {
+    ) ERC20(name, symbol) {
         _mint(msg.sender, initialAmount);
     }
 }
