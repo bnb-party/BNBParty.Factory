@@ -67,13 +67,6 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         feesEarned = (feeGrowthGlobalX128 * liquidity) / 2 ** 128;
     }
 
-    function calculateFees(
-        uint256 liquidity,
-        uint256 feeGrowthGlobalX128
-    ) public pure returns (uint256 feesEarned) {
-        feesEarned = (feeGrowthGlobalX128 * liquidity) / 2 ** 128;
-    }
-
     function joinParty(
         address tokenOut,
         uint256 amountOutMinimum
