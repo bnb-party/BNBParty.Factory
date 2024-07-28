@@ -45,11 +45,11 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         if (liquidtyPool == IUniswapV3Pool(address(0))) {
             revert ZeroAddress();
         }
-        return _isToken0WBNB(liquidtyPool);
+        return liquidtyPool.token0() == address(WBNB);
     }
 
-    function _isToken0WBNB(IUniswapV3Pool liquidtyPool) internal view returns (bool) {
-        return liquidtyPool.token0() == address(WBNB);
+    function _isToken0WBNB() internal view returns (bool) {
+        return IUniswapV3Pool(msg.sender).token0() == address(WBNB);
     }
 
     function setNonfungiblePositionManager(

@@ -33,7 +33,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         newToken = new ERC20Token(name, symbol, party.initialTokenAmount);
         // create First Liquidity Pool
         address liquidityPool = _createFLP(address(newToken));
-        lpToCreator[liquidityPool] = msg.sender; 
+        lpToCreator[liquidityPool] = msg.sender;
         if (msg.value > party.createTokenFee) {
             _executeSwap(address(newToken));
         }
@@ -43,21 +43,35 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     function handleSwap(
         address recipient
     ) external override onlyParty notZeroAddress(recipient) {
-        uint256 fullAmount = WBNB.balanceOf(msg.sender);
-        uint256 fee = 0;
-        if (_isToken0WBNB(IUniswapV3Pool(msg.sender))) {
-            (, , , , , , , , , , fee, ) = BNBPositionManager.positions(
-                lpToTokenId[msg.sender]
-            );
-        } else {
-            (, , , , , , , , , , , fee) = BNBPositionManager.positions(
-                lpToTokenId[msg.sender]
-            );
-        }
-        if (fullAmount - fee < party.partyTarget) return;
+        IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
 
+        uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
+        uint256 feeGrowthGlobal = 0;
+        if (_isToken0WBNB()) {
+            feeGrowthGlobal = pool.feeGrowthGlobal0X128();
+        } else {
+            feeGrowthGlobal = pool.feeGrowthGlobal1X128();
+        }
+
+        uint256 liquidity = pool.liquidity();
+        uint256 feesEarned = _calculateFees(liquidity, feeGrowthGlobal);
+        if (WBNBBalance - feesEarned < party.partyTarget) return;
         // handle liquidity
         _handleLiquidity(recipient);
+    }
+
+    function _calculateFees(
+        uint256 liquidity,
+        uint256 feeGrowthGlobalX128
+    ) internal pure returns (uint256 feesEarned) {
+        feesEarned = (feeGrowthGlobalX128 * liquidity) / 2 ** 128;
+    }
+
+    function calculateFees(
+        uint256 liquidity,
+        uint256 feeGrowthGlobalX128
+    ) public pure returns (uint256 feesEarned) {
+        feesEarned = (feeGrowthGlobalX128 * liquidity) / 2 ** 128;
     }
 
     function joinParty(
