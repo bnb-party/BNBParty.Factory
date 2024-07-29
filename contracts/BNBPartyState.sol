@@ -48,10 +48,6 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         return liquidtyPool.token0() == address(WBNB);
     }
 
-    function _isToken0WBNB() internal view returns (bool) {
-        return IUniswapV3Pool(msg.sender).token0() == address(WBNB);
-    }
-
     function setNonfungiblePositionManager(
         INonfungiblePositionManager _BNBPositionManager,
         INonfungiblePositionManager _positionManager
