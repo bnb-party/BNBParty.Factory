@@ -91,6 +91,13 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         _withdrawLPFees(liquidityPools, positionManager);
     }
 
+    function calculateFees(
+        uint256 liquidity,
+        uint256 feeGrowthGlobalX128
+    ) public pure returns (uint256 feesEarned) {
+        feesEarned = (feeGrowthGlobalX128 * liquidity) / 2 ** 128;
+    }
+
     /// @notice Withdraws the LP fee
     function _withdrawLPFees(
         address[] calldata liquidityPools,

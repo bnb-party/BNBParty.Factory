@@ -54,17 +54,10 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         }
 
         uint256 liquidity = pool.liquidity();
-        uint256 feesEarned = _calculateFees(liquidity, feeGrowthGlobal);
+        uint256 feesEarned = calculateFees(liquidity, feeGrowthGlobal);
         if (WBNBBalance - feesEarned < party.partyTarget) return;
         // handle liquidity
         _handleLiquidity(recipient);
-    }
-
-    function _calculateFees(
-        uint256 liquidity,
-        uint256 feeGrowthGlobalX128
-    ) internal pure returns (uint256 feesEarned) {
-        feesEarned = (feeGrowthGlobalX128 * liquidity) / 2 ** 128;
     }
 
     function joinParty(
