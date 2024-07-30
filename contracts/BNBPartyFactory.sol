@@ -33,7 +33,7 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
         newToken = new ERC20Token(name, symbol, party.initialTokenAmount);
         // create First Liquidity Pool
         address liquidityPool = _createFLP(address(newToken));
-        lpToCreator[liquidityPool] = msg.sender; 
+        lpToCreator[liquidityPool] = msg.sender;
         if (msg.value > party.createTokenFee) {
             _executeSwap(address(newToken));
         }
@@ -43,9 +43,21 @@ contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
     function handleSwap(
         address recipient
     ) external override onlyParty notZeroAddress(recipient) {
-        uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
-        if (WBNBBalance < party.partyTarget) return;
+        IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
 
+        uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
+        uint256 feeGrowthGlobal = 0;
+        if (pool.token0() == address(WBNB)) {
+            (uint256 feeGrowthInside0LastX128, ) = _getFeeGrowthInsideLastX128(pool);
+            feeGrowthGlobal = pool.feeGrowthGlobal0X128() - feeGrowthInside0LastX128;
+        } else {
+            (, uint256 feeGrowthInside1LastX128) = _getFeeGrowthInsideLastX128(pool);
+            feeGrowthGlobal = pool.feeGrowthGlobal1X128() - feeGrowthInside1LastX128;
+        }
+
+        uint256 liquidity = pool.liquidity();
+        uint256 feesEarned = calculateFees(liquidity, feeGrowthGlobal);
+        if (WBNBBalance - feesEarned < party.partyTarget) return;
         // handle liquidity
         _handleLiquidity(recipient);
     }

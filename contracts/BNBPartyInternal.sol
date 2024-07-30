@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./interfaces/IUniswapV3Pool.sol";
 import "./BNBPartyModifiers.sol";
 
 abstract contract BNBPartyInternal is BNBPartyModifiers {

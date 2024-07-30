@@ -6,6 +6,7 @@ import "@bnb-party/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 import "./interfaces/INonfungiblePositionManager.sol";
 import "./interfaces/IBNBPartyFactory.sol";
+import "./interfaces/IUniswapV3Pool.sol";
 import "./interfaces/IWBNB.sol";
 
 abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
@@ -40,6 +41,13 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         WBNB = _WBNB;
     }
 
+    function isToken0WBNB(IUniswapV3Pool liquidtyPool) public view returns (bool) {
+        if (liquidtyPool == IUniswapV3Pool(address(0))) {
+            revert ZeroAddress();
+        }
+        return liquidtyPool.token0() == address(WBNB);
+    }
+
     function setNonfungiblePositionManager(
         INonfungiblePositionManager _BNBPositionManager,
         INonfungiblePositionManager _positionManager
@@ -67,7 +75,6 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         emit TransferOutBNB(msg.sender, address(this).balance);
     }
 
-
     /// @notice Withdraws the LP fee from the BNB Party
     function withdrawPartyLPFee(
         address[] calldata liquidityPools
@@ -80,6 +87,51 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         _withdrawLPFees(liquidityPools, positionManager);
     }
 
+    function calculateFees(
+        uint256 liquidity,
+        uint256 feeGrowthGlobalX128
+    ) public pure returns (uint256 feesEarned) {
+        feesEarned = (feeGrowthGlobalX128 * liquidity) / 2 ** 128;
+    }
+
+    function getFeeGrowthInsideLastX128(
+        IUniswapV3Pool pool
+    )
+        external
+        view
+        returns (
+            uint256 feeGrowthInside0LastX128,
+            uint256 feeGrowthInside1LastX128
+        )
+    {
+        if (pool == IUniswapV3Pool(address(0))) return (0, 0);
+        (
+            feeGrowthInside0LastX128,
+            feeGrowthInside1LastX128
+        ) = _getFeeGrowthInsideLastX128(pool);
+    }
+
+    function _getFeeGrowthInsideLastX128(
+        IUniswapV3Pool pool
+    )
+        internal
+        view
+        returns (
+            uint256 feeGrowthInside0LastX128,
+            uint256 feeGrowthInside1LastX128
+        )
+    {
+        (, feeGrowthInside0LastX128, feeGrowthInside1LastX128, , ) = pool
+            .positions(
+                keccak256(
+                    abi.encodePacked(
+                        address(BNBPositionManager),
+                        party.tickLower,
+                        party.tickUpper
+                    )
+                )
+            );
+    }
     /// @notice Withdraws the LP fee
     function _withdrawLPFees(
         address[] calldata liquidityPools,
@@ -92,7 +144,7 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
             _collectFee(liquidityPools[i], manager);
         }
     }
-    
+
     function _collectFee(
         address liquidityPool,
         INonfungiblePositionManager manager
