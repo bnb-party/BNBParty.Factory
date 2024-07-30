@@ -94,6 +94,44 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         feesEarned = (feeGrowthGlobalX128 * liquidity) / 2 ** 128;
     }
 
+    function getFeeGrowthInsideLastX128(
+        IUniswapV3Pool pool
+    )
+        external
+        view
+        returns (
+            uint256 feeGrowthInside0LastX128,
+            uint256 feeGrowthInside1LastX128
+        )
+    {
+        if (pool == IUniswapV3Pool(address(0))) return (0, 0);
+        (
+            feeGrowthInside0LastX128,
+            feeGrowthInside1LastX128
+        ) = _getFeeGrowthInsideLastX128(pool);
+    }
+
+    function _getFeeGrowthInsideLastX128(
+        IUniswapV3Pool pool
+    )
+        internal
+        view
+        returns (
+            uint256 feeGrowthInside0LastX128,
+            uint256 feeGrowthInside1LastX128
+        )
+    {
+        (, feeGrowthInside0LastX128, feeGrowthInside1LastX128, , ) = pool
+            .positions(
+                keccak256(
+                    abi.encodePacked(
+                        address(BNBPositionManager),
+                        party.tickLower,
+                        party.tickUpper
+                    )
+                )
+            );
+    }
     /// @notice Withdraws the LP fee
     function _withdrawLPFees(
         address[] calldata liquidityPools,

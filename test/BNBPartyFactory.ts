@@ -376,7 +376,7 @@ describe("BNBPartyFactory", function () {
         })
 
         it("should create second liquidity pool", async () => {
-            const tx = await bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget })
+            await bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget })
             expect(await positionManager.totalSupply()).to.equal(1)
         })
 
@@ -418,6 +418,8 @@ describe("BNBPartyFactory", function () {
         let MEME: string
         let tokenId: string
         let position: any
+        const amountIn = ethers.parseUnits("1", 18)
+        let lpAddress: string
 
         beforeEach(async () => {
             await deployContracts()
@@ -425,6 +427,7 @@ describe("BNBPartyFactory", function () {
             tokenId = (await BNBPositionManager.totalSupply()).toString()
             position = await BNBPositionManager.positions(tokenId)
             MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
+            lpAddress = await v3PartyFactory.getPool(MEME, await weth9.getAddress(), FeeAmount.HIGH)
         })
 
         it("should withdraw token creation fee", async () => {
@@ -477,7 +480,6 @@ describe("BNBPartyFactory", function () {
         })
 
         it("calculateFees should return zero if no swaps", async () => {
-            const lpAddress = await v3PartyFactory.getPool(MEME, await weth9.getAddress(), FeeAmount.HIGH)
             const lpPool = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
             const liquidity = await lpPool.liquidity()
             const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal1X128()
@@ -486,9 +488,7 @@ describe("BNBPartyFactory", function () {
         })
 
         it("calculateFees should return fee from swap", async () => {
-            const amountIn = ethers.parseUnits("1", 18)
             await bnbPartyFactory.joinParty(MEME, 0, { value: amountIn })
-            const lpAddress = await v3PartyFactory.getPool(MEME, await weth9.getAddress(), FeeAmount.HIGH)
             const lpPool = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
             const liquidity = await lpPool.liquidity()
             const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal1X128()
@@ -498,11 +498,9 @@ describe("BNBPartyFactory", function () {
         })
 
         it("calculateFees should return fee from 5 swaps", async () => {
-            const amountIn = ethers.parseUnits("1", 18)
             for (let i = 0; i < 5; i++) {
                 await bnbPartyFactory.joinParty(MEME, 0, { value: amountIn })
             }
-            const lpAddress = await v3PartyFactory.getPool(MEME, await weth9.getAddress(), FeeAmount.HIGH)
             const lpPool = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
             const liquidity = await lpPool.liquidity()
             const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal1X128()
@@ -510,7 +508,6 @@ describe("BNBPartyFactory", function () {
         })
 
         it("isToken0WBNB should return false if token0 is not WBNB", async () => {
-            const lpAddress = await v3PartyFactory.getPool(MEME, await weth9.getAddress(), FeeAmount.HIGH)
             expect(await bnbPartyFactory.isToken0WBNB(lpAddress)).to.be.false
         })
 
@@ -519,6 +516,22 @@ describe("BNBPartyFactory", function () {
                 bnbPartyFactory,
                 "ZeroAddress"
             )
+        })
+
+        it("should deacrease fee after withdraw", async () => {
+            for (let i = 0; i < 5; i++) {
+                await bnbPartyFactory.joinParty(MEME, 0, { value: amountIn })
+            }
+            const lpPool = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
+            await bnbPartyFactory.withdrawPartyLPFee([lpAddress])
+            let liquidity = await lpPool.liquidity()
+            let feeGrowthGlobalX128 =
+                position.token1 == (await weth9.getAddress())
+                    ? await lpPool.feeGrowthGlobal1X128()
+                    : await lpPool.feeGrowthGlobal0X128()
+            const collectedFee = await bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress)
+            console.log(collectedFee.feeGrowthInside0LastX128)
+            expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128 - collectedFee.feeGrowthInside0LastX128)).to.be.equal(0)
         })
 
         it("should revert zero lenght array", async () => {
