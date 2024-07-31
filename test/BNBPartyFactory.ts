@@ -540,8 +540,7 @@ describe("BNBPartyFactory", function () {
                     ? await lpPool.feeGrowthGlobal1X128()
                     : await lpPool.feeGrowthGlobal0X128()
             const collectedFee = await bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress)
-            console.log(collectedFee.feeGrowthInside0LastX128)
-            expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128 - collectedFee.feeGrowthInside0LastX128)).to.be.equal(0)
+            expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128 - collectedFee.feeGrowthInside1LastX128)).to.be.equal(0)
         })
 
         it("should revert zero lenght array", async () => {
