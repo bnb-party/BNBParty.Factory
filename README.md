@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/bnb-party/BNBParty.Factory/branch/master/graph/badge.svg)](https://codecov.io/gh/bnb-party/BNBParty.Factory)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bnb-party/BNBParty.Factory/blob/readme/LICENSE)
 
-**BNBPartyFactory** is your gateway to hosting **liquidity parties** and creating **custom ERC20 tokens** on the **Binance Smart Chain (BSC)**. Leveraging **Uniswap V3**, it lets kick off liquidity pools, orchestrate token swaps, and manage liquidity. Integrates seamlessly with **Uniswap V3's non-fungible position manager** and **swap router** for top-notch trading and liquidity management.
+**BNBPartyFactory** is a smart contract that serves as a launchpad for hosting **liquidity parties** and creating **custom ERC20 tokens** on the **Binance Smart Chain (BSC)**. Leveraging **Uniswap V3**, it facilitates the initiation of liquidity pools, orchestration of token swaps, and management of liquidity. It integrates seamlessly with **Uniswap V3's non-fungible position manager** and **swap router** for advanced trading and liquidity management.
 
 ### Navigation
 
