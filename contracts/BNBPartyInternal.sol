@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./BNBPartyModifiers.sol";
+import "./BNBPartyView.sol";
 
-abstract contract BNBPartyInternal is BNBPartyModifiers {
+abstract contract BNBPartyInternal is BNBPartyView {
     function _createFLP(
         address _token
     ) internal returns (address liquidityPool) {
