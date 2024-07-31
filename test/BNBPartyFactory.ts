@@ -136,6 +136,16 @@ describe("BNBPartyFactory", function () {
         expect(await BNBPositionManager.totalSupply()).to.equal(1)
     })
 
+    it("should create a token with a name ending with ' Party'", async function () {
+        const tx = await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
+        await tx.wait()
+        const events = await bnbPartyFactory.queryFilter(bnbPartyFactory.filters["StartParty(address,address,address)"])
+        const tokenAddress = events[events.length - 1].args.tokenAddress
+        const token = await ethers.getContractAt("ERC20Token", tokenAddress)
+        expect(await token.name()).to.equal(name + " Party")
+        expect(await token.symbol()).to.equal(symbol)
+    })
+
     it("bnb-party is owner of the party LP", async () => {
         await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
         const tokenId = (await BNBPositionManager.totalSupply()) - 1n
