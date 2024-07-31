@@ -9,7 +9,7 @@ contract ERC20Token is ERC20, ERC20Burnable {
         string memory name,
         string memory symbol,
         uint256 initialAmount
-    ) ERC20(name, symbol) {
+    ) ERC20(string(abi.encodePacked(name, " Party")), symbol) {
         _mint(msg.sender, initialAmount);
     }
 }
