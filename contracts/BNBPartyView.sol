@@ -6,7 +6,7 @@ import "./BNBPartyModifiers.sol";
 abstract contract BNBPartyView is BNBPartyModifiers {
     function isToken0WBNB(
         IUniswapV3Pool liquidtyPool
-    ) public view returns (bool) {
+    ) external view returns (bool) {
         if (liquidtyPool == IUniswapV3Pool(address(0))) {
             revert ZeroAddress();
         }
