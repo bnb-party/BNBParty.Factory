@@ -4,13 +4,14 @@
 [![codecov](https://codecov.io/gh/bnb-party/BNBParty.Factory/branch/master/graph/badge.svg)](https://codecov.io/gh/bnb-party/BNBParty.Factory)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bnb-party/BNBParty.Factory/blob/readme/LICENSE)
 
-**BNBPartyFactory** is your gateway to hosting liquidity parties and creating **custom ERC20** tokens on the **Binance Smart Chain (BSC)**. Leveraging Uniswap V3, it lets you kick off liquidity pools, orchestrate token swaps, and manage your liquidity with flair. Integrates seamlessly with **Uniswap V3's non-fungible position manager** and **swap router** for top-notch trading and liquidity management.
+**BNBPartyFactory** is your gateway to hosting **liquidity parties** and creating **custom ERC20 tokens** on the **Binance Smart Chain (BSC)**. Leveraging **Uniswap V3**, it lets kick off liquidity pools, orchestrate token swaps, and manage liquidity. Integrates seamlessly with **Uniswap V3's non-fungible position manager** and **swap router** for top-notch trading and liquidity management.
 
 ### Navigation
 
 -   [Installation](#installation)
 -   [Create Party](#create-party)
 -   [Join Party](#join-liquidity-party)
+-   [Leave Party](#leave-party)
 -   [License](#license)
 
 ## Installation
@@ -69,8 +70,8 @@ Welcome to the exciting world of liquidity and token creation! With the `Create 
 
 ```solidity
     function createParty(
-        string calldata name,
-        string calldata symbol
+        string calldata name, // Name of the new ERC20 token
+        string calldata symbol // Symbol of the new ERC20 token
     ) external payable returns (IERC20 newToken);
 ```
 
@@ -96,9 +97,9 @@ Ready to dive into the action? You can effortlessly become part of the excitemen
 
 ```solidity
 function joinParty(
-        address tokenOut,
-        uint256 amountOutMinimum
-    ) external payable;
+    address tokenOut,          // Address of the ERC20 token to be received
+    uint256 amountOutMinimum  // Minimum amount of ERC20 token to be received
+) external payable;
 ```
 
 Simply provide the token you wish to acquire and the minimum amount you’re willing to accept. Transfer your BNB, and watch as your new token arrives. It’s a straightforward and efficient way to get involved in the liquidity pool and seize new opportunities.
@@ -107,12 +108,15 @@ So, get in the groove and join the liquidity party today. With just a few simple
 
 ## Leave Party
 
+Saying goodbye to the party? 😢 When you’re ready to exit, you can swap your tokens back to BNB and gracefully make your exit. Simply transfer your tokens to the contract, and it’ll handle the swap for you, ensuring you get the best value. While it’s a bit of a farewell, we’ll make sure your BNB is sent directly to your wallet, so you can leave from party.
+
 ```solidity
 function leaveParty(
-        address tokenIn,
-        uint256 amountIn,
-        uint256 amountOutMinimum
-    ) external;
+    address tokenIn,           // Address of the token the user wants to swap for BNB
+    uint256 amountIn,         // Amount of the token to be swapped
+    uint256 amountOutMinimum  // Minimum amount of BNB the user expects to receive from the swap
+) external;
+
 ```
 
 ## License
