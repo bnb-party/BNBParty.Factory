@@ -2,12 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "./token/ERC20Token.sol";
-import "./BNBPartyInternal.sol";
+import "./BNBPartyLiquidity.sol";
+import "./BNBPartyManageable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@bnb-party/v3-periphery/contracts/interfaces/IPeripheryPayments.sol";
 
-contract BNBPartyFactory is BNBPartyInternal, ReentrancyGuard {
+contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageable {
     using SafeERC20 for IERC20;
 
     receive() external payable {}
