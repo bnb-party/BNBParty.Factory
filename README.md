@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/bnb-party/BNBParty.Factory/branch/master/graph/badge.svg)](https://codecov.io/gh/bnb-party/BNBParty.Factory)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/bnb-party/BNBParty.Factory/blob/readme/LICENSE)
 
-**BNBPartyFactory** is a smart contract that serves as a launchpad for hosting **liquidity parties** and creating **custom ERC20 tokens** on the **Binance Smart Chain (BSC)**. Leveraging **Uniswap V3**, it facilitates the initiation of liquidity pools, orchestration of token swaps, and management of liquidity. It integrates seamlessly with **Uniswap V3's non-fungible position manager** and **swap router** for advanced trading and liquidity management.
+**BNBPartyFactory** is a smart contract that serves as a **launchpad** for hosting **liquidity parties** and creating **custom ERC20 tokens** on the **Binance Smart Chain (BSC)**. Leveraging **Uniswap V3**, it facilitates the initiation of liquidity pools, orchestration of token swaps, and management of liquidity. It integrates seamlessly with **Uniswap V3's non-fungible position manager** and **swap router** for advanced trading and liquidity management.
 
 ### Navigation
 
@@ -93,6 +93,7 @@ Ready to dive into the action? You can effortlessly become part of the excitemen
 
 -   **Smooth Integration:** Effortlessly swap your BNB for the party token with just a few clicks.
 -   **Immediate Participation:** Jump straight into the liquidity pool and start benefiting from the party’s activities.
+-   **Early Access Advantage:** The early buyers enjoy a special price. The longer the party lasts, the greater the opportunity to sell tokens at a more favorable price.
     **How to Get Started:**
 
 ```solidity
