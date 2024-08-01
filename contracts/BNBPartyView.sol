@@ -3,16 +3,27 @@ pragma solidity ^0.8.0;
 
 import "./BNBPartyModifiers.sol";
 
+/// @title BNBPartyView
+/// @notice This abstract contract provides view functions for the BNB Party system, including fee calculations and token checks.
 abstract contract BNBPartyView is BNBPartyModifiers {
+    /// @notice Checks if WBNB is the token0 in the provided Uniswap V3 pool
+    /// @param liquidtyPool Address of the Uniswap V3 pool to check
+    /// @return True if WBNB is token0, false otherwise
+    /// @dev Reverts if the provided pool address is zero
     function isToken0WBNB(
         IUniswapV3Pool liquidtyPool
     ) external view returns (bool) {
         if (liquidtyPool == IUniswapV3Pool(address(0))) {
             revert ZeroAddress();
         }
-        return liquidtyPool.token0() == address(WBNB);
+        return liquidtyPool.token0() == address(WBNB); // Checks if WBNB is token0
     }
 
+    /// @notice Calculates the fees earned based on liquidity and global fee growth
+    /// @param liquidity Amount of liquidity in the pool
+    /// @param feeGrowthGlobalX128 Global fee growth value
+    /// @return feesEarned Calculated fees earned
+    /// @dev Uses fixed-point math to compute fees
     function calculateFees(
         uint256 liquidity,
         uint256 feeGrowthGlobalX128
@@ -20,6 +31,11 @@ abstract contract BNBPartyView is BNBPartyModifiers {
         feesEarned = (feeGrowthGlobalX128 * liquidity) / 2 ** 128;
     }
 
+    /// @notice Retrieves the fee growth inside the position from the last observation
+    /// @param pool Address of the Uniswap V3 pool
+    /// @return feeGrowthInside0LastX128 Fee growth inside for token0 from the last observation
+    /// @return feeGrowthInside1LastX128 Fee growth inside for token1 from the last observation
+    /// @dev Returns (0, 0) if the pool address is zero
     function getFeeGrowthInsideLastX128(
         IUniswapV3Pool pool
     )
@@ -37,6 +53,10 @@ abstract contract BNBPartyView is BNBPartyModifiers {
         ) = _getFeeGrowthInsideLastX128(pool);
     }
 
+    /// @notice Internal function to retrieve the fee growth inside the position from the last observation
+    /// @param pool Address of the Uniswap V3 pool
+    /// @return feeGrowthInside0LastX128 Fee growth inside for token0 from the last observation
+    /// @return feeGrowthInside1LastX128 Fee growth inside for token1 from the last observation
     function _getFeeGrowthInsideLastX128(
         IUniswapV3Pool pool
     )

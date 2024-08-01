@@ -9,33 +9,38 @@ import "./interfaces/IBNBPartyFactory.sol";
 import "./interfaces/IUniswapV3Pool.sol";
 import "./interfaces/IWBNB.sol";
 
+/// @title BNBPartyState
+/// @notice This abstract contract handles the state variables and initial setup for the BNBParty system.
 abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
     INonfungiblePositionManager public BNBPositionManager; // BNB Party position manager
     INonfungiblePositionManager public positionManager; // Default Pancakeswap V3 position manager
     ISwapRouter public swapRouter; // V3 swap router
-    mapping(address => bool) public isParty; // LiquidityPool => isParty
-    mapping(address => uint256) public lpToTokenId; // LiquidityPool => nft tokenId
-    mapping(address => address) public lpToCreator; // LiquidityPool => LPCreator
+    mapping(address => bool) public isParty; // Mapping to track if a LiquidityPool is a party
+    mapping(address => uint256) public lpToTokenId; // Mapping from LiquidityPool to its NFT tokenId
+    mapping(address => address) public lpToCreator; // Mapping from LiquidityPool to its creator
 
-    Party public party;
+    Party public party; // store party parameters
 
-    IWBNB public immutable WBNB;
+    IWBNB public immutable WBNB; // Wrapped BNB token contract
 
+    /// @notice Constructor to initialize the BNBPartyState contract
+    /// @param _party Struct containing party parameters
+    /// @param _WBNB Address of the Wrapped BNB token contract
     constructor(Party memory _party, IWBNB _WBNB) Ownable(_msgSender()) {
         if (address(_WBNB) == address(0)) {
-            revert ZeroAddress();
+            revert ZeroAddress(); // Reverts if the WBNB address is zero
         }
         if (_party.partyTarget == 0) {
-            revert ZeroAmount();
+            revert ZeroAmount(); // Reverts if the party target is zero
         }
         if (_party.initialTokenAmount == 0) {
-            revert ZeroAmount();
+            revert ZeroAmount(); // Reverts if the initial token amount is zero
         }
         if (_party.partyTarget <= (_party.bonusPartyCreator + _party.bonusTargetReach + _party.targetReachFee)) {
-            revert BonusGreaterThanTarget();
+            revert BonusGreaterThanTarget(); // Reverts if the party target is less than or equal to the sum of bonuses and fees
         }
         if (_party.sqrtPriceX96 == 0) {
-            revert ZeroAmount();
+            revert ZeroAmount(); // Reverts if the sqrt price is zero
         }
         party = _party;
         WBNB = _WBNB;
