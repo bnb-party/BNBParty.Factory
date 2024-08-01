@@ -12,6 +12,7 @@
 -   [Create Party](#create-party)
 -   [Join Party](#join-liquidity-party)
 -   [Leave Party](#leave-party)
+-   [Swap Router](#swap-router)
 -   [License](#license)
 
 ## Installation
@@ -70,7 +71,7 @@ Welcome to the exciting world of liquidity and token creation! With the `Create 
 
 ```solidity
     function createParty(
-        string calldata name, // Name of the new ERC20 token
+        string calldata name,  // Name of the new ERC20 token
         string calldata symbol // Symbol of the new ERC20 token
     ) external payable returns (IERC20 newToken);
 ```
@@ -98,7 +99,7 @@ Ready to dive into the action? You can effortlessly become part of the excitemen
 
 ```solidity
 function joinParty(
-    address tokenOut,          // Address of the ERC20 token to be received
+    address tokenOut,         // Address of the ERC20 token to be received
     uint256 amountOutMinimum  // Minimum amount of ERC20 token to be received
 ) external payable;
 ```
@@ -113,12 +114,87 @@ Saying goodbye to the party? 😢 When you’re ready to exit, you can swap your
 
 ```solidity
 function leaveParty(
-    address tokenIn,           // Address of the token the user wants to swap for BNB
+    address tokenIn,          // Address of the token the user wants to swap for BNB
     uint256 amountIn,         // Amount of the token to be swapped
     uint256 amountOutMinimum  // Minimum amount of BNB the user expects to receive from the swap
 ) external;
 
 ```
+
+## Swap Router
+
+#### **Token Swaps with Swap Router**
+
+The Swap Router offers an alternative way to exchange tokens without using `joinParty` and `leaveParty` functions. This method often results in lower gas costs.
+
+### BNB -> WBNB -> MEME
+
+Convert BNB to WBNB and then swap to MEME tokens:
+
+```js
+const amountIn = ethers.parseUnits("1", 18) // Amount of BNB to swap
+const path = ethers.concat([
+    ethers.zeroPadValue(await weth9.getAddress(), 20),
+    ethers.zeroPadValue(ethers.toBeHex(FeeAmount.HIGH), 3),
+    ethers.zeroPadValue(MEME, 20),
+]) // Define the swap path
+
+const params = {
+    path: path,
+    recipient: await signers[0].getAddress(), // Recipient of the final tokens
+    deadline: deadline, // Transaction deadline
+    amountIn: amountIn, // Amount of BNB being swapped
+    amountOutMinimum: "0", // Minimum amount of tokens to receive
+}
+
+await BNBSwapRouter.exactInput(params, { value: amountIn }) // Perform the swap
+```
+
+**What Happens:**
+
+1. The user specifies the amount of **BNB** to swap **(amountIn)**.
+2. The path variable defines the conversion path: **BNB** is first wrapped into **WBNB**, then swapped to **MEME** tokens.
+3. The params object contains all necessary parameters for the swap, including the recipient address, deadline, amount of **BNB**, and minimum amount of tokens to receive.
+4. The `exactInput` method of the **BNBSwapRouter** contract is called with the specified parameters, performing the swap and sending the MEME tokens to the recipient.
+
+### MEME -> WBNB -> BNB (Multicall)
+
+Swap MEME tokens to WBNB and then unwrap WBNB to BNB using a multicall:
+
+```js
+const amountIn = ethers.parseUnits("1", 17) // Amount of MEME to swap
+const MEME = position.token0
+const path = ethers.concat([
+    ethers.zeroPadValue(MEME, 20),
+    ethers.zeroPadValue(ethers.toBeHex(FeeAmount.HIGH), 3),
+    ethers.zeroPadValue(await weth9.getAddress(), 20),
+]) // Define the swap path
+
+const params = {
+    path: path,
+    recipient: ethers.ZeroAddress, // Temporary recipient for WBNB
+    deadline: deadline, // Transaction deadline
+    amountIn: amountIn, // Amount of MEME being swapped
+    amountOutMinimum: "0", // Minimum amount of tokens to receive
+}
+
+const exactInputData = BNBSwapRouter.interface.encodeFunctionData("exactInput", [params])
+// Encode the unwrapWETH9 call to convert WETH to ETH
+const unwrapWETH9Data = BNBSwapRouter.interface.encodeFunctionData("unwrapWETH9", ["0", await signers[1].getAddress()])
+
+await BNBSwapRouter.multicall([exactInputData, unwrapWETH9Data]) // Perform the multicall swap and unwrap
+```
+
+**What Happens:**
+
+1. The user specifies the amount of **MEME** tokens to swap **(amountIn)**.
+2. The path variable defines the conversion path: **MEME** tokens are first swapped to **WBNB**.
+3. The params object contains all necessary parameters for the swap, including the recipient address, deadline, amount of **MEME** tokens, and minimum amount of tokens to receive.
+4. The `exactInput` method is encoded to perform the **MEME** to **WBNB** swap.
+5. The `unwrapWETH9` method is encoded to unwrap the **WBNB** to **BNB**, sending it to the specified address.
+6. The `multicall` method of the **BNBSwapRouter** contract is called with the encoded `exactInput` and `unwrapWETH9` data, performing both operations in a single transaction. This results in swapping **MEME** to **WBNB** and then converting **WBNB** to **BNB**, which is sent to the recipient.
+
+This section demonstrates how to efficiently perform token swaps using the **Swap Router**, providing an alternative to the `joinParty` and `leaveParty` functions while saving on gas costs
 
 ## License
 
