@@ -182,7 +182,12 @@ const exactInputData = BNBSwapRouter.interface.encodeFunctionData("exactInput", 
 // Encode the unwrapWETH9 call to convert WETH to ETH
 const unwrapWETH9Data = BNBSwapRouter.interface.encodeFunctionData("unwrapWETH9", ["0", await signers[1].getAddress()])
 
-await BNBSwapRouter.multicall([exactInputData, unwrapWETH9Data]) // Perform the multicall swap and unwrap
+// Approve MEME tokens for the Swap Router
+const MEMEContract = new ethers.Contract(MEME, ERC20_ABI, signers[0])
+await MEMEContract.approve(BNBSwapRouter.address, amountIn)
+
+// Perform the multicall swap and unwrap
+await BNBSwapRouter.multicall([exactInputData, unwrapWETH9Data])
 ```
 
 **What Happens:**
@@ -192,7 +197,8 @@ await BNBSwapRouter.multicall([exactInputData, unwrapWETH9Data]) // Perform the 
 3. The params object contains all necessary parameters for the swap, including the recipient address, deadline, amount of **MEME** tokens, and minimum amount of tokens to receive.
 4. The `exactInput` method is encoded to perform the **MEME** to **WBNB** swap.
 5. The `unwrapWETH9` method is encoded to unwrap the **WBNB** to **BNB**, sending it to the specified address.
-6. The `multicall` method of the **BNBSwapRouter** contract is called with the encoded `exactInput` and `unwrapWETH9` data, performing both operations in a single transaction. This results in swapping **MEME** to **WBNB** and then converting **WBNB** to **BNB**, which is sent to the recipient.
+6. Before performing the `multicall`, **MEME** tokens are `approved` for transfer by the **BNBSwapRouter**.
+7. The `multicall` method of the **BNBSwapRouter** contract is called with the encoded `exactInput` and `unwrapWETH9` data, performing both operations in a single transaction. This results in swapping **MEME** to **WBNB** and then converting **WBNB** to **BNB**, which is sent to the recipient.
 
 This section demonstrates how to efficiently perform token swaps using the **Swap Router**, providing an alternative to the `joinParty` and `leaveParty` functions while saving on gas costs
 
