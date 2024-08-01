@@ -10,11 +10,7 @@ import "@bnb-party/v3-periphery/contracts/interfaces/IPeripheryPayments.sol";
 
 /// @title BNBPartyFactory
 /// @notice This contract is used for creating and managing liquidity pools and custom ERC20 tokens on the Binance Smart Chain (BSC) using Uniswap V3 technology.
-contract BNBPartyFactory is
-    BNBPartyLiquidity,
-    ReentrancyGuard,
-    BNBPartyManageable
-{
+contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageable {
     using SafeERC20 for IERC20;
 
     /// @notice Allows the contract to receive BNB
