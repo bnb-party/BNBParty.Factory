@@ -110,7 +110,7 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
         ISwapRouter.ExactInputParams memory params = ISwapRouter
             .ExactInputParams({
                 path: abi.encodePacked(tokenIn, fee, address(WBNB)),
-                recipient: address(this),
+                recipient: address(router),
                 deadline: block.timestamp,
                 amountIn: amountIn,
                 amountOutMinimum: amountOutMinimum
