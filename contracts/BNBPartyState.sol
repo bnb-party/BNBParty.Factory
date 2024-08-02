@@ -14,10 +14,12 @@ import "./interfaces/IWBNB.sol";
 abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
     INonfungiblePositionManager public BNBPositionManager; // BNB Party position manager
     INonfungiblePositionManager public positionManager; // Default Pancakeswap V3 position manager
-    ISwapRouter public swapRouter; // V3 swap router
+    ISwapRouter public BNBSwapRouter; // V3 swap router
+    ISwapRouter public swapRouter; // Pancakeswap V3 router
     mapping(address => bool) public isParty; // Mapping to track if a LiquidityPool is a party
     mapping(address => uint256) public lpToTokenId; // Mapping from LiquidityPool to its NFT tokenId
     mapping(address => address) public lpToCreator; // Mapping from LiquidityPool to its creator
+    mapping(address => bool) isTokenOnPartyLP; // Mapping to track if a token is part of a party
 
     Party public party; // store party parameters
 

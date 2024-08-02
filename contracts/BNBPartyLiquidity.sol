@@ -33,6 +33,7 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
             party.partyLpFee
         );
         isParty[liquidityPool] = true; // Mark the liquidity pool as a party pool
+        isTokenOnPartyLP[_token] = true; // Mark the token as part of the party LP
     }
 
     /// @notice Creates a new liquidity pool and mints liquidity positions.
@@ -112,8 +113,10 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
         uint256 unwrapAmount = party.bonusTargetReach + party.bonusPartyCreator + party.targetReachFee;
         if (token0 == address(WBNB)) {
             amount0 -= unwrapAmount; // Deduct unwrap amount from token0 if it is WBNB
+            isTokenOnPartyLP[token1] = false;
         } else {
             amount1 -= unwrapAmount; // Deduct unwrap amount from token1 if it is WBNB
+            isTokenOnPartyLP[token0] = false;
         }
 
         IERC20(token0).approve(address(positionManager), amount0);
