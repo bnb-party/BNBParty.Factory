@@ -77,4 +77,18 @@ abstract contract BNBPartySwaps is BNBPartyView {
     function _reverseSqrtPrice(uint160 sqrtPriceX96) internal pure returns (uint160 reverseSqrtPriceX96) {
         reverseSqrtPriceX96 = uint160((1 << 192) / sqrtPriceX96);
     }
+
+    /// @notice Helper function to get the appropriate router and fee based on the token
+    /// @param token The address of the token to determine the router and fee for
+    /// @return router The address of the swap router
+    /// @return fee The fee amount for the swap
+    function _getRouterAndFee(address token) internal view returns (ISwapRouter router, uint24 fee) {
+        if (isTokenOnPartyLP[token]) {
+            router = BNBSwapRouter;
+            fee = party.partyLpFee;
+        } else {
+            router = swapRouter;
+            fee = party.lpFee;
+        }
+    }
 }

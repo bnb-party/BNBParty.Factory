@@ -82,15 +82,7 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
         address tokenOut,
         uint256 amountOutMinimum
     ) external payable notZeroAddress(tokenOut) notZeroValue {
-        ISwapRouter router;
-        uint24 fee;
-        if (isTokenOnPartyLP[tokenOut]) {
-            router = BNBSwapRouter;
-            fee = party.partyLpFee;
-        } else {
-            router = swapRouter;
-            fee = party.lpFee;
-        }
+        (ISwapRouter router, uint24 fee) = _getRouterAndFee(tokenOut);
         ISwapRouter.ExactInputParams memory params = ISwapRouter
             .ExactInputParams({
                 path: abi.encodePacked(address(WBNB), fee, tokenOut),
@@ -112,15 +104,7 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
         uint256 amountOutMinimum
     ) external notZeroAddress(tokenIn) notZeroAmount(amountIn) {
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
-        ISwapRouter router;
-        uint24 fee;
-        if (isTokenOnPartyLP[tokenIn]) {
-            router = BNBSwapRouter;
-            fee = party.partyLpFee;
-        } else {
-            router = swapRouter;
-            fee = party.lpFee;
-        }
+        (ISwapRouter router, uint24 fee) = _getRouterAndFee(tokenIn);
         IERC20(tokenIn).safeIncreaseAllowance(address(router), amountIn);
 
         ISwapRouter.ExactInputParams memory params = ISwapRouter
