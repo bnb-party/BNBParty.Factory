@@ -63,7 +63,7 @@ async function main() {
     await tx.wait()
     console.log("PositionManager set to BNBPartyFactory")
     // set swapRouter
-    tx = await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
+    tx = await bnbPartyFactory.setBNBPartySwapRouter(await swapRouter.getAddress())
     await tx.wait()
     console.log("SwapRouter set to BNBPartyFactory")
     const name = "Party"

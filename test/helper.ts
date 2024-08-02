@@ -102,5 +102,5 @@ export async function deployContracts() {
         await positionManager.getAddress()
     )
     // Set Swap Router in BNBPartyFactory
-    await bnbPartyFactory.setSwapRouter(await BNBSwapRouter.getAddress())
+    await bnbPartyFactory.setBNBPartySwapRouter(await BNBSwapRouter.getAddress())
 }
