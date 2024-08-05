@@ -215,5 +215,15 @@ describe("Smart Router", function () {
             const balanceAfter = await token.balanceOf(user.address)
             expect(balanceAfter).to.be.gt(balanceBefore)
         })
+
+        it("should swap MEME to BNB with classic swap router", async () => {
+            const amountIn = ethers.parseUnits("1", 17)
+            const balanceBefore = await ethers.provider.getBalance(await signers[0].getAddress())
+            const tx = await bnbPartyFactory.leaveParty(MEME, amountIn, 0)
+            const txReceipt = (await tx.wait()) as any
+            const gasCost = ethers.toBigInt(txReceipt.gasUsed) * ethers.toBigInt(tx.gasPrice)
+            const balanceAfter = await ethers.provider.getBalance(await signers[0].getAddress())
+            expect(balanceAfter).to.be.gt(balanceBefore - gasCost)
+        })
     })
 })
