@@ -8,6 +8,9 @@ import { SwapRouter } from "../typechain-types/@bnb-party/v3-periphery/contracts
 import { IWBNB } from "../typechain-types/contracts/interfaces/IWBNB"
 import WETH9Artifact from "./WETH9/WETH9.json"
 import FactoryArtifact from "@bnb-party/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json"
+import ClassicFactoryArtifact from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json"
+import ClassicNonfungiblePositionManager from "@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json"
+import ClassicSwapRouter from "@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json"
 
 export enum FeeAmount {
     LOW = 500,
@@ -64,23 +67,25 @@ export async function deployContracts() {
     )) as BNBPartyFactory
 
     // Deploy Uniswap V3 Factory
-    const V3FactoryContract = await ethers.getContractFactory(FactoryArtifact.abi, FactoryArtifact.bytecode)
-    v3Factory = (await V3FactoryContract.deploy(await bnbPartyFactory.getAddress())) as UniswapV3Factory
+    const v3PartyFactoryContract = await ethers.getContractFactory(FactoryArtifact.abi, FactoryArtifact.bytecode)
+    const v3FactoryContract = await ethers.getContractFactory(ClassicFactoryArtifact.abi, ClassicFactoryArtifact.bytecode)
+    v3Factory = (await v3FactoryContract.deploy()) as UniswapV3Factory
 
-    v3PartyFactory = (await V3FactoryContract.deploy(await bnbPartyFactory.getAddress())) as UniswapV3Factory
+    v3PartyFactory = (await v3PartyFactoryContract.deploy(await bnbPartyFactory.getAddress())) as UniswapV3Factory
 
     // Deploy Token Position Descriptor
     const TokenPositionDescriptor = await ethers.getContractFactory("MockNonfungibleTokenPositionDescriptor")
     tokenPositionDescriptor = (await TokenPositionDescriptor.deploy()) as MockNonfungibleTokenPositionDescriptor
 
     // Deploy Position Manager
-    const PositionManagerContract = await ethers.getContractFactory("NonfungiblePositionManager")
-    positionManager = (await PositionManagerContract.deploy(
+    const ManagerContract = await ethers.getContractFactory(ClassicNonfungiblePositionManager.abi, ClassicNonfungiblePositionManager.bytecode)
+    positionManager = (await ManagerContract.deploy(
         await v3Factory.getAddress(),
         await weth9.getAddress(),
         await tokenPositionDescriptor.getAddress()
     )) as NonfungiblePositionManager
 
+    const PositionManagerContract = await ethers.getContractFactory("NonfungiblePositionManager")
     BNBPositionManager = (await PositionManagerContract.deploy(
         await v3PartyFactory.getAddress(),
         await weth9.getAddress(),
@@ -94,7 +99,8 @@ export async function deployContracts() {
         await weth9.getAddress()
     )) as SwapRouter
 
-    swapRouter = (await SwapRouterContract.deploy(await v3Factory.getAddress(), await weth9.getAddress())) as SwapRouter
+    const routerContract = await ethers.getContractFactory(ClassicSwapRouter.abi, ClassicSwapRouter.bytecode)
+    swapRouter = (await routerContract.deploy(await v3Factory.getAddress(), await weth9.getAddress())) as SwapRouter
 
     // Set Position Manager in BNBPartyFactory
     await bnbPartyFactory.setNonfungiblePositionManager(
@@ -103,4 +109,5 @@ export async function deployContracts() {
     )
     // Set Swap Router in BNBPartyFactory
     await bnbPartyFactory.setBNBPartySwapRouter(await BNBSwapRouter.getAddress())
+    await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
 }

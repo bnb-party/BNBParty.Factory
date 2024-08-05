@@ -14,7 +14,7 @@ abstract contract BNBPartyManageable is BNBPartyModifiers {
         INonfungiblePositionManager _BNBPositionManager,
         INonfungiblePositionManager _positionManager
     ) external onlyOwner {
-        if (_BNBPositionManager == BNBPositionManager &&_positionManager == positionManager) {
+        if (_BNBPositionManager == BNBPositionManager && _positionManager == positionManager) {
             revert PositionManagerAlreadySet();
         }
         positionManager = _positionManager;
@@ -56,9 +56,7 @@ abstract contract BNBPartyManageable is BNBPartyModifiers {
 
     /// @notice Withdraws LP fees from Pancakeswap V3 for specified liquidity pools
     /// @param liquidityPools Array of liquidity pool addresses from which fees will be withdrawn
-    function withdrawLPFee(
-        address[] calldata liquidityPools
-    ) external onlyOwner {
+    function withdrawLPFee(address[] calldata liquidityPools) external onlyOwner {
         _withdrawLPFees(liquidityPools, positionManager);
     }
 

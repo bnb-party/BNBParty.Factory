@@ -1,7 +1,7 @@
 import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
-import { IUniswapV3Pool } from "../typechain-types"
+import { IUniswapV3Pool, MockContract } from "../typechain-types"
 import {
     FeeAmount,
     getDataHexString,
@@ -67,22 +67,13 @@ describe("Withdraw fees", function () {
     })
 
     it("should revert LPNotAtParty", async () => {
+        const mockContract = await ethers.getContractFactory("MockContract")
+        const mock = await mockContract.deploy()
         await bnbPartyFactory.connect(signers[1]).joinParty(MEME, 0, { value: BNBToTarget })
-        // do swap from second LP
-        const amountIn = ethers.parseUnits("1", 17)
-        const amountOutMinimum = 0 // For testing, accept any amount out
-        const path = getDataHexString(await weth9.getAddress(), MEME)
-        const deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
-        const params = {
-            path: path,
-            recipient: await signers[0].getAddress(),
-            deadline: deadline,
-            amountIn: amountIn,
-            amountOutMinimum: amountOutMinimum,
-        }
-        await expect(
-            swapRouter.connect(signers[1]).exactInput(params, { value: amountIn })
-        ).to.be.revertedWithCustomError(bnbPartyFactory, "LPNotAtParty")
+        await expect(mock.callHandleSwap(await bnbPartyFactory.getAddress())).to.be.revertedWithCustomError(
+            bnbPartyFactory,
+            "LPNotAtParty"
+        )
     })
 
     it("calculateFees should return zero if no swaps", async () => {
@@ -97,7 +88,7 @@ describe("Withdraw fees", function () {
         await bnbPartyFactory.joinParty(MEME, 0, { value: amountIn })
         const lpPool = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
         const liquidity = await lpPool.liquidity()
-        const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal1X128()
+        const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal0X128()
         expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 100n - 1n) // 1 % fee
     })
 
@@ -107,12 +98,12 @@ describe("Withdraw fees", function () {
         }
         const lpPool = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
         const liquidity = await lpPool.liquidity()
-        const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal1X128()
+        const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal0X128()
         expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 20n - 1n) // 1 % fee
     })
 
-    it("isToken0WBNB should return true if token0 is WBNB", async () => {
-        expect(await bnbPartyFactory.isToken0WBNB(lpAddress)).to.be.true
+    it("isToken0WBNB should return false if token0 is not WBNB", async () => {
+        expect(await bnbPartyFactory.isToken0WBNB(lpAddress)).to.be.false
     })
 
     it("isToken0WBNB should revert if set zero address", async () => {
@@ -135,7 +126,7 @@ describe("Withdraw fees", function () {
                 : await lpPool.feeGrowthGlobal0X128()
         const collectedFee = await bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress)
         expect(
-            await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128 - collectedFee.feeGrowthInside1LastX128)
+            await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128 - collectedFee.feeGrowthInside0LastX128)
         ).to.be.equal(0)
     })
 

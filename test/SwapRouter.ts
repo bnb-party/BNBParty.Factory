@@ -196,4 +196,24 @@ describe("Smart Router", function () {
             bnbPartyFactory.leaveParty(ethers.ZeroAddress, ethers.parseUnits("1", 16), 0)
         ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAddress")
     })
+
+    describe("Classic Swap Router", () => {
+        const partyTarget = ethers.parseEther("90")
+        const BNBToTarget: bigint = partyTarget + ethers.parseEther("1")
+
+        before(async () => {
+            // target reached
+            await bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget })
+        })
+
+        it("should swap BNB to MEME with classic swap router", async () => {
+            const user = signers[3]
+            const amountIn = ethers.parseUnits("1", 17)
+            const token = await ethers.getContractAt("ERC20", MEME)
+            const balanceBefore = await token.balanceOf(user.address)
+            await bnbPartyFactory.connect(user).joinParty(MEME, 0, { value: amountIn })
+            const balanceAfter = await token.balanceOf(user.address)
+            expect(balanceAfter).to.be.gt(balanceBefore)
+        })
+    })
 })
