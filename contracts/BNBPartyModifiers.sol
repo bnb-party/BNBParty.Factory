@@ -42,4 +42,14 @@ abstract contract BNBPartyModifiers is BNBPartyState {
         if (msg.value == 0) revert ZeroAmount();
         _;
     }
+
+    modifier SwapRouterAlreadySet(
+        ISwapRouter _swapRouter,
+        ISwapRouter _newSwapRouter
+    ) {
+        if (_swapRouter == _newSwapRouter) {
+            revert AlreadySet();
+        }
+        _;
+    }
 }

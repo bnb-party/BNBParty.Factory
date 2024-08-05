@@ -38,6 +38,7 @@
     "@bnb-party/v3-core": "^1.0.4",
     "@bnb-party/v3-periphery": "^1.0.5",
     "@uniswap/lib": "^4.0.1-alpha",
-    "@uniswap/v3-core": "^1.0.0"
+    "@uniswap/v3-core": "^1.0.0",
+    "@uniswap/v3-periphery": "^1.4.4"
   }
 }

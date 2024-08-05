@@ -55,7 +55,7 @@ interface IBNBPartyFactory {
     error BonusGreaterThanTarget(); // Error thrown when the bonus amount exceeds the party target.
     error PositionManagerNotSet(); // Error thrown when the position manager is not set.
     error PositionManagerAlreadySet(); // Error thrown when the position manager is already set.
-    error SwapRouterAlreadySet(); // Error thrown when the swap router is already set.
+    error AlreadySet(); // Error thrown when the swap router is already set.
     error LPNotAtParty(); // Error thrown when the liquidity pool is not part of the party.
     error ZeroLength(); // Error thrown when an array is empty.
     error BonusAmountTransferFailed(); // Error thrown when transferring bonus amounts fails.

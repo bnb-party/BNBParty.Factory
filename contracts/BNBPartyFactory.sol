@@ -82,13 +82,16 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
         address tokenOut,
         uint256 amountOutMinimum
     ) external payable notZeroAddress(tokenOut) notZeroValue {
-        _executeSwap(
-            address(WBNB),
-            tokenOut,
-            msg.sender,
-            amountOutMinimum,
-            msg.value
-        );
+        (ISwapRouter router, uint24 fee) = _getRouterAndFee(tokenOut);
+        ISwapRouter.ExactInputParams memory params = ISwapRouter
+            .ExactInputParams({
+                path: abi.encodePacked(address(WBNB), fee, tokenOut),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: msg.value,
+                amountOutMinimum: amountOutMinimum
+            });
+        _executeSwap(router, params);
     }
 
     /// @notice Allows users to leave the party by swapping the specified token for BNB
@@ -101,17 +104,18 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
         uint256 amountOutMinimum
     ) external notZeroAddress(tokenIn) notZeroAmount(amountIn) {
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
-        IERC20(tokenIn).safeIncreaseAllowance(address(swapRouter), amountIn);
-        _executeSwap(
-            tokenIn,
-            address(WBNB),
-            address(swapRouter),
-            amountOutMinimum,
-            amountIn
-        );
-        IPeripheryPayments(address(swapRouter)).unwrapWETH9(
-            amountOutMinimum,
-            msg.sender
-        );
+        (ISwapRouter router, uint24 fee) = _getRouterAndFee(tokenIn);
+        IERC20(tokenIn).safeIncreaseAllowance(address(router), amountIn);
+
+        ISwapRouter.ExactInputParams memory params = ISwapRouter
+            .ExactInputParams({
+                path: abi.encodePacked(tokenIn, fee, address(WBNB)),
+                recipient: address(router),
+                deadline: block.timestamp,
+                amountIn: amountIn,
+                amountOutMinimum: amountOutMinimum
+            });
+        _executeSwap(router, params);
+        IPeripheryPayments(address(router)).unwrapWETH9(amountOutMinimum, msg.sender);
     }
 }

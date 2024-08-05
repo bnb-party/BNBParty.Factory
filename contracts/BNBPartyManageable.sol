@@ -24,10 +24,15 @@ abstract contract BNBPartyManageable is BNBPartyModifiers {
     /// @notice Sets the swap router address
     /// @param _swapRouter Address of the new swap router
     /// @dev Reverts if the new swap router is identical to the current one
-    function setSwapRouter(ISwapRouter _swapRouter) external onlyOwner {
-        if (_swapRouter == swapRouter) {
-            revert SwapRouterAlreadySet();
-        }
+    function setBNBPartySwapRouter(
+        ISwapRouter _swapRouter
+    ) external onlyOwner SwapRouterAlreadySet(_swapRouter, BNBSwapRouter) {
+        BNBSwapRouter = _swapRouter;
+    }
+
+    function setSwapRouter(
+        ISwapRouter _swapRouter
+    ) external onlyOwner SwapRouterAlreadySet(_swapRouter, swapRouter) {
         swapRouter = _swapRouter;
     }
 

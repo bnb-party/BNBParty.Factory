@@ -37,34 +37,22 @@ abstract contract BNBPartySwaps is BNBPartyView {
     /// @param tokenOut Address of the token to swap to
     /// @dev Calculates amount to swap based on msg.value and executes the swap
     function _executeSwap(address tokenOut) internal {
-        uint256 amountIn = msg.value - party.createTokenFee;
-        _executeSwap(address(WBNB), tokenOut, msg.sender, 0, amountIn);
+        ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
+            path: abi.encodePacked(address(WBNB), party.partyLpFee, tokenOut),
+            recipient: msg.sender,
+            deadline: block.timestamp,
+            amountIn: msg.value - party.createTokenFee,
+            amountOutMinimum: 0
+        });
+        _executeSwap(BNBSwapRouter, params);
     }
 
-    /// @notice Executes a swap between two tokens using the swap router
-    /// @param tokenIn Address of the token to swap from
-    /// @param tokenOut Address of the token to swap to
-    /// @param recipient Address receiving the output token
-    /// @param amountOutMinimum Minimum amount of output token to receive
-    /// @param amountIn Amount of input token to swap
-    /// @dev Uses the swap router to perform the swap and handle ether value if provided
     function _executeSwap(
-        address tokenIn,
-        address tokenOut,
-        address recipient,
-        uint256 amountOutMinimum,
-        uint256 amountIn
-    ) internal notZeroAddress(address(swapRouter)) {
-        ISwapRouter.ExactInputParams memory params = ISwapRouter
-            .ExactInputParams({
-                path: abi.encodePacked(tokenIn, party.partyLpFee, tokenOut),
-                recipient: recipient,
-                deadline: block.timestamp,
-                amountIn: amountIn,
-                amountOutMinimum: amountOutMinimum
-            });
-        uint256 value = msg.value > 0 ? amountIn : 0; // Set value if msg.value is greater than zero
-        swapRouter.exactInput{value: value}(params); // Executes the swap
+        ISwapRouter router,
+        ISwapRouter.ExactInputParams memory params
+    ) internal notZeroAddress(address(router)) {
+        uint256 value = msg.value > 0 ? params.amountIn : 0; // Set value if msg.value is greater than zero
+        ISwapRouter(router).exactInput{value: value}(params); // Executes the swap
     }
 
     /// @notice Determines the token pair and price direction based on the input token
@@ -88,5 +76,19 @@ abstract contract BNBPartySwaps is BNBPartyView {
     /// @dev Used to determine the price direction for swaps
     function _reverseSqrtPrice(uint160 sqrtPriceX96) internal pure returns (uint160 reverseSqrtPriceX96) {
         reverseSqrtPriceX96 = uint160((1 << 192) / sqrtPriceX96);
+    }
+
+    /// @notice Helper function to get the appropriate router and fee based on the token
+    /// @param token The address of the token to determine the router and fee for
+    /// @return router The address of the swap router
+    /// @return fee The fee amount for the swap
+    function _getRouterAndFee(address token) internal view returns (ISwapRouter router, uint24 fee) {
+        if (isTokenOnPartyLP[token]) {
+            router = BNBSwapRouter;
+            fee = party.partyLpFee;
+        } else {
+            router = swapRouter;
+            fee = party.lpFee;
+        }
     }
 }

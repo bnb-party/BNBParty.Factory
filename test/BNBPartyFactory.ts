@@ -98,12 +98,12 @@ describe("BNBPartyFactory", function () {
 
     it("should revert if swap router is not set", async function () {
         const amountIn = ethers.parseUnits("1", 18)
-        await bnbPartyFactory.setSwapRouter(ethers.ZeroAddress)
+        await bnbPartyFactory.setBNBPartySwapRouter(ethers.ZeroAddress)
         await expect(bnbPartyFactory.createParty(name, symbol, { value: amountIn })).to.be.revertedWithCustomError(
             bnbPartyFactory,
             "ZeroAddress"
         )
-        await bnbPartyFactory.setSwapRouter(await BNBSwapRouter.getAddress())
+        await bnbPartyFactory.setBNBPartySwapRouter(await BNBSwapRouter.getAddress())
     })
 
     describe("Second Liquidity Pool", function () {
