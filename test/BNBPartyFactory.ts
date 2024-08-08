@@ -25,10 +25,10 @@ describe("BNBPartyFactory", function () {
     const returnFeeAmount = ethers.parseUnits("5", 17)
     const bonusFee = ethers.parseUnits("1", 16)
     const targetReachFee = ethers.parseUnits("1", 17)
-    const initialTokenAmount = "10000000000000000000000000"
+    const initialTokenAmount = "1000000000000000000000000000"
     const name = "Party"
     const symbol = "Token"
-    const sqrtPriceX96 = "25052911542910170730777872"
+    const sqrtPriceX96 = "7922427122162318518285487"
     const BNBToTarget: bigint = partyTarget + ethers.parseEther("1")
 
     before(async () => {
@@ -46,8 +46,8 @@ describe("BNBPartyFactory", function () {
         expect((await bnbPartyFactory.party()).lpFee).to.equal(FeeAmount.HIGH)
         expect((await bnbPartyFactory.party()).partyLpFee).to.equal(FeeAmount.HIGH)
         expect((await bnbPartyFactory.party()).createTokenFee).to.equal(tokenCreationFee)
-        expect((await bnbPartyFactory.party()).tickUpper).to.equal("0")
-        expect((await bnbPartyFactory.party()).tickLower).to.equal("-92200")
+        expect((await bnbPartyFactory.party()).tickUpper).to.equal("183800")
+        expect((await bnbPartyFactory.party()).tickLower).to.equal("-183800")
     })
 
     it("should create party LP", async function () {
@@ -146,7 +146,7 @@ describe("BNBPartyFactory", function () {
             const newBalance = await token.balanceOf(newLPPool)
             const userBalance = await token.balanceOf(await signers[0].getAddress())
             const bnbpartyBalance = await token.balanceOf(await bnbPartyFactory.getAddress())
-            expect(newBalance).to.be.equal(oldBalance + rest - userBalance - bnbpartyBalance - 1n)
+            expect(newBalance).to.be.equal(oldBalance + rest - userBalance - bnbpartyBalance - 2n)
         })
 
         it("should send WBNB to new LP", async () => {
@@ -154,7 +154,7 @@ describe("BNBPartyFactory", function () {
             const lpAddress = await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
             const balance = await weth9.balanceOf(lpAddress)
             const percentFee = ethers.parseEther("0.91")
-            expect(balance).to.be.equal(BNBToTarget - returnFeeAmount - bonusFee - targetReachFee - percentFee - 1n)
+            expect(balance).to.be.equal(BNBToTarget - returnFeeAmount - bonusFee - targetReachFee - percentFee - 2n)
         })
     })
 })

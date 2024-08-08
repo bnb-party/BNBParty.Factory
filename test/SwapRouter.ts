@@ -58,7 +58,7 @@ describe("Smart Router", function () {
     })
 
     it("user should receive bnb after leave party", async () => {
-        const amountIn = ethers.parseUnits("5", 16)
+        const amountIn = ethers.parseUnits("50", 18)
         const bnbBalanceBefore = await ethers.provider.getBalance(await signers[0].getAddress())
         await bnbPartyFactory.leaveParty(MEME, amountIn, 0)
         const bnbBalanceAfter = await ethers.provider.getBalance(await signers[0].getAddress())
