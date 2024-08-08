@@ -9,7 +9,6 @@ let signers: SignerWithAddress[]
 const BNB_PRICE = 550 // BNB price in USD
 let lpContract: IUniswapV3Pool
 
-// Создаем CSV писатель
 const createCsvWriter = csvWriter.createObjectCsvWriter
 const csv = createCsvWriter({
     path: "liquidity_pool_data.csv",
