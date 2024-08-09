@@ -66,13 +66,45 @@ async function logPrices(meme: string, priceToken0InToken1: BigNumber, priceToke
     }
 }
 
-// todo: balances minus fee
 async function getTokenBalances(lpAddress: string, token: any) {
     const fullMEMEAmount = await token.balanceOf(lpAddress)
-    console.log("Full MEME amount: ", fullMEMEAmount.toString())
     const fullWBNBAmount = await weth9.balanceOf(lpAddress)
-    console.log("Full WBNB amount: ", fullWBNBAmount.toString())
-    return { fullMEMEAmount, fullWBNBAmount }
+    const lpPool = await ethers.getContractAt("UniswapV3Pool", lpAddress)
+    let feeGrowthGlobal0X128 = await lpPool.feeGrowthGlobal0X128()
+    let feeGrowthGlobal1X128 = await lpPool.feeGrowthGlobal1X128()
+    let liquidity = await lpPool.liquidity()
+    let getFeeGlobal = await bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress)
+    let wbnbFee
+    let memeFee
+    if ((await lpPool.token0()) === (await weth9.getAddress())) {
+        wbnbFee = await bnbPartyFactory.calculateFees(
+            liquidity,
+            feeGrowthGlobal0X128 - getFeeGlobal.feeGrowthInside0LastX128
+        )
+        memeFee = await bnbPartyFactory.calculateFees(
+            liquidity,
+            feeGrowthGlobal1X128 - getFeeGlobal.feeGrowthInside1LastX128
+        )
+        console.log("WBNB fee: ", wbnbFee)
+        console.log("MEME fee: ", memeFee)
+        console.log("WBNB amount: ", fullWBNBAmount - wbnbFee)
+        console.log("MEME amount: ", fullMEMEAmount - memeFee)
+    } else {
+        wbnbFee = await bnbPartyFactory.calculateFees(
+            liquidity,
+            feeGrowthGlobal1X128 - getFeeGlobal.feeGrowthInside1LastX128
+        )
+        memeFee = await bnbPartyFactory.calculateFees(
+            liquidity,
+            feeGrowthGlobal0X128 - getFeeGlobal.feeGrowthInside0LastX128
+        )
+        console.log("WBNB fee: ", wbnbFee)
+        console.log("MEME fee: ", memeFee)
+        console.log("WBNB amount: ", fullWBNBAmount - wbnbFee)
+        console.log("MEME amount: ", fullMEMEAmount - memeFee)
+    }
+
+    return { WBNBAmount: fullWBNBAmount - wbnbFee, MEMEAmount: fullMEMEAmount - memeFee }
 }
 
 async function test() {
@@ -81,8 +113,8 @@ async function test() {
     const token = await ethers.getContractAt("ERC20Token", MEME)
     const lpAddress = await v3PartyFactory.getPool(position.token0, position.token1, FeeAmount.HIGH)
 
-    const { fullMEMEAmount, fullWBNBAmount } = await getTokenBalances(lpAddress, token)
-    const initialMEMEAmount = fullMEMEAmount // Save the initial MEME amount for later comparison
+    const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
+    const initialMEMEAmount = MEMEAmount // Save the initial MEME amount for later comparison
     lpContract = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
     const { slot0, liquidity } = await getPoolData(lpContract)
 
@@ -95,11 +127,9 @@ async function test() {
     for (let i = 0; i < target; i++) {
         const swapAmount = ethers.parseUnits("1", 18)
         await bnbPartyFactory.joinParty(MEME, 0, { value: swapAmount })
-
-        const updatedMEMEAmount = await token.balanceOf(lpAddress)
-        console.log("Updated MEME amount: ", updatedMEMEAmount.toString())
-        const updatedWBNBAmount = await weth9.balanceOf(lpAddress)
-        console.log("Updated WBNB amount: ", updatedWBNBAmount.toString())
+        const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
+        console.log("Updated MEME amount: ", MEMEAmount.toString())
+        console.log("Updated WBNB amount: ", WBNBAmount.toString())
         const updatedSlot0 = await lpContract.slot0()
         const updatedLiquidity = await lpContract.liquidity()
         console.log("Updated liquidity: ", updatedLiquidity.toString())
@@ -114,12 +144,12 @@ async function test() {
             await logPrices(MEME, updatedPriceToken0InToken1, updatedPriceToken1InToken0)
 
             // Calculate market cap
-            const wbnbValueUSD = new BigNumber(updatedWBNBAmount.toString())
+            const wbnbValueUSD = new BigNumber(WBNBAmount.toString())
                 .div(new BigNumber(10).pow(18))
                 .multipliedBy(BNB_PRICE)
             console.log(`WBNB value in USD: ${wbnbValueUSD.toString()}`)
 
-            const memeValueInWBNB = new BigNumber(updatedMEMEAmount.toString())
+            const memeValueInWBNB = new BigNumber(MEMEAmount.toString())
                 .div(new BigNumber(10).pow(18))
                 .multipliedBy(updatedPriceToken1InToken0)
             const memeValueUSD = memeValueInWBNB.multipliedBy(BNB_PRICE)
@@ -129,7 +159,7 @@ async function test() {
             console.log(`Market Cap of Liquidity Pool in USD: ${marketCap.toString()}`)
 
             // Calculate the remaining percentage of MEME tokens
-            const remainingMEMEPercentage = new BigNumber(updatedMEMEAmount.toString())
+            const remainingMEMEPercentage = new BigNumber(MEMEAmount.toString())
                 .dividedBy(new BigNumber(initialMEMEAmount.toString()))
                 .multipliedBy(100)
                 .toFixed(2)
@@ -139,8 +169,8 @@ async function test() {
             await csv.writeRecords([
                 {
                     iteration: i + 1,
-                    updatedMEMEAmount: updatedMEMEAmount.toString(),
-                    updatedWBNBAmount: updatedWBNBAmount.toString(),
+                    updatedMEMEAmount: MEMEAmount.toString(),
+                    updatedWBNBAmount: WBNBAmount.toString(),
                     updatedLiquidity: updatedLiquidity.toString(),
                     updatedSqrtPriceX96: updatedSqrtPriceX96.toString(),
                     priceToken0InToken1: updatedPriceToken0InToken1.toString(),

@@ -46,8 +46,8 @@ describe("BNBPartyFactory", function () {
         expect((await bnbPartyFactory.party()).lpFee).to.equal(FeeAmount.HIGH)
         expect((await bnbPartyFactory.party()).partyLpFee).to.equal(FeeAmount.HIGH)
         expect((await bnbPartyFactory.party()).createTokenFee).to.equal(tokenCreationFee)
-        expect((await bnbPartyFactory.party()).tickUpper).to.equal("183800")
-        expect((await bnbPartyFactory.party()).tickLower).to.equal("-183800")
+        expect((await bnbPartyFactory.party()).tickUpper).to.equal("184200")
+        expect((await bnbPartyFactory.party()).tickLower).to.equal("-203800")
     })
 
     it("should create party LP", async function () {
