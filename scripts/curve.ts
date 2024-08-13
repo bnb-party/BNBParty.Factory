@@ -97,9 +97,6 @@ async function test() {
     const { MEMEAmount } = await getTokenBalances(lpAddress, token)
     const initialMEMEAmount = MEMEAmount // Save the initial MEME amount for later comparison
     lpContract = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
-    const slot0 = await lpContract.slot0()
-
-    const sqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
     const [token0, token1] = await Promise.all([lpContract.token0(), lpContract.token1()])
 
     const target = 13
