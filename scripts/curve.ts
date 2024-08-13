@@ -38,13 +38,6 @@ async function createLiquidityPool() {
     return { MEME, position }
 }
 
-async function getPoolData(lpContract: IUniswapV3Pool) {
-    const slot0 = await lpContract.slot0()
-    const liquidity = await lpContract.liquidity()
-    console.log("Liquidity: ", liquidity.toString())
-    return { slot0, liquidity }
-}
-
 function calculatePrices(sqrtPriceX96: BigNumber, token0: string, token1: string, meme: string) {
     const priceX96 = sqrtPriceX96.multipliedBy(sqrtPriceX96)
     const priceToken0InToken1 = priceX96.dividedBy(new BigNumber(2).pow(192))
@@ -119,10 +112,10 @@ async function test() {
     const token = await ethers.getContractAt("ERC20Token", MEME)
     const lpAddress = await v3PartyFactory.getPool(position.token0, position.token1, FeeAmount.HIGH)
 
-    const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
+    const { MEMEAmount } = await getTokenBalances(lpAddress, token)
     const initialMEMEAmount = MEMEAmount // Save the initial MEME amount for later comparison
     lpContract = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
-    const { slot0, liquidity } = await getPoolData(lpContract)
+    const slot0 = await lpContract.slot0()
 
     const sqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
     const token0 = await lpContract.token0()
