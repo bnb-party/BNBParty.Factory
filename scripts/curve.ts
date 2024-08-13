@@ -18,8 +18,8 @@ const csv = createCsvWriter({
         { id: "updatedSqrtPriceX96", title: "Updated sqrtPriceX96" },
         { id: "priceMemeInWbnb", title: "Price of MEME in WBNB" },
         { id: "priceWbnbInMeme", title: "Price of WBNB in MEME" },
-        { id: "wbnb value in lp", title: "WBNB Value in USD" },
-        { id: "meme value in lp", title: "MEME Value in USD" },
+        { id: "wbnbValueInLp", title: "WBNB Value in USD" },
+        { id: "memealueInLp", title: "MEME Value in USD" },
         { id: "marketCap", title: "Market Cap in USD" },
         { id: "remainingMEMEPercentage", title: "Remaining MEME %" },
     ],
@@ -99,9 +99,9 @@ async function test() {
     lpContract = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
     const [token0, token1] = await Promise.all([lpContract.token0(), lpContract.token1()])
 
-    const target = 13
+    const target = 26
     for (let i = 0; i < target; i++) {
-        const swapAmount = ethers.parseUnits("1", 18)
+        const swapAmount = ethers.parseUnits("5", 17)
         await bnbPartyFactory.joinParty(MEME, 0, { value: swapAmount })
         const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
         const updatedSlot0 = await lpContract.slot0()
@@ -134,8 +134,8 @@ async function test() {
                 updatedSqrtPriceX96: updatedSqrtPriceX96.toString(),
                 priceMemeInWbnb: updatedPriceMemeInWbnb.toString(),
                 priceWbnbInMeme: updatedPriceWbnbInMeme.toString(),
-                wbnbValueUSD: wbnbValueUSD.toString(),
-                memeValueUSD: memeValueUSD.toString(),
+                wbnbValueInLp: wbnbValueUSD.toString(),
+                memealueInLp: memeValueUSD.toString(),
                 marketCap: marketCap.toString(),
                 remainingMEMEPercentage: remainingMEMEPercentage,
             },
