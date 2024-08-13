@@ -49,7 +49,7 @@ describe("Smart Router", function () {
     })
 
     it("user should receive meme token after join party", async () => {
-        const amountIn = ethers.parseUnits("5", 17)
+        const amountIn = ethers.parseUnits("1", 18)
 
         const balanceBefore = await MEMEToken.balanceOf(await signers[0].getAddress())
         await bnbPartyFactory.joinParty(MEME, 0, { value: amountIn })

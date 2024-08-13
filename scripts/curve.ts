@@ -1,12 +1,10 @@
 import { ethers } from "hardhat"
-import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { FeeAmount, v3PartyFactory, deployContracts, weth9, bnbPartyFactory, BNBPositionManager } from "../test/helper"
 import { IUniswapV3Pool } from "../typechain-types"
 import BigNumber from "bignumber.js"
 import * as csvWriter from "csv-writer"
 
-let signers: SignerWithAddress[]
-const BNB_PRICE = 550 // BNB price in USD
+const BNB_PRICE = 600 // BNB price in USD
 let lpContract: IUniswapV3Pool
 
 const createCsvWriter = csvWriter.createObjectCsvWriter
@@ -18,8 +16,8 @@ const csv = createCsvWriter({
         { id: "updatedWBNBAmount", title: "Updated WBNB Amount" },
         { id: "updatedLiquidity", title: "Updated Liquidity" },
         { id: "updatedSqrtPriceX96", title: "Updated sqrtPriceX96" },
-        { id: "priceToken0InToken1", title: "Price of MEME in WBNB" },
-        { id: "priceToken1InToken0", title: "Price of WBNB in MEME" },
+        { id: "priceMemeInWbnb", title: "Price of MEME in WBNB" },
+        { id: "priceWbnbInMeme", title: "Price of WBNB in MEME" },
         { id: "wbnbValueUSD", title: "WBNB Value in USD" },
         { id: "memeValueUSD", title: "MEME Value in USD" },
         { id: "marketCap", title: "Market Cap in USD" },
@@ -28,7 +26,6 @@ const csv = createCsvWriter({
 })
 
 async function before() {
-    signers = await ethers.getSigners()
     await deployContracts()
 }
 
@@ -48,22 +45,31 @@ async function getPoolData(lpContract: IUniswapV3Pool) {
     return { slot0, liquidity }
 }
 
-function calculatePrices(sqrtPriceX96: BigNumber) {
+function calculatePrices(sqrtPriceX96: BigNumber, token0: string, token1: string, meme: string) {
     const priceX96 = sqrtPriceX96.multipliedBy(sqrtPriceX96)
     const priceToken0InToken1 = priceX96.dividedBy(new BigNumber(2).pow(192))
     const priceToken1InToken0 = new BigNumber(1).div(priceToken0InToken1)
-    return { priceToken0InToken1, priceToken1InToken0 }
+
+    // Determine which token is MEME and which is WBNB
+    if (token0 === meme) {
+        return {
+            priceMemeInWbnb: priceToken0InToken1,
+            priceWbnbInMeme: priceToken1InToken0,
+        }
+    } else if (token1 === meme) {
+        return {
+            priceMemeInWbnb: priceToken1InToken0,
+            priceWbnbInMeme: priceToken0InToken1,
+        }
+    } else {
+        throw new Error("MEME token address does not match either token0 or token1 in the pool")
+    }
 }
 
-async function logPrices(meme: string, priceToken0InToken1: BigNumber, priceToken1InToken0: BigNumber) {
-    const token0 = await lpContract.token0()
-    if (token0 === meme) {
-        console.log(`Price of MEME in terms of WBNB: ${priceToken0InToken1.toString()}`)
-        console.log(`Price of WBNB in terms of MEME: ${priceToken1InToken0.toString()}`)
-    } else {
-        console.log(`Price of WBNB in terms of MEME: ${priceToken0InToken1.toString()}`)
-        console.log(`Price of MEME in terms of WBNB: ${priceToken1InToken0.toString()}`)
-    }
+async function logPrices(meme: string, token0: string, token1: string, sqrtPriceX96: BigNumber) {
+    const { priceMemeInWbnb, priceWbnbInMeme } = calculatePrices(sqrtPriceX96, token0, token1, meme)
+    console.log(`Price of MEME in terms of WBNB: ${priceMemeInWbnb.toString()}`)
+    console.log(`Price of WBNB in terms of MEME: ${priceWbnbInMeme.toString()}`)
 }
 
 async function getTokenBalances(lpAddress: string, token: any) {
@@ -119,11 +125,12 @@ async function test() {
     const { slot0, liquidity } = await getPoolData(lpContract)
 
     const sqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
-    const { priceToken0InToken1, priceToken1InToken0 } = calculatePrices(sqrtPriceX96)
+    const token0 = await lpContract.token0()
+    const token1 = await lpContract.token1()
 
-    await logPrices(MEME, priceToken0InToken1, priceToken1InToken0)
+    await logPrices(MEME, token0, token1, sqrtPriceX96)
 
-    const target = 12
+    const target = 13
     for (let i = 0; i < target; i++) {
         const swapAmount = ethers.parseUnits("1", 18)
         await bnbPartyFactory.joinParty(MEME, 0, { value: swapAmount })
@@ -135,34 +142,29 @@ async function test() {
         console.log("Updated liquidity: ", updatedLiquidity.toString())
 
         const updatedSqrtPriceX96 = new BigNumber(updatedSlot0.sqrtPriceX96.toString())
-        const { priceToken0InToken1: updatedPriceToken0InToken1, priceToken1InToken0: updatedPriceToken1InToken0 } =
-            calculatePrices(updatedSqrtPriceX96)
+        const { priceMemeInWbnb: updatedPriceMemeInWbnb, priceWbnbInMeme: updatedPriceWbnbInMeme } = calculatePrices(
+            updatedSqrtPriceX96,
+            token0,
+            token1,
+            MEME
+        )
 
         console.log(`Updated sqrtPriceX96: ${updatedSqrtPriceX96.toString()}`)
 
         if (!(updatedLiquidity == 0n)) {
-            await logPrices(MEME, updatedPriceToken0InToken1, updatedPriceToken1InToken0)
+            await logPrices(MEME, token0, token1, updatedSqrtPriceX96)
 
             // Calculate market cap
-            const wbnbValueUSD = new BigNumber(WBNBAmount.toString())
-                .div(new BigNumber(10).pow(18))
-                .multipliedBy(BNB_PRICE)
-            console.log(`WBNB value in USD: ${wbnbValueUSD.toString()}`)
+            const wbnbValueUSD = new BigNumber(WBNBAmount.toString()).div(new BigNumber(10).pow(18)).multipliedBy(BNB_PRICE)
+            console.log(`WBNB Value in Liquidity pool: ${wbnbValueUSD.toString()}`)
 
-            const memeValueInWBNB = new BigNumber(MEMEAmount.toString())
-                .div(new BigNumber(10).pow(18))
-                .multipliedBy(updatedPriceToken1InToken0)
-            const memeValueUSD = memeValueInWBNB.multipliedBy(BNB_PRICE)
-            console.log(`MEME value in USD: ${memeValueUSD.toString()}`)
+            const memeAmountInWbnb = new BigNumber(initialMEMEAmount.toString()).dividedBy(new BigNumber(10).pow(18)).multipliedBy(updatedPriceMemeInWbnb)
+            const marketCap = memeAmountInWbnb.multipliedBy(BNB_PRICE)
 
-            const marketCap = wbnbValueUSD.plus(memeValueUSD)
-            console.log(`Market Cap of Liquidity Pool in USD: ${marketCap.toString()}`)
+            console.log(`MEME Market Cap: ${marketCap.toString()}`)
 
             // Calculate the remaining percentage of MEME tokens
-            const remainingMEMEPercentage = new BigNumber(MEMEAmount.toString())
-                .dividedBy(new BigNumber(initialMEMEAmount.toString()))
-                .multipliedBy(100)
-                .toFixed(2)
+            const remainingMEMEPercentage = new BigNumber(MEMEAmount.toString()).dividedBy(new BigNumber(initialMEMEAmount.toString())).multipliedBy(100).toFixed(2)
             console.log(`Remaining MEME tokens in the pool: ${remainingMEMEPercentage}%\n`)
 
             // Write data to CSV
@@ -173,17 +175,17 @@ async function test() {
                     updatedWBNBAmount: WBNBAmount.toString(),
                     updatedLiquidity: updatedLiquidity.toString(),
                     updatedSqrtPriceX96: updatedSqrtPriceX96.toString(),
-                    priceToken0InToken1: updatedPriceToken0InToken1.toString(),
-                    priceToken1InToken0: updatedPriceToken1InToken0.toString(),
-                    wbnbValueUSD: wbnbValueUSD.toString(),
-                    memeValueUSD: memeValueUSD.toString(),
+                    priceMemeInWbnb: updatedPriceMemeInWbnb.toString(),
+                    priceWbnbInMeme: updatedPriceWbnbInMeme.toString(),
+                    wbnbValueUSD: updatedPriceWbnbInMeme.multipliedBy(BNB_PRICE).toString(),
+                    memeValueUSD: updatedPriceMemeInWbnb.multipliedBy(BNB_PRICE).toString(),
                     marketCap: marketCap.toString(),
                     remainingMEMEPercentage: remainingMEMEPercentage,
                 },
             ])
         } else {
-            console.log("Updated price of token0 in terms of token1: not available (liquidity is zero)")
-            console.log("Updated price of token1 in terms of token0: not available (liquidity is zero)")
+            console.log("Updated price of MEME in terms of WBNB: not available (liquidity is zero)")
+            console.log("Updated price of WBNB in terms of MEME: not available (liquidity is zero)")
         }
     }
 }

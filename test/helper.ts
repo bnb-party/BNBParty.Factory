@@ -43,7 +43,7 @@ export async function deployContracts() {
     const bonusFee = ethers.parseUnits("1", 16)
     const targetReachFee = ethers.parseUnits("1", 17)
     const initialTokenAmount = "1000000000000000000000000000"
-    const sqrtPriceX96 = "7922427122162318518285487"
+    const sqrtPriceX96 = "1252685732681638336686364"
     // Deploy WETH9
     const WETH9 = await ethers.getContractFactory(WETH9Artifact.abi, WETH9Artifact.bytecode)
     weth9 = (await WETH9.deploy()) as IWBNB
@@ -60,8 +60,8 @@ export async function deployContracts() {
             bonusTargetReach: returnFeeAmount,
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
-            tickLower: "-203800",
-            tickUpper: "184200",
+            tickLower: "-214200",
+            tickUpper: "195600",
         },
         await weth9.getAddress()
     )) as BNBPartyFactory

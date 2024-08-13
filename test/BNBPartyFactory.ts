@@ -28,7 +28,7 @@ describe("BNBPartyFactory", function () {
     const initialTokenAmount = "1000000000000000000000000000"
     const name = "Party"
     const symbol = "Token"
-    const sqrtPriceX96 = "7922427122162318518285487"
+    const sqrtPriceX96 = "1252685732681638336686364"
     const BNBToTarget: bigint = partyTarget + ethers.parseEther("1")
 
     before(async () => {
@@ -46,8 +46,8 @@ describe("BNBPartyFactory", function () {
         expect((await bnbPartyFactory.party()).lpFee).to.equal(FeeAmount.HIGH)
         expect((await bnbPartyFactory.party()).partyLpFee).to.equal(FeeAmount.HIGH)
         expect((await bnbPartyFactory.party()).createTokenFee).to.equal(tokenCreationFee)
-        expect((await bnbPartyFactory.party()).tickUpper).to.equal("184200")
-        expect((await bnbPartyFactory.party()).tickLower).to.equal("-203800")
+        expect((await bnbPartyFactory.party()).tickUpper).to.equal("195600")
+        expect((await bnbPartyFactory.party()).tickLower).to.equal("-214200")
     })
 
     it("should create party LP", async function () {
