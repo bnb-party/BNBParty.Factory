@@ -20,6 +20,7 @@ const csv = createCsvWriter({
         { id: "wbnbValueInLp", title: "WBNB Value in USD" },
         { id: "memeValueInLp", title: "MEME Value in USD" },
         { id: "marketCap", title: "Market Cap in USD" },
+        { id: "memeMarketCapInBnb", title: "Market Cap in BNB" },
         { id: "remainingMEMEPercentage", title: "Remaining MEME %" },
     ],
 })
@@ -85,6 +86,7 @@ async function logData(
     const memeValueUSD = MEMEAmount.div(new BigNumber(10).pow(18)).multipliedBy(priceMemeInWbnb).multipliedBy(BNB_PRICE)
     const marketCap = initialMEMEAmount.div(new BigNumber(10).pow(18)).multipliedBy(priceMemeInWbnb).multipliedBy(BNB_PRICE)
     const remainingMEMEPercentage = MEMEAmount.div(initialMEMEAmount).multipliedBy(100).toFixed(2)
+    const memeMarketCapInBnb = initialMEMEAmount.div(new BigNumber(10).pow(18)).multipliedBy(priceMemeInWbnb)
 
     const data = {
         iteration,
@@ -96,6 +98,7 @@ async function logData(
         wbnbValueInLp: wbnbValueUSD.toString(),
         memeValueInLp: memeValueUSD.toString(),
         marketCap: marketCap.toString(),
+        memeMarketCapInBnb: memeMarketCapInBnb.toString(),
         remainingMEMEPercentage,
     }
 
