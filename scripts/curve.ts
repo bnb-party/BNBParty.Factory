@@ -14,7 +14,6 @@ const csv = createCsvWriter({
         { id: "iteration", title: "Iteration" },
         { id: "updatedMEMEAmount", title: "Updated MEME Amount" },
         { id: "updatedWBNBAmount", title: "Updated WBNB Amount" },
-        { id: "updatedLiquidity", title: "Updated Liquidity" },
         { id: "updatedSqrtPriceX96", title: "Updated sqrtPriceX96" },
         { id: "priceMemeInWbnb", title: "Price of MEME in WBNB" },
         { id: "priceWbnbInMeme", title: "Price of WBNB in MEME" },
@@ -105,7 +104,6 @@ async function test() {
         await bnbPartyFactory.joinParty(MEME, 0, { value: swapAmount })
         const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
         const updatedSlot0 = await lpContract.slot0()
-        const updatedLiquidity = await lpContract.liquidity()
 
         const updatedSqrtPriceX96 = new BigNumber(updatedSlot0.sqrtPriceX96.toString())
         const { priceMemeInWbnb: updatedPriceMemeInWbnb, priceWbnbInMeme: updatedPriceWbnbInMeme } = calculatePrices(
@@ -130,7 +128,6 @@ async function test() {
                 iteration: i + 1,
                 updatedMEMEAmount: MEMEAmount.toString(),
                 updatedWBNBAmount: WBNBAmount.toString(),
-                updatedLiquidity: updatedLiquidity.toString(),
                 updatedSqrtPriceX96: updatedSqrtPriceX96.toString(),
                 priceMemeInWbnb: updatedPriceMemeInWbnb.toString(),
                 priceWbnbInMeme: updatedPriceWbnbInMeme.toString(),

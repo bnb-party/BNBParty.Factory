@@ -61,7 +61,7 @@ export async function deployContracts() {
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
             tickLower: "-214200",
-            tickUpper: "195600",
+            tickUpper: "195400",
         },
         await weth9.getAddress()
     )) as BNBPartyFactory
