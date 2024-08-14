@@ -24,7 +24,7 @@ describe("BNBPartyFactory", function () {
     const tokenCreationFee = ethers.parseUnits("1", 16)
     const returnFeeAmount = ethers.parseUnits("5", 17)
     const bonusFee = ethers.parseUnits("1", 16)
-    const targetReachFee = ethers.parseUnits("1", 17)
+    const targetReachFee = ethers.parseUnits("8.5", 17)
     const initialTokenAmount = "1000000000000000000000000000"
     const name = "Party"
     const symbol = "Token"
@@ -46,7 +46,7 @@ describe("BNBPartyFactory", function () {
         expect((await bnbPartyFactory.party()).lpFee).to.equal(FeeAmount.HIGH)
         expect((await bnbPartyFactory.party()).partyLpFee).to.equal(FeeAmount.HIGH)
         expect((await bnbPartyFactory.party()).createTokenFee).to.equal(tokenCreationFee)
-        expect((await bnbPartyFactory.party()).tickUpper).to.equal("196200")
+        expect((await bnbPartyFactory.party()).tickUpper).to.equal("195600")
         expect((await bnbPartyFactory.party()).tickLower).to.equal("-214200")
     })
 

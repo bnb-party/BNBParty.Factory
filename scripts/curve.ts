@@ -1,5 +1,5 @@
 import { ethers } from "hardhat"
-import { FeeAmount, v3PartyFactory, deployContracts, weth9, bnbPartyFactory, BNBPositionManager } from "../test/helper"
+import { FeeAmount, v3PartyFactory, deployContracts, weth9, bnbPartyFactory, BNBPositionManager, v3Factory, positionManager } from "../test/helper"
 import { IUniswapV3Pool } from "../typechain-types"
 import BigNumber from "bignumber.js"
 import * as csvWriter from "csv-writer"
@@ -123,7 +123,7 @@ async function test() {
 
     const segments = 26
     for (let i = 1; i <= segments; ++i) {
-        const swapAmount = ethers.parseUnits("5.05", 17)
+        const swapAmount = ethers.parseUnits("5.06", 17)
         await bnbPartyFactory.joinParty(MEME, 0, { value: swapAmount })
 
         const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
@@ -131,7 +131,19 @@ async function test() {
         const sqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
         const { priceMemeInWbnb, priceWbnbInMeme } = calculatePrices(sqrtPriceX96, await lpContract.token0(), await lpContract.token1(), MEME)
 
-        await logData(i, MEMEAmount, WBNBAmount, sqrtPriceX96, priceMemeInWbnb, priceWbnbInMeme, initialMEMEAmount)
+        const isParty = await bnbPartyFactory.isTokenOnPartyLP(MEME)
+        if (isParty) {
+            await logData(i, MEMEAmount, WBNBAmount, sqrtPriceX96, priceMemeInWbnb, priceWbnbInMeme, initialMEMEAmount)
+        }
+        else { 
+            const newLPPool = await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
+            const lpContract = (await ethers.getContractAt("UniswapV3Pool", newLPPool)) as any as IUniswapV3Pool
+            const slot0 = await lpContract.slot0()
+            const sqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
+            const { priceMemeInWbnb, priceWbnbInMeme } = calculatePrices(sqrtPriceX96, await lpContract.token0(), await lpContract.token1(), MEME)
+            const { MEMEAmount, WBNBAmount } = await getTokenBalances(newLPPool, token)
+            await logData(i, MEMEAmount, WBNBAmount, sqrtPriceX96, priceMemeInWbnb, priceWbnbInMeme, initialMEMEAmount)
+        }
     }
 }
 
