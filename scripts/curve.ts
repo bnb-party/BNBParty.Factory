@@ -12,9 +12,9 @@ const csv = createCsvWriter({
     path: "liquidity_pool_data.csv",
     header: [
         { id: "iteration", title: "Iteration" },
-        { id: "updatedMEMEAmount", title: "Updated MEME Amount" },
-        { id: "updatedWBNBAmount", title: "Updated WBNB Amount" },
-        { id: "updatedSqrtPriceX96", title: "Updated sqrtPriceX96" },
+        { id: "MEMEAmount", title: "MEME Amount" },
+        { id: "WBNBAmount", title: "WBNB Amount" },
+        { id: "SqrtPriceX96", title: "sqrtPriceX96" },
         { id: "priceMemeInWbnb", title: "Price of MEME in WBNB" },
         { id: "priceWbnbInMeme", title: "Price of WBNB in MEME" },
         { id: "wbnbValueInLp", title: "WBNB Value in USD" },
@@ -76,23 +76,23 @@ async function logData(
     iteration: number,
     MEMEAmount: BigNumber,
     WBNBAmount: BigNumber,
-    updatedSqrtPriceX96: BigNumber,
-    updatedPriceMemeInWbnb: BigNumber,
-    updatedPriceWbnbInMeme: BigNumber,
+    sqrtPriceX96: BigNumber,
+    priceMemeInWbnb: BigNumber,
+    priceWbnbInMeme: BigNumber,
     initialMEMEAmount: BigNumber
 ) {
     const wbnbValueUSD = WBNBAmount.div(new BigNumber(10).pow(18)).multipliedBy(BNB_PRICE)
-    const memeValueUSD = MEMEAmount.div(new BigNumber(10).pow(18)).multipliedBy(updatedPriceMemeInWbnb).multipliedBy(BNB_PRICE)
-    const marketCap = initialMEMEAmount.div(new BigNumber(10).pow(18)).multipliedBy(updatedPriceMemeInWbnb).multipliedBy(BNB_PRICE)
+    const memeValueUSD = MEMEAmount.div(new BigNumber(10).pow(18)).multipliedBy(priceMemeInWbnb).multipliedBy(BNB_PRICE)
+    const marketCap = initialMEMEAmount.div(new BigNumber(10).pow(18)).multipliedBy(priceMemeInWbnb).multipliedBy(BNB_PRICE)
     const remainingMEMEPercentage = MEMEAmount.div(initialMEMEAmount).multipliedBy(100).toFixed(2)
 
     const data = {
         iteration,
-        updatedMEMEAmount: MEMEAmount.toString(),
-        updatedWBNBAmount: WBNBAmount.toString(),
-        updatedSqrtPriceX96: updatedSqrtPriceX96.toString(),
-        priceMemeInWbnb: updatedPriceMemeInWbnb.toString(),
-        priceWbnbInMeme: updatedPriceWbnbInMeme.toString(),
+        MEMEAmount: MEMEAmount.toString(),
+        WBNBAmount: WBNBAmount.toString(),
+        SqrtPriceX96: sqrtPriceX96.toString(),
+        priceMemeInWbnb: priceMemeInWbnb.toString(),
+        priceWbnbInMeme: priceWbnbInMeme.toString(),
         wbnbValueInLp: wbnbValueUSD.toString(),
         memeValueInLp: memeValueUSD.toString(),
         marketCap: marketCap.toString(),
@@ -112,15 +112,10 @@ async function test() {
 
     const { MEMEAmount: initialMEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
     const slot0 = await lpContract.slot0()
-    const updatedSqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
-    const { priceMemeInWbnb, priceWbnbInMeme } = calculatePrices(
-        updatedSqrtPriceX96,
-        await lpContract.token0(),
-        await lpContract.token1(),
-        MEME
-    )
+    const sqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
+    const { priceMemeInWbnb, priceWbnbInMeme } = calculatePrices(sqrtPriceX96, await lpContract.token0(), await lpContract.token1(), MEME)
 
-    await logData(0, initialMEMEAmount, WBNBAmount, updatedSqrtPriceX96, priceMemeInWbnb, priceWbnbInMeme, initialMEMEAmount)
+    await logData(0, initialMEMEAmount, WBNBAmount, sqrtPriceX96, priceMemeInWbnb, priceWbnbInMeme, initialMEMEAmount)
 
     const target = 26
     for (let i = 1; i <= target; ++i) {
@@ -128,11 +123,11 @@ async function test() {
         await bnbPartyFactory.joinParty(MEME, 0, { value: swapAmount })
 
         const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
-        const updatedSlot0 = await lpContract.slot0()
-        const updatedSqrtPriceX96 = new BigNumber(updatedSlot0.sqrtPriceX96.toString())
-        const { priceMemeInWbnb, priceWbnbInMeme } = calculatePrices(updatedSqrtPriceX96, await lpContract.token0(), await lpContract.token1(), MEME)
+        const slot0 = await lpContract.slot0()
+        const sqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
+        const { priceMemeInWbnb, priceWbnbInMeme } = calculatePrices(sqrtPriceX96, await lpContract.token0(), await lpContract.token1(), MEME)
 
-        await logData(i, MEMEAmount, WBNBAmount, updatedSqrtPriceX96, priceMemeInWbnb, priceWbnbInMeme, initialMEMEAmount)
+        await logData(i, MEMEAmount, WBNBAmount, sqrtPriceX96, priceMemeInWbnb, priceWbnbInMeme, initialMEMEAmount)
     }
 }
 
