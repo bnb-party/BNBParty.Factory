@@ -36,8 +36,7 @@ export let BNBSwapRouter: SwapRouter
 export let swapRouter: SwapRouter
 export let weth9: IWBNB
 
-export async function deployContracts() {
-    const partyTarget = ethers.parseEther("90")
+export async function deployContracts(partyTarget = ethers.parseEther("90")) {
     const tokenCreationFee = ethers.parseUnits("1", 16)
     const returnFeeAmount = ethers.parseUnits("5", 17)
     const bonusFee = ethers.parseUnits("1", 16)
@@ -61,7 +60,7 @@ export async function deployContracts() {
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
             tickLower: "-214200",
-            tickUpper: "195400",
+            tickUpper: "196200",
         },
         await weth9.getAddress()
     )) as BNBPartyFactory

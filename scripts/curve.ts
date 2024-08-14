@@ -107,7 +107,8 @@ async function logData(
 }
 
 async function test() {
-    await deployContracts()
+    const target = ethers.parseEther("13")
+    await deployContracts(target)
     const { MEME, position } = await createLiquidityPool()
     const token = await ethers.getContractAt("ERC20Token", MEME)
     const lpAddress = await v3PartyFactory.getPool(position.token0, position.token1, FeeAmount.HIGH)
@@ -120,9 +121,9 @@ async function test() {
 
     await logData(0, initialMEMEAmount, WBNBAmount, sqrtPriceX96, priceMemeInWbnb, priceWbnbInMeme, initialMEMEAmount)
 
-    const target = 26
-    for (let i = 1; i <= target; ++i) {
-        const swapAmount = ethers.parseUnits("5", 17)
+    const segments = 26
+    for (let i = 1; i <= segments; ++i) {
+        const swapAmount = ethers.parseUnits("5.05", 17)
         await bnbPartyFactory.joinParty(MEME, 0, { value: swapAmount })
 
         const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)

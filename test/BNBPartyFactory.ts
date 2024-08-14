@@ -46,7 +46,7 @@ describe("BNBPartyFactory", function () {
         expect((await bnbPartyFactory.party()).lpFee).to.equal(FeeAmount.HIGH)
         expect((await bnbPartyFactory.party()).partyLpFee).to.equal(FeeAmount.HIGH)
         expect((await bnbPartyFactory.party()).createTokenFee).to.equal(tokenCreationFee)
-        expect((await bnbPartyFactory.party()).tickUpper).to.equal("195400")
+        expect((await bnbPartyFactory.party()).tickUpper).to.equal("196200")
         expect((await bnbPartyFactory.party()).tickLower).to.equal("-214200")
     })
 
@@ -146,7 +146,7 @@ describe("BNBPartyFactory", function () {
             const newBalance = await token.balanceOf(newLPPool)
             const userBalance = await token.balanceOf(await signers[0].getAddress())
             const bnbpartyBalance = await token.balanceOf(await bnbPartyFactory.getAddress())
-            expect(newBalance).to.be.equal(oldBalance + rest - userBalance - bnbpartyBalance - 1n)
+            expect(newBalance).to.be.equal(oldBalance + rest - userBalance - bnbpartyBalance - 2n)
         })
 
         it("should send WBNB to new LP", async () => {
