@@ -7,16 +7,16 @@ import "./BNBPartyModifiers.sol";
 /// @notice This abstract contract provides view functions for the BNB Party system, including fee calculations and token checks.
 abstract contract BNBPartyView is BNBPartyModifiers {
     /// @notice Checks if WBNB is the token0 in the provided Uniswap V3 pool
-    /// @param liquidtyPool Address of the Uniswap V3 pool to check
+    /// @param liquidityPool Address of the Uniswap V3 pool to check
     /// @return True if WBNB is token0, false otherwise
     /// @dev Reverts if the provided pool address is zero
     function isToken0WBNB(
-        IUniswapV3Pool liquidtyPool
+        IUniswapV3Pool liquidityPool
     ) external view returns (bool) {
-        if (liquidtyPool == IUniswapV3Pool(address(0))) {
+        if (liquidityPool == IUniswapV3Pool(address(0))) {
             revert ZeroAddress();
         }
-        return liquidtyPool.token0() == address(WBNB); // Checks if WBNB is token0
+        return liquidityPool.token0() == address(WBNB); // Checks if WBNB is token0
     }
 
     /// @notice Calculates the fees earned based on liquidity and global fee growth

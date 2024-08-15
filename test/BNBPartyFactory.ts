@@ -154,7 +154,7 @@ describe("BNBPartyFactory", function () {
             const lpAddress = await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
             const balance = await weth9.balanceOf(lpAddress)
             const percentFee = ethers.parseEther("0.91")
-            expect(balance).to.be.equal(BNBToTarget - returnFeeAmount - bonusFee - targetReachFee - percentFee - 1n)
+            expect(balance).to.be.equal(BNBToTarget - returnFeeAmount - bonusFee - targetReachFee - percentFee - 3n)
         })
     })
 })

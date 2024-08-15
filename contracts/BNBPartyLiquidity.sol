@@ -86,7 +86,6 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
     /// @dev Decreases liquidity, collects tokens, creates a new pool, and sends bonuses
     function _handleLiquidity(address recipient) internal {
         IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
-        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         address token0 = pool.token0();
         address token1 = pool.token1();
 
@@ -121,11 +120,28 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
 
         IERC20(token0).approve(address(positionManager), amount0);
         IERC20(token1).approve(address(positionManager), amount1);
-
+        uint160 sqrtPriceX96 = _calcSqrtPriceX96(amount0, amount1);
         // Create new Liquidity Pool
         _createLP(positionManager, token0, token1, amount0, amount1, sqrtPriceX96, party.lpFee);
 
         // Send bonuses
         _unwrapAndSendBNB(recipient, unwrapAmount);
+    }
+
+    function _calcSqrtPriceX96(
+        uint256 amount0,
+        uint256 amount1
+    ) internal pure returns (uint160 sqrtPriceX96) {
+        uint256 ratioX192 = (amount1 << 192) / amount0; // Shift left by 192 to maintain precision
+        sqrtPriceX96 = uint160(_sqrt(ratioX192));
+    }
+
+    function _sqrt(uint256 x) private pure returns (uint256 y) {
+        uint256 z = (x + 1) / 2;
+        y = x;
+        while (z < y) {
+            y = z;
+            z = (x / z + z) / 2;
+        }
     }
 }
