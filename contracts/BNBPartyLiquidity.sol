@@ -96,16 +96,15 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
         uint128 liquidity = pool.liquidity();
 
         // Decrease liquidity and collect tokens
-        (uint256 amount0, uint256 amount1) = BNBPositionManager
-            .decreaseLiquidity(
-                INonfungiblePositionManager.DecreaseLiquidityParams({
-                    tokenId: lpToTokenId[msg.sender],
-                    liquidity: liquidity,
-                    amount0Min: 0,
-                    amount1Min: 0,
-                    deadline: block.timestamp
-                })
-            );
+        (uint256 amount0, uint256 amount1) = BNBPositionManager.decreaseLiquidity(
+            INonfungiblePositionManager.DecreaseLiquidityParams({
+                tokenId: lpToTokenId[msg.sender],
+                liquidity: liquidity,
+                amount0Min: 0,
+                amount1Min: 0,
+                deadline: block.timestamp
+            })
+        );
 
         BNBPositionManager.collect(
             INonfungiblePositionManager.CollectParams({

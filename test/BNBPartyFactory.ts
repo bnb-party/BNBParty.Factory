@@ -30,7 +30,6 @@ describe("BNBPartyFactory", function () {
     const symbol = "Token"
     const sqrtPriceX96 = "1252685732681638336686364"
     const BNBToTarget: bigint = partyTarget + ethers.parseEther("1")
-    let liquidityAmountsCalculator: LiquidityAmountsCalculator
 
     before(async () => {
         signers = await ethers.getSigners()

@@ -3,7 +3,7 @@ pragma solidity ^0.7.0;
 
 import "@bnb-party/v3-core/contracts/libraries/SqrtPriceMath.sol";
 
-contract LiquidityAmountsCalculator {
+library LiquidityAmountsCalculator {
     function getNextSqrtPriceFromAmount0RoundingUp(
         uint160 sqrtPX96,
         uint128 liquidity,
