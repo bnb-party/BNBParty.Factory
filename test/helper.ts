@@ -11,6 +11,7 @@ import FactoryArtifact from "@bnb-party/v3-core/artifacts/contracts/UniswapV3Fac
 import ClassicFactoryArtifact from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json"
 import ClassicNonfungiblePositionManager from "@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json"
 import ClassicSwapRouter from "@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json"
+import { LiquidityAmountsCalculator } from "../typechain-types/contracts/calc/SqrtPriceCalculator.sol"
 
 export enum FeeAmount {
     LOW = 500,
@@ -36,14 +37,13 @@ export let BNBSwapRouter: SwapRouter
 export let swapRouter: SwapRouter
 export let weth9: IWBNB
 
-export async function deployContracts() {
-    const partyTarget = ethers.parseEther("90")
-    const tokenCreationFee = ethers.parseUnits("1", 16)
-    const returnFeeAmount = ethers.parseUnits("5", 17)
-    const bonusFee = ethers.parseUnits("1", 16)
-    const targetReachFee = ethers.parseUnits("1", 17)
-    const initialTokenAmount = "10000000000000000000000000"
-    const sqrtPriceX96 = "25052911542910170730777872"
+export async function deployContracts(partyTarget = ethers.parseEther("90")) {
+    const tokenCreationFee = ethers.parseUnits("1", 16) // 0.01 BNB token creation fee
+    const returnFeeAmount = ethers.parseUnits("5", 16) // 0.05 BNB return fee (bonusTargetReach)
+    const bonusFee = ethers.parseUnits("1", 17) // 0.01 BNB bonus fee (bonusPartyCreator)
+    const targetReachFee = ethers.parseUnits("8.5", 17) // 0.85 BNB target reach fee
+    const initialTokenAmount = "1000000000000000000000000000"
+    const sqrtPriceX96 = "1252685732681638336686364"
     // Deploy WETH9
     const WETH9 = await ethers.getContractFactory(WETH9Artifact.abi, WETH9Artifact.bytecode)
     weth9 = (await WETH9.deploy()) as IWBNB
@@ -60,8 +60,8 @@ export async function deployContracts() {
             bonusTargetReach: returnFeeAmount,
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
-            tickLower: "-92200",
-            tickUpper: "0",
+            tickLower: "-214200",
+            tickUpper: "195600",
         },
         await weth9.getAddress()
     )) as BNBPartyFactory
@@ -110,4 +110,8 @@ export async function deployContracts() {
     // Set Swap Router in BNBPartyFactory
     await bnbPartyFactory.setBNBPartySwapRouter(await BNBSwapRouter.getAddress())
     await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
+    
+    const liquidityAmountsCalculatorContract = await ethers.getContractFactory("LiquidityAmountsCalculator")
+    const liquidityAmountsCalculator = (await liquidityAmountsCalculatorContract.deploy()) as LiquidityAmountsCalculator
+    await bnbPartyFactory.setLiquidityAmountsCalculator(await liquidityAmountsCalculator.getAddress())
 }

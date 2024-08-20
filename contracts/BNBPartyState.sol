@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@bnb-party/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-
+import "./interfaces/ILiquidityAmountsCalculator.sol";
 import "./interfaces/INonfungiblePositionManager.sol";
 import "./interfaces/IBNBPartyFactory.sol";
 import "./interfaces/IUniswapV3Pool.sol";
@@ -19,7 +19,8 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
     mapping(address => bool) public isParty; // Mapping to track if a LiquidityPool is a party
     mapping(address => uint256) public lpToTokenId; // Mapping from LiquidityPool to its NFT tokenId
     mapping(address => address) public lpToCreator; // Mapping from LiquidityPool to its creator
-    mapping(address => bool) isTokenOnPartyLP; // Mapping to track if a token is part of a party
+    mapping(address => bool) public isTokenOnPartyLP; // Mapping to track if a token is part of a party
+    ILiquidityAmountsCalculator public liquidityAmountsCalculator;
 
     Party public party; // store party parameters
 

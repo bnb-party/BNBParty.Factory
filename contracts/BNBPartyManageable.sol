@@ -21,6 +21,12 @@ abstract contract BNBPartyManageable is BNBPartyModifiers {
         BNBPositionManager = _BNBPositionManager;
     }
 
+    function setLiquidityAmountsCalculator(
+        ILiquidityAmountsCalculator _liquidityAmountsCalculator
+    ) external onlyOwner {
+        liquidityAmountsCalculator = _liquidityAmountsCalculator;
+    }
+
     /// @notice Sets the swap router address
     /// @param _swapRouter Address of the new swap router
     /// @dev Reverts if the new swap router is identical to the current one

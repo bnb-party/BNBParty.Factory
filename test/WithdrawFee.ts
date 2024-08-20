@@ -63,7 +63,7 @@ describe("Withdraw fees", function () {
         const partyLP = await v3PartyFactory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
         await bnbPartyFactory.withdrawPartyLPFee([partyLP])
         const balanceAfter = await weth9.balanceOf(await signers[0].getAddress())
-        expect(balanceAfter).to.be.equal(balanceBefore + expectedFee - 1n)
+        expect(balanceAfter).to.be.equal(balanceBefore + expectedFee)
     })
 
     it("should revert LPNotAtParty", async () => {
@@ -88,7 +88,7 @@ describe("Withdraw fees", function () {
         await bnbPartyFactory.joinParty(MEME, 0, { value: amountIn })
         const lpPool = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
         const liquidity = await lpPool.liquidity()
-        const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal1X128()
+        const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal1X128() > 0 ? await lpPool.feeGrowthGlobal1X128() : await lpPool.feeGrowthGlobal0X128()
         expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 100n - 1n) // 1 % fee
     })
 

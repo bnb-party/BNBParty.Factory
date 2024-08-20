@@ -36,8 +36,8 @@ describe("Smart Router", function () {
         MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
         lpAddress = await v3PartyFactory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
         MEMEToken = await ethers.getContractAt("ERC20", MEME)
-        await MEMEToken.approve(await bnbPartyFactory.getAddress(), ethers.parseEther("100"))
-        await MEMEToken.approve(await BNBSwapRouter.getAddress(), ethers.parseEther("100"))
+        await MEMEToken.approve(await bnbPartyFactory.getAddress(), ethers.parseEther("1000000"))
+        await MEMEToken.approve(await BNBSwapRouter.getAddress(), ethers.parseEther("10000000"))
     })
 
     it("should increase wbnb on party lp after join party", async () => {
@@ -58,7 +58,7 @@ describe("Smart Router", function () {
     })
 
     it("user should receive bnb after leave party", async () => {
-        const amountIn = ethers.parseUnits("5", 16)
+        const amountIn = ethers.parseUnits("5000", 18)
         const bnbBalanceBefore = await ethers.provider.getBalance(await signers[0].getAddress())
         await bnbPartyFactory.leaveParty(MEME, amountIn, 0)
         const bnbBalanceAfter = await ethers.provider.getBalance(await signers[0].getAddress())

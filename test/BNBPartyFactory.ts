@@ -20,20 +20,21 @@ const POOL_BYTECODE_HASH = keccak256(bytecode)
 
 describe("BNBPartyFactory", function () {
     let signers: SignerWithAddress[]
-    const partyTarget = ethers.parseEther("90")
-    const tokenCreationFee = ethers.parseUnits("1", 16)
-    const returnFeeAmount = ethers.parseUnits("5", 17)
-    const bonusFee = ethers.parseUnits("1", 16)
-    const targetReachFee = ethers.parseUnits("1", 17)
-    const initialTokenAmount = "10000000000000000000000000"
+    const partyTarget = ethers.parseEther("13") // 13 BNB target
+    const tokenCreationFee = ethers.parseUnits("1", 16) // 0.01 BNB token creation fee
+    const returnFeeAmount = ethers.parseUnits("5", 16) // 0.05 BNB return fee (bonusTargetReach)
+    const bonusFee = ethers.parseUnits("1", 17) // 0.01 BNB bonus fee (bonusPartyCreator)
+    const targetReachFee = ethers.parseUnits("8.5", 17) // 0.85 BNB target reach fee
+    const initialTokenAmount = "1000000000000000000000000000"
     const name = "Party"
     const symbol = "Token"
-    const sqrtPriceX96 = "25052911542910170730777872"
+    const sqrtPriceX96 = "1252685732681638336686364"
     const BNBToTarget: bigint = partyTarget + ethers.parseEther("1")
+    let liquidityAmountsCalculator: LiquidityAmountsCalculator
 
     before(async () => {
         signers = await ethers.getSigners()
-        await deployContracts()
+        await deployContracts(partyTarget)
     })
 
     it("should deploy BNBPartyFactory", async function () {
@@ -46,8 +47,8 @@ describe("BNBPartyFactory", function () {
         expect((await bnbPartyFactory.party()).lpFee).to.equal(FeeAmount.HIGH)
         expect((await bnbPartyFactory.party()).partyLpFee).to.equal(FeeAmount.HIGH)
         expect((await bnbPartyFactory.party()).createTokenFee).to.equal(tokenCreationFee)
-        expect((await bnbPartyFactory.party()).tickUpper).to.equal("0")
-        expect((await bnbPartyFactory.party()).tickLower).to.equal("-92200")
+        expect((await bnbPartyFactory.party()).tickUpper).to.equal("195600")
+        expect((await bnbPartyFactory.party()).tickLower).to.equal("-214200")
     })
 
     it("should create party LP", async function () {
@@ -146,15 +147,15 @@ describe("BNBPartyFactory", function () {
             const newBalance = await token.balanceOf(newLPPool)
             const userBalance = await token.balanceOf(await signers[0].getAddress())
             const bnbpartyBalance = await token.balanceOf(await bnbPartyFactory.getAddress())
-            expect(newBalance).to.be.equal(oldBalance + rest - userBalance - bnbpartyBalance - 1n)
+            expect(newBalance).to.be.equal(oldBalance + rest - userBalance - bnbpartyBalance - 2n)
         })
 
         it("should send WBNB to new LP", async () => {
             await bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget })
             const lpAddress = await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
             const balance = await weth9.balanceOf(lpAddress)
-            const percentFee = ethers.parseEther("0.91")
-            expect(balance).to.be.equal(BNBToTarget - returnFeeAmount - bonusFee - targetReachFee - percentFee - 3n)
+            const percentFee = ethers.parseEther("0.14") // target 13 + 1 BNB - 1% fee
+            expect(balance).to.be.equal(BNBToTarget - returnFeeAmount - bonusFee - targetReachFee - percentFee - 1n)
         })
     })
 })

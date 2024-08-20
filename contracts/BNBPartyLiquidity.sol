@@ -53,7 +53,9 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
         uint256 amount0,
         uint256 amount1,
         uint160 sqrtPriceX96,
-        uint24 fee
+        uint24 fee,
+        int24 tickLower,
+        int24 tickUpper
     ) internal returns (address liquidityPool) {
         // Create LP
         liquidityPool = liquidityManager.createAndInitializePoolIfNecessary(
@@ -69,8 +71,8 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
                 token0: token0,
                 token1: token1,
                 fee: fee,
-                tickLower: party.tickLower,
-                tickUpper: party.tickUpper,
+                tickLower: tickLower,
+                tickUpper: tickUpper,
                 amount0Desired: amount0,
                 amount1Desired: amount1,
                 amount0Min: 0,
@@ -86,19 +88,22 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
     /// @dev Decreases liquidity, collects tokens, creates a new pool, and sends bonuses
     function _handleLiquidity(address recipient) internal {
         IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
+        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         address token0 = pool.token0();
         address token1 = pool.token1();
+        uint128 liquidity = pool.liquidity();
 
         // Decrease liquidity and collect tokens
-        (uint256 amount0, uint256 amount1) = BNBPositionManager.decreaseLiquidity(
-            INonfungiblePositionManager.DecreaseLiquidityParams({
-                tokenId: lpToTokenId[msg.sender],
-                liquidity: pool.liquidity(),
-                amount0Min: 0,
-                amount1Min: 0,
-                deadline: block.timestamp
-            })
-        );
+        (uint256 amount0, uint256 amount1) = BNBPositionManager
+            .decreaseLiquidity(
+                INonfungiblePositionManager.DecreaseLiquidityParams({
+                    tokenId: lpToTokenId[msg.sender],
+                    liquidity: liquidity,
+                    amount0Min: 0,
+                    amount1Min: 0,
+                    deadline: block.timestamp
+                })
+            );
 
         BNBPositionManager.collect(
             INonfungiblePositionManager.CollectParams({
@@ -110,38 +115,33 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
         );
 
         uint256 unwrapAmount = party.bonusTargetReach + party.bonusPartyCreator + party.targetReachFee;
+        uint160 newSqrtPriceX96;
         if (token0 == address(WBNB)) {
             amount0 -= unwrapAmount; // Deduct unwrap amount from token0 if it is WBNB
             isTokenOnPartyLP[token1] = false;
+            newSqrtPriceX96 = liquidityAmountsCalculator.getNextSqrtPriceFromAmount0RoundingUp(
+                sqrtPriceX96,
+                liquidity,
+                unwrapAmount,
+                false
+            );
         } else {
             amount1 -= unwrapAmount; // Deduct unwrap amount from token1 if it is WBNB
             isTokenOnPartyLP[token0] = false;
+            newSqrtPriceX96 = liquidityAmountsCalculator.getNextSqrtPriceFromAmount1RoundingDown(
+                sqrtPriceX96,
+                liquidity,
+                unwrapAmount,
+                false
+            );
         }
 
         IERC20(token0).approve(address(positionManager), amount0);
         IERC20(token1).approve(address(positionManager), amount1);
-        uint160 sqrtPriceX96 = _calcSqrtPriceX96(amount0, amount1);
         // Create new Liquidity Pool
-        _createLP(positionManager, token0, token1, amount0, amount1, sqrtPriceX96, party.lpFee);
+        _createLP(positionManager, token0, token1, amount0, amount1, newSqrtPriceX96, party.lpFee, party.tickLower, party.tickUpper + 5800);
 
         // Send bonuses
         _unwrapAndSendBNB(recipient, unwrapAmount);
-    }
-
-    function _calcSqrtPriceX96(
-        uint256 amount0,
-        uint256 amount1
-    ) internal pure returns (uint160 sqrtPriceX96) {
-        uint256 ratioX192 = (amount1 << 192) / amount0; // Shift left by 192 to maintain precision
-        sqrtPriceX96 = uint160(_sqrt(ratioX192));
-    }
-
-    function _sqrt(uint256 x) private pure returns (uint256 y) {
-        uint256 z = (x + 1) / 2;
-        y = x;
-        while (z < y) {
-            y = z;
-            z = (x / z + z) / 2;
-        }
     }
 }
