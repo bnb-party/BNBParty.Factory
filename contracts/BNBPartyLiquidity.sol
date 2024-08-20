@@ -30,7 +30,9 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
             amount0,
             amount1,
             sqrtPrice,
-            party.partyLpFee
+            party.partyLpFee,
+            party.tickLower,
+            party.tickUpper
         );
         isParty[liquidityPool] = true; // Mark the liquidity pool as a party pool
         isTokenOnPartyLP[_token] = true; // Mark the token as part of the party LP
