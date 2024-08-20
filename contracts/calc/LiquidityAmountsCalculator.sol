@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
 
-import "@uniswap/v3-core/contracts/libraries/SqrtPriceMath.sol";
+import "@bnb-party/v3-core/contracts/libraries/SqrtPriceMath.sol";
 
 contract LiquidityAmountsCalculator {
     function getNextSqrtPriceFromAmount0RoundingUp(
