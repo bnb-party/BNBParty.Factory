@@ -30,6 +30,8 @@ interface IBNBPartyFactory {
         uint256 bonusTargetReach; // Bonus amount given if the party target is reached.
         uint256 bonusPartyCreator; // Bonus amount for the party creator.
         uint256 targetReachFee; // Fee charged upon reaching the target.
+        int24 partyTickLower; // Lower bound of the tick range for the Party liquidity pool.
+        int24 partyTickUpper; // Upper bound of the tick range for the Party liquidity pool.
         int24 tickLower; // Lower bound of the tick range for the liquidity pool.
         int24 tickUpper; // Upper bound of the tick range for the liquidity pool.
     }

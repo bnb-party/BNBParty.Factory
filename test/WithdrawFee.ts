@@ -4,11 +4,9 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { IUniswapV3Pool, MockContract } from "../typechain-types"
 import {
     FeeAmount,
-    getDataHexString,
     bnbPartyFactory,
     v3PartyFactory,
     BNBPositionManager,
-    swapRouter,
     weth9,
     deployContracts,
 } from "./helper"
@@ -25,6 +23,8 @@ describe("Withdraw fees", function () {
     const name = "Party"
     const symbol = "Token"
     const BNBToTarget: bigint = partyTarget + ethers.parseEther("1")
+    const tickLower = -214200
+    const tickUpper = 201400
 
     beforeEach(async () => {
         signers = await ethers.getSigners()
@@ -124,10 +124,9 @@ describe("Withdraw fees", function () {
             position.token1 == (await weth9.getAddress())
                 ? await lpPool.feeGrowthGlobal1X128()
                 : await lpPool.feeGrowthGlobal0X128()
-        const collectedFee = await bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress)
-        expect(
-            await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128 - collectedFee.feeGrowthInside0LastX128)
-        ).to.be.equal(0)
+        const collectedFee = await bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress, BNBPositionManager)
+        const fee = collectedFee.feeGrowthInside0LastX128 == 0n ? collectedFee.feeGrowthInside1LastX128 : collectedFee.feeGrowthInside0LastX128
+        expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128 - fee)).to.be.equal(0)
     })
 
     it("should revert zero lenght array", async () => {

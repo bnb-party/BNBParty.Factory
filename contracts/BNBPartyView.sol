@@ -37,7 +37,8 @@ abstract contract BNBPartyView is BNBPartyModifiers {
     /// @return feeGrowthInside1LastX128 Fee growth inside for token1 from the last observation
     /// @dev Returns (0, 0) if the pool address is zero
     function getFeeGrowthInsideLastX128(
-        IUniswapV3Pool pool
+        IUniswapV3Pool pool,
+        INonfungiblePositionManager manager
     )
         external
         view
@@ -46,11 +47,13 @@ abstract contract BNBPartyView is BNBPartyModifiers {
             uint256 feeGrowthInside1LastX128
         )
     {
-        if (pool == IUniswapV3Pool(address(0))) return (0, 0);
+        if (pool == IUniswapV3Pool(address(0)) || address(manager) == address(0)) {
+            return (0, 0);
+        }
         (
             feeGrowthInside0LastX128,
             feeGrowthInside1LastX128
-        ) = _getFeeGrowthInsideLastX128(pool);
+        ) = manager == BNBPositionManager ? _getPartyFeeGrowthInsideLastX128(pool) : _getFeeGrowthInsideLastX128(pool);
     }
 
     /// @notice Internal function to retrieve the fee growth inside the position from the last observation
@@ -67,15 +70,57 @@ abstract contract BNBPartyView is BNBPartyModifiers {
             uint256 feeGrowthInside1LastX128
         )
     {
-        (, feeGrowthInside0LastX128, feeGrowthInside1LastX128, , ) = pool
-            .positions(
-                keccak256(
-                    abi.encodePacked(
-                        address(BNBPositionManager),
-                        party.tickLower,
-                        party.tickUpper
-                    )
+        (
+            feeGrowthInside0LastX128,
+            feeGrowthInside1LastX128
+        ) = _getFeeGrowthInsideLastX128(
+            pool,
+            keccak256(
+                abi.encodePacked(
+                    address(positionManager),
+                    party.tickLower,
+                    party.tickUpper
                 )
-            );
+            )
+        );
+    }
+
+    function _getPartyFeeGrowthInsideLastX128(
+        IUniswapV3Pool pool
+    )
+        internal
+        view
+        returns (
+            uint256 feeGrowthInside0LastX128,
+            uint256 feeGrowthInside1LastX128
+        )
+    {
+        (
+            feeGrowthInside0LastX128,
+            feeGrowthInside1LastX128
+        ) = _getFeeGrowthInsideLastX128(
+            pool,
+            keccak256(
+                abi.encodePacked(
+                    address(BNBPositionManager),
+                    party.partyTickLower,
+                    party.partyTickUpper
+                )
+            )
+        );
+    }
+
+    function _getFeeGrowthInsideLastX128(
+        IUniswapV3Pool pool,
+        bytes32 key
+    )
+        internal
+        view
+        returns (
+            uint256 feeGrowthInside0LastX128,
+            uint256 feeGrowthInside1LastX128
+        )
+    {
+        (, feeGrowthInside0LastX128, feeGrowthInside1LastX128, , ) = pool.positions(key);
     }
 }

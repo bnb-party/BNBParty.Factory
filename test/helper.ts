@@ -60,8 +60,10 @@ export async function deployContracts(partyTarget = ethers.parseEther("90")) {
             bonusTargetReach: returnFeeAmount,
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
+            partyTickLower: "-214200",
+            partyTickUpper: "195600",
             tickLower: "-214200",
-            tickUpper: "195600",
+            tickUpper: "201400",
         },
         await weth9.getAddress()
     )) as BNBPartyFactory
