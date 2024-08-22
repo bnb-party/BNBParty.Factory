@@ -78,8 +78,8 @@ abstract contract BNBPartyView is BNBPartyModifiers {
             keccak256(
                 abi.encodePacked(
                     address(positionManager),
-                    party.tickLower,
-                    party.tickUpper
+                    party.lpTicks.tickLower,
+                    party.lpTicks.tickUpper
                 )
             )
         );
@@ -103,8 +103,8 @@ abstract contract BNBPartyView is BNBPartyModifiers {
             keccak256(
                 abi.encodePacked(
                     address(BNBPositionManager),
-                    party.partyTickLower,
-                    party.partyTickUpper
+                    party.partyTicks.tickLower,
+                    party.partyTicks.tickUpper
                 )
             )
         );

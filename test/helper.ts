@@ -60,10 +60,8 @@ export async function deployContracts(partyTarget = ethers.parseEther("90")) {
             bonusTargetReach: returnFeeAmount,
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
-            partyTickLower: "-214200",
-            partyTickUpper: "195600",
-            tickLower: "-214200",
-            tickUpper: "201400",
+            partyTicks: { tickLower: "-214200", tickUpper: "195600" },
+            lpTicks: { tickLower: "-214200", tickUpper: "201400" },
         },
         await weth9.getAddress()
     )) as BNBPartyFactory
@@ -112,7 +110,7 @@ export async function deployContracts(partyTarget = ethers.parseEther("90")) {
     // Set Swap Router in BNBPartyFactory
     await bnbPartyFactory.setBNBPartySwapRouter(await BNBSwapRouter.getAddress())
     await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
-    
+
     const liquidityAmountsCalculatorContract = await ethers.getContractFactory("LiquidityAmountsCalculator")
     const liquidityAmountsCalculator = (await liquidityAmountsCalculatorContract.deploy()) as LiquidityAmountsCalculator
     await bnbPartyFactory.setLiquidityAmountsCalculator(await liquidityAmountsCalculator.getAddress())

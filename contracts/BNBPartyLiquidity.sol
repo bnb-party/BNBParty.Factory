@@ -31,8 +31,8 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
             amount1,
             sqrtPrice,
             party.partyLpFee,
-            party.partyTickLower,
-            party.partyTickUpper
+            party.partyTicks.tickLower,
+            party.partyTicks.tickUpper
         );
         isParty[liquidityPool] = true; // Mark the liquidity pool as a party pool
         isTokenOnPartyLP[_token] = true; // Mark the token as part of the party LP
@@ -140,7 +140,7 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
         IERC20(token0).approve(address(positionManager), amount0);
         IERC20(token1).approve(address(positionManager), amount1);
         // Create new Liquidity Pool
-        _createLP(positionManager, token0, token1, amount0, amount1, newSqrtPriceX96, party.lpFee, party.tickLower, party.tickUpper);
+        _createLP(positionManager, token0, token1, amount0, amount1, newSqrtPriceX96, party.lpFee, party.lpTicks.tickLower, party.lpTicks.tickUpper);
 
         // Send bonuses
         _unwrapAndSendBNB(recipient, unwrapAmount);
