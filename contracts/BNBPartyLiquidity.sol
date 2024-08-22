@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./BNBPartySwaps.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 /// @title BNBPartyLiquidity
 /// @notice This abstract contract manages the creation and handling of liquidity pools within the BNB Party system.
@@ -130,7 +131,7 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
             newSqrtPriceX96 = sqrtPriceCalculator.getNextSqrtPriceFromAmount1RoundingDown(
                 sqrtPriceX96,
                 liquidity,
-                unwrapAmount,
+                unwrapAmount / 2,
                 false
             );
         }
@@ -142,5 +143,17 @@ abstract contract BNBPartyLiquidity is BNBPartySwaps {
 
         // Send bonuses
         _unwrapAndSendBNB(recipient, unwrapAmount);
+        // burn meme tokens
+        if(token0 == address(WBNB)) {
+            _burnMemeToken(token1);
+        }
+        else {
+            _burnMemeToken(token0);
+        }
+    }
+
+    function _burnMemeToken(address token) internal {
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        ERC20Burnable(token).burn(balance);
     }
 }

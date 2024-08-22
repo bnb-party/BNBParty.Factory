@@ -103,7 +103,7 @@ describe("Smart Router", function () {
 
     it("MEME -> WBNB -> BNB multicall", async function () {
         const amountIn = ethers.parseUnits("1", 17)
-        const MEME = position.token0
+        const MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
         const path = getDataHexString(MEME, await weth9.getAddress())
 
         const params = {
