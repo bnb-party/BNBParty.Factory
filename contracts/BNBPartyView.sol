@@ -7,16 +7,16 @@ import "./BNBPartyModifiers.sol";
 /// @notice This abstract contract provides view functions for the BNB Party system, including fee calculations and token checks.
 abstract contract BNBPartyView is BNBPartyModifiers {
     /// @notice Checks if WBNB is the token0 in the provided Uniswap V3 pool
-    /// @param liquidtyPool Address of the Uniswap V3 pool to check
+    /// @param liquidityPool Address of the Uniswap V3 pool to check
     /// @return True if WBNB is token0, false otherwise
     /// @dev Reverts if the provided pool address is zero
     function isToken0WBNB(
-        IUniswapV3Pool liquidtyPool
+        IUniswapV3Pool liquidityPool
     ) external view returns (bool) {
-        if (liquidtyPool == IUniswapV3Pool(address(0))) {
+        if (liquidityPool == IUniswapV3Pool(address(0))) {
             revert ZeroAddress();
         }
-        return liquidtyPool.token0() == address(WBNB); // Checks if WBNB is token0
+        return liquidityPool.token0() == address(WBNB); // Checks if WBNB is token0
     }
 
     /// @notice Calculates the fees earned based on liquidity and global fee growth
@@ -37,7 +37,8 @@ abstract contract BNBPartyView is BNBPartyModifiers {
     /// @return feeGrowthInside1LastX128 Fee growth inside for token1 from the last observation
     /// @dev Returns (0, 0) if the pool address is zero
     function getFeeGrowthInsideLastX128(
-        IUniswapV3Pool pool
+        IUniswapV3Pool pool,
+        INonfungiblePositionManager manager
     )
         external
         view
@@ -46,11 +47,13 @@ abstract contract BNBPartyView is BNBPartyModifiers {
             uint256 feeGrowthInside1LastX128
         )
     {
-        if (pool == IUniswapV3Pool(address(0))) return (0, 0);
+        if (pool == IUniswapV3Pool(address(0)) || address(manager) == address(0)) {
+            return (0, 0);
+        }
         (
             feeGrowthInside0LastX128,
             feeGrowthInside1LastX128
-        ) = _getFeeGrowthInsideLastX128(pool);
+        ) = manager == BNBPositionManager ? _getPartyFeeGrowthInsideLastX128(pool) : _getFeeGrowthInsideLastX128(pool);
     }
 
     /// @notice Internal function to retrieve the fee growth inside the position from the last observation
@@ -67,15 +70,57 @@ abstract contract BNBPartyView is BNBPartyModifiers {
             uint256 feeGrowthInside1LastX128
         )
     {
-        (, feeGrowthInside0LastX128, feeGrowthInside1LastX128, , ) = pool
-            .positions(
-                keccak256(
-                    abi.encodePacked(
-                        address(BNBPositionManager),
-                        party.tickLower,
-                        party.tickUpper
-                    )
+        (
+            feeGrowthInside0LastX128,
+            feeGrowthInside1LastX128
+        ) = _getFeeGrowthInsideLastX128(
+            pool,
+            keccak256(
+                abi.encodePacked(
+                    address(positionManager),
+                    party.lpTicks.tickLower,
+                    party.lpTicks.tickUpper
                 )
-            );
+            )
+        );
+    }
+
+    function _getPartyFeeGrowthInsideLastX128(
+        IUniswapV3Pool pool
+    )
+        internal
+        view
+        returns (
+            uint256 feeGrowthInside0LastX128,
+            uint256 feeGrowthInside1LastX128
+        )
+    {
+        (
+            feeGrowthInside0LastX128,
+            feeGrowthInside1LastX128
+        ) = _getFeeGrowthInsideLastX128(
+            pool,
+            keccak256(
+                abi.encodePacked(
+                    address(BNBPositionManager),
+                    party.partyTicks.tickLower,
+                    party.partyTicks.tickUpper
+                )
+            )
+        );
+    }
+
+    function _getFeeGrowthInsideLastX128(
+        IUniswapV3Pool pool,
+        bytes32 key
+    )
+        internal
+        view
+        returns (
+            uint256 feeGrowthInside0LastX128,
+            uint256 feeGrowthInside1LastX128
+        )
+    {
+        (, feeGrowthInside0LastX128, feeGrowthInside1LastX128, , ) = pool.positions(key);
     }
 }
