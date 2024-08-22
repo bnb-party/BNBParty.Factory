@@ -21,8 +21,9 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
     /// @param _WBNB The address of the Wrapped BNB (WBNB) token contract
     constructor(
         Party memory _party,
-        IWBNB _WBNB
-    ) BNBPartyState(_party, _WBNB) {}
+        IWBNB _WBNB,
+        ISqrtPriceCalculator _sqrtPriceCalculator
+    ) BNBPartyState(_party, _WBNB, _sqrtPriceCalculator) {}
 
     /// @notice Creates a new party with a custom ERC20 token and initializes its liquidity pool
     /// @param name The name of the new ERC20 token

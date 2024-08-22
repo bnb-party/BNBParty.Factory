@@ -11,7 +11,7 @@ import FactoryArtifact from "@bnb-party/v3-core/artifacts/contracts/UniswapV3Fac
 import ClassicFactoryArtifact from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json"
 import ClassicNonfungiblePositionManager from "@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json"
 import ClassicSwapRouter from "@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json"
-import { SqrtPriceCalculator } from "../typechain-types/contracts/calc/SqrtPriceCalculator.sol"
+import { SqrtPriceCalculator } from "../typechain-types/contracts/calc/SqrtPriceCalculator"
 
 export enum FeeAmount {
     LOW = 500,
@@ -47,7 +47,7 @@ export async function deployContracts(partyTarget = ethers.parseEther("90")) {
     // Deploy WETH9
     const WETH9 = await ethers.getContractFactory(WETH9Artifact.abi, WETH9Artifact.bytecode)
     weth9 = (await WETH9.deploy()) as IWBNB
-    const sqrtPriceCalculatorContract = await ethers.getContractFactory("LiquidityAmountsCalculator")
+    const sqrtPriceCalculatorContract = await ethers.getContractFactory("SqrtPriceCalculator")
     const sqrtPriceCalculator = (await sqrtPriceCalculatorContract.deploy()) as SqrtPriceCalculator
     // Deploy BNBPartyFactory
     const BNBPartyFactoryContract = await ethers.getContractFactory("BNBPartyFactory")
