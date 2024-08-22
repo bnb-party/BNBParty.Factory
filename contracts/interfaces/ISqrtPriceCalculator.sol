@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface ILiquidityAmountsCalculator {
+interface ISqrtPriceCalculator {
     function getNextSqrtPriceFromAmount0RoundingUp(
         uint160 sqrtPX96,
         uint128 liquidity,
