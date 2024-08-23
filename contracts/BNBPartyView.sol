@@ -28,7 +28,7 @@ abstract contract BNBPartyView is BNBPartyModifiers {
         uint256 liquidity,
         uint256 feeGrowthGlobalX128
     ) public pure returns (uint256 feesEarned) {
-        feesEarned = (feeGrowthGlobalX128 * liquidity) / 2 ** 128;
+        feesEarned = (feeGrowthGlobalX128 * liquidity) / FEE_GROWTH_GLOBAL_SCALE;
     }
 
     /// @notice Retrieves the fee growth inside the position from the last observation
