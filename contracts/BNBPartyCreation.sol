@@ -13,17 +13,9 @@ abstract contract BNBPartyCreation is BNBPartySwaps {
     /// @dev Sets the token amounts based on the balance and initializes the pool
     function _createFLP(address _token) internal returns (address liquidityPool) {
         (address tokenA, address tokenB, uint160 sqrtPrice) = _getTokenPairAndPrice(_token);
-        uint256 amount0;
-        uint256 amount1;
-        if (IERC20(tokenA).balanceOf(address(this)) == party.initialTokenAmount) {
-            amount0 = party.initialTokenAmount; // Set amount0 if tokenA balance matches the initial amount
-        } else {
-            amount1 = party.initialTokenAmount; // Otherwise, set amount1
-        }
-        IERC20(_token).approve(
-            address(BNBPositionManager),
-            party.initialTokenAmount
-        );
+        // Determine the token amounts
+        (uint256 amount0, uint256 amount1) = _calculateAmounts(tokenA);
+        IERC20(_token).approve(address(BNBPositionManager), party.initialTokenAmount);
         liquidityPool = _createLP(
             BNBPositionManager,
             tokenA,
@@ -82,5 +74,18 @@ abstract contract BNBPartyCreation is BNBPartySwaps {
                 deadline: block.timestamp
             })
         );
+    }
+
+    /// @notice Calculates the amounts of token0 and token1 based on the balance of tokenA and tokenB.
+    /// @param tokenA Address of the first token.
+    /// @return amount0 The amount of token0.
+    /// @return amount1 The amount of token1.
+    function _calculateAmounts(address tokenA) internal view returns (uint256 amount0, uint256 amount1) {
+        uint256 balanceA = IERC20(tokenA).balanceOf(address(this));
+        if (balanceA == party.initialTokenAmount) {
+            amount0 = party.initialTokenAmount; // Set amount0 if tokenA balance matches the initial amount
+        } else {
+            amount1 = party.initialTokenAmount; // Otherwise, set amount1
+        }
     }
 }
