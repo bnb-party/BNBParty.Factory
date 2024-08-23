@@ -58,17 +58,10 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
         IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
 
         uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
-        uint256 feeGrowthGlobal = 0;
-        if (pool.token0() == address(WBNB)) {
-            (uint256 feeGrowthInside0LastX128, ) = _getPartyFeeGrowthInsideLastX128(pool);
-            feeGrowthGlobal = pool.feeGrowthGlobal0X128() - feeGrowthInside0LastX128;
-        } else {
-            (, uint256 feeGrowthInside1LastX128) = _getPartyFeeGrowthInsideLastX128(pool);
-            feeGrowthGlobal = pool.feeGrowthGlobal1X128() - feeGrowthInside1LastX128;
-        }
-
+        uint256 feeGrowthGlobal = _calculateFeeGrowthGlobal(pool);
         uint256 liquidity = pool.liquidity();
         uint256 feesEarned = calculateFees(liquidity, feeGrowthGlobal);
+
         if (WBNBBalance - feesEarned < party.partyTarget) return;
         // Handle liquidity
         _handleLiquidity(recipient);
