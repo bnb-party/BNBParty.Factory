@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "./BNBPartySwaps.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 /// @title BNBPartyCreation
 /// @notice This abstract contract manages the creation pools within the BNB Party system.

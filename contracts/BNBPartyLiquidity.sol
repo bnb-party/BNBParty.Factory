@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "./BNBPartyLiquidityHelper.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 /// @title BNBPartyLiquidity
 /// @notice This abstract contract manages the creation and handling of liquidity pools within the BNB Party system.

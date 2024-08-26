@@ -43,7 +43,7 @@ abstract contract BNBPartyModifiers is BNBPartyState {
         _;
     }
 
-    modifier SwapRouterAlreadySet(
+    modifier swapRouterAlreadySet(
         ISwapRouter _swapRouter,
         ISwapRouter _newSwapRouter
     ) {

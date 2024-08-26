@@ -8,15 +8,15 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 /// @notice This contract is a basic ERC20 token with burnable capabilities, used in the BNB Party system.
 contract ERC20Token is ERC20, ERC20Burnable {
     /// @notice Constructs the ERC20 token with a name, symbol, and initial supply.
-    /// @param name The name of the token
-    /// @param symbol The symbol of the token
+    /// @param tokenName The name of the token
+    /// @param tokenSymbol The symbol of the token
     /// @param initialAmount The initial amount of tokens to mint to the deployer's address
     /// @dev The token name ends with " Party"
     constructor(
-        string memory name,
-        string memory symbol,
+        string memory tokenName,
+        string memory tokenSymbol,
         uint256 initialAmount
-    ) ERC20(string(abi.encodePacked(name, " Party")), symbol) {
+    ) ERC20(string(abi.encodePacked(tokenName, " Party")), tokenSymbol) {
         _mint(msg.sender, initialAmount); // Mint the initial supply to the deployer's address
     }
 }
