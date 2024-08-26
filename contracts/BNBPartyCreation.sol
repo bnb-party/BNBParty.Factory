@@ -11,14 +11,14 @@ abstract contract BNBPartyCreation is BNBPartySwaps {
     /// @return liquidityPool Address of the newly created liquidity pool
     /// @dev Sets the token amounts based on the balance and initializes the pool
     function _createFLP(address _token) internal returns (address liquidityPool) {
-        (address tokenA, address tokenB, uint160 sqrtPrice) = _getTokenPairAndPrice(_token);
+        (address token0, address token1, uint160 sqrtPrice) = _getTokenPairAndPrice(_token);
         // Determine the token amounts
-        (uint256 amount0, uint256 amount1) = _calculateAmounts(tokenA);
+        (uint256 amount0, uint256 amount1) = _calculateAmounts(token0);
         IERC20(_token).approve(address(BNBPositionManager), party.initialTokenAmount);
         liquidityPool = _createLP(
             BNBPositionManager,
-            tokenA,
-            tokenB,
+            token0,
+            token1,
             amount0,
             amount1,
             sqrtPrice,
@@ -75,16 +75,15 @@ abstract contract BNBPartyCreation is BNBPartySwaps {
         );
     }
 
-    /// @notice Calculates the amounts of token0 and token1 based on the balance of tokenA and tokenB.
-    /// @param tokenA Address of the first token.
+    /// @notice Calculates the token amounts for the liquidity pool.
+    /// @param token0 Address of the first token.
     /// @return amount0 The amount of token0.
     /// @return amount1 The amount of token1.
-    function _calculateAmounts(address tokenA) internal view returns (uint256 amount0, uint256 amount1) {
-        uint256 balanceA = IERC20(tokenA).balanceOf(address(this));
-        if (balanceA == party.initialTokenAmount) {
-            amount0 = party.initialTokenAmount; // Set amount0 if tokenA balance matches the initial amount
+    function _calculateAmounts(address token0) internal view returns (uint256 amount0, uint256 amount1) {
+        if (token0 != address(WBNB)) {
+            amount0 = party.initialTokenAmount; // Set amount0 if tokenA is not WBNB
         } else {
-            amount1 = party.initialTokenAmount; // Otherwise, set amount1
+            amount1 = party.initialTokenAmount; // Otherwise, set amount1 if tokenA is WBNB
         }
     }
 }
