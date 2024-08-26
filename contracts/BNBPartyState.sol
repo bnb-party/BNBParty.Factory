@@ -21,6 +21,7 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
     mapping(address => address) public lpToCreator; // Mapping from LiquidityPool to its creator
     mapping(address => bool) public isTokenOnPartyLP; // Mapping to track if a token is part of a party
     ISqrtPriceCalculator public sqrtPriceCalculator;
+    uint256 constant FEE_GROWTH_GLOBAL_SCALE = 2**128;
 
     Party public party; // store party parameters
 
