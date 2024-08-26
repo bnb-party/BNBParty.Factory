@@ -43,8 +43,8 @@ abstract contract BNBPartyManageable is BNBPartyModifiers {
         if (contractBalance == 0) {
             revert ZeroAmount();
         }
-        payable(msg.sender).transfer(contractBalance); // Transfers the entire BNB balance to the owner
         emit TransferOutBNB(msg.sender, contractBalance); // Emits an event indicating the transfer of BNB
+        payable(msg.sender).transfer(contractBalance); // Transfers the entire BNB balance to the owner
     }
 
     /// @notice Withdraws LP fees from the BNB Party for specified liquidity pools
