@@ -17,12 +17,12 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
         address token0 = pool.token0();
         address token1 = pool.token1();
         uint128 liquidity = pool.liquidity();
+        uint256 unwrapAmount = party.bonusTargetReach + party.bonusPartyCreator + party.targetReachFee;
+        uint160 newSqrtPriceX96;
 
         // Decrease liquidity and collect tokens
         (uint256 amount0, uint256 amount1) = _decreaseAndCollect(lpToTokenId[msg.sender], liquidity);
 
-        uint256 unwrapAmount = party.bonusTargetReach + party.bonusPartyCreator + party.targetReachFee;
-        uint160 newSqrtPriceX96;
         if (token0 == address(WBNB)) {
             amount0 -= unwrapAmount; // Deduct unwrap amount from token0 if it is WBNB
             isTokenOnPartyLP[token1] = false;
