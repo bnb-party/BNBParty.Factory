@@ -6,6 +6,8 @@ import "./BNBPartyLiquidityHelper.sol";
 /// @title BNBPartyLiquidity
 /// @notice This abstract contract manages the creation and handling of liquidity pools within the BNB Party system.
 abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
+    using SafeERC20 for IERC20;
+
     /// @notice Handles liquidity by decreasing the liquidity, collecting tokens, and creating a new liquidity pool.
     /// @param recipient Address receiving the bonus BNB
     /// @dev Decreases liquidity, collects tokens, creates a new pool, and sends bonuses
@@ -42,7 +44,8 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
         }
 
         // Approve tokens for the new liquidity pool creation
-        _approveTokens(token0, token1, amount0, amount1);
+        IERC20(token0).safeIncreaseAllowance(address(positionManager), amount0);
+        IERC20(token1).safeIncreaseAllowance(address(positionManager), amount1);
         // Create new Liquidity Pool
         _createLP(positionManager, token0, token1, amount0, amount1, newSqrtPriceX96, party.lpFee, party.lpTicks);
 
