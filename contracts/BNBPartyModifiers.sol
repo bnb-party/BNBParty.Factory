@@ -39,8 +39,8 @@ abstract contract BNBPartyModifiers is BNBPartyState {
     /// @notice Ensures the provided amount is not zero
     /// @dev Reverts if the amount is zero
     modifier notZeroBNB() {
-        if (address(this).balance == 0) revert ZeroAmount();
-        _;
+        if (address(this).balance > 0) _;
+        revert ZeroAmount();
     }
 
     /// @notice Ensures that some value (BNB) is sent with the transaction
