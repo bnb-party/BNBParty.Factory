@@ -36,6 +36,8 @@ abstract contract BNBPartyModifiers is BNBPartyState {
         _;
     }
 
+    /// @notice Ensures the provided amount is not zero
+    /// @dev Reverts if the amount is zero
     modifier notZeroBNB() {
         if (address(this).balance == 0) revert ZeroAmount();
         _;
@@ -48,6 +50,7 @@ abstract contract BNBPartyModifiers is BNBPartyState {
         _;
     }
 
+    /// @notice Ensures the swap router is not already set
     modifier swapRouterAlreadySet(
         ISwapRouter _swapRouter,
         ISwapRouter _newSwapRouter
