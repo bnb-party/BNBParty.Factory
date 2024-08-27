@@ -38,9 +38,11 @@ abstract contract BNBPartyManageable is BNBPartyModifiers {
 
     /// @notice Withdraws the balance of BNB from token creation fees
     /// @dev Reverts if the contract balance is zero
-    function withdrawFee() external onlyOwner notZeroBNB {
-        emit TransferOutBNB(msg.sender, address(this).balance); // Emits an event indicating the transfer of BNB
-        payable(msg.sender).transfer(address(this).balance); // Transfers the entire BNB balance to the owner
+    function withdrawFee() external onlyOwner {
+        if (address(this).balance > 0) {
+            emit TransferOutBNB(msg.sender, address(this).balance); // Emits an event indicating the transfer of BNB
+            payable(msg.sender).transfer(address(this).balance); // Transfers the entire BNB balance to the owner
+        }
     }
 
     /// @notice Withdraws LP fees from the BNB Party for specified liquidity pools
