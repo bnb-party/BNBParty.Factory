@@ -24,13 +24,10 @@ abstract contract BNBPartySwaps is BNBPartyView {
     /// @notice Transfers BNB to the specified recipient
     /// @param recipient Address receiving the BNB
     /// @param amount Amount of BNB to transfer
-    /// @dev Uses call to send BNB and reverts if the transfer fails
+    /// @dev Uses transfer to send BNB and reverts if the transfer fails
     function _transferBNB(address recipient, uint256 amount) private {
         emit TransferOutBNB(recipient, amount);
-        (bool success, ) = recipient.call{value: amount}("");
-        if (!success) {
-            revert BonusAmountTransferFailed();
-        }
+        payable(recipient).transfer(amount); // Transfer BNB to recipient
     }
 
     /// @notice Executes a swap from WBNB to another token
