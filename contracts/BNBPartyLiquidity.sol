@@ -2,11 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "./BNBPartyLiquidityHelper.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 
 /// @title BNBPartyLiquidity
 /// @notice This abstract contract manages the creation and handling of liquidity pools within the BNB Party system.
 abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
+    using SafeERC20 for IERC20;
+
     /// @notice Handles liquidity by decreasing the liquidity, collecting tokens, and creating a new liquidity pool.
     /// @param recipient Address receiving the bonus BNB
     /// @dev Decreases liquidity, collects tokens, creates a new pool, and sends bonuses
@@ -16,12 +17,12 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
         address token0 = pool.token0();
         address token1 = pool.token1();
         uint128 liquidity = pool.liquidity();
+        uint256 unwrapAmount = party.bonusTargetReach + party.bonusPartyCreator + party.targetReachFee;
+        uint160 newSqrtPriceX96;
 
         // Decrease liquidity and collect tokens
         (uint256 amount0, uint256 amount1) = _decreaseAndCollect(lpToTokenId[msg.sender], liquidity);
 
-        uint256 unwrapAmount = party.bonusTargetReach + party.bonusPartyCreator + party.targetReachFee;
-        uint160 newSqrtPriceX96;
         if (token0 == address(WBNB)) {
             amount0 -= unwrapAmount; // Deduct unwrap amount from token0 if it is WBNB
             isTokenOnPartyLP[token1] = false;
@@ -43,7 +44,8 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
         }
 
         // Approve tokens for the new liquidity pool creation
-        _approveTokens(token0, token1, amount0, amount1);
+        IERC20(token0).safeIncreaseAllowance(address(positionManager), amount0);
+        IERC20(token1).safeIncreaseAllowance(address(positionManager), amount1);
         // Create new Liquidity Pool
         _createLP(positionManager, token0, token1, amount0, amount1, newSqrtPriceX96, party.lpFee, party.lpTicks);
 
