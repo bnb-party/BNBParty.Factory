@@ -106,6 +106,39 @@ describe("BNBPartyFactory", function () {
         await bnbPartyFactory.setBNBPartySwapRouter(await BNBSwapRouter.getAddress())
     })
 
+    it("should set pause", async function () {
+        await bnbPartyFactory.pause()
+        expect(await bnbPartyFactory.paused()).to.be.true
+        await bnbPartyFactory.unpause()
+    })
+
+    it("should unpause", async function () {
+        await bnbPartyFactory.pause()
+        await bnbPartyFactory.unpause()
+        expect(await bnbPartyFactory.paused()).to.be.false
+    })
+
+    it("should revert party creation if paused", async function () {
+        await bnbPartyFactory.pause()
+        await expect(
+            bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
+        ).to.be.revertedWithCustomError(bnbPartyFactory, "EnforcedPause")
+        await bnbPartyFactory.unpause()
+    })
+
+    it("should revert join party if paused", async function () {
+        await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
+        await bnbPartyFactory.pause()
+        const tokenId = (await BNBPositionManager.totalSupply()) - 1n
+        const position = await BNBPositionManager.positions(tokenId)
+        const MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
+        await expect(bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget })).to.be.revertedWithCustomError(
+            bnbPartyFactory,
+            "EnforcedPause"
+        )
+        await bnbPartyFactory.unpause()
+    })
+
     describe("Second Liquidity Pool", function () {
         let MEME: string
         let tokenId: string
@@ -148,7 +181,7 @@ describe("BNBPartyFactory", function () {
             const lpAddress = await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
             const balance = await weth9.balanceOf(lpAddress)
             const percentFee = ethers.parseEther("0.14") // target 13 + 1 BNB - 1% fee
-            expect(balance).to.be.equal(BNBToTarget - returnFeeAmount - bonusFee - targetReachFee - percentFee - 1n)
+            expect(balance).to.be.equal(BNBToTarget - returnFeeAmount - bonusFee - targetReachFee - percentFee - 2n)
         })
 
         it("should send MEME to new LP", async () => {
