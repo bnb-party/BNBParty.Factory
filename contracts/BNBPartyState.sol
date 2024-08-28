@@ -6,7 +6,6 @@ import "@bnb-party/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "./interfaces/ISqrtPriceCalculator.sol";
 import "./interfaces/INonfungiblePositionManager.sol";
 import "./interfaces/IBNBPartyFactory.sol";
-import "./interfaces/IUniswapV3Pool.sol";
 import "./interfaces/IWBNB.sol";
 
 /// @title BNBPartyState
@@ -20,11 +19,11 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
     mapping(address => uint256) public lpToTokenId; // Mapping from LiquidityPool to its NFT tokenId
     mapping(address => address) public lpToCreator; // Mapping from LiquidityPool to its creator
     mapping(address => bool) public isTokenOnPartyLP; // Mapping to track if a token is part of a party
-    ISqrtPriceCalculator public sqrtPriceCalculator;
     uint256 constant FEE_GROWTH_GLOBAL_SCALE = 2**128;
 
     Party public party; // store party parameters
 
+    ISqrtPriceCalculator public immutable sqrtPriceCalculator; // Sqrt price calculator contract
     IWBNB public immutable WBNB; // Wrapped BNB token contract
 
     /// @notice Constructor to initialize the BNBPartyState contract
