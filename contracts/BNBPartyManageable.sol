@@ -27,24 +27,23 @@ abstract contract BNBPartyManageable is BNBPartyModifiers, Pausable {
     /// @dev Reverts if the new swap router is identical to the current one
     function setBNBPartySwapRouter(
         ISwapRouter _swapRouter
-    ) external onlyOwner SwapRouterAlreadySet(_swapRouter, BNBSwapRouter) {
+    ) external onlyOwner swapRouterAlreadySet(_swapRouter, BNBSwapRouter) {
         BNBSwapRouter = _swapRouter;
     }
 
     function setSwapRouter(
         ISwapRouter _swapRouter
-    ) external onlyOwner SwapRouterAlreadySet(_swapRouter, swapRouter) {
+    ) external onlyOwner swapRouterAlreadySet(_swapRouter, swapRouter) {
         swapRouter = _swapRouter;
     }
 
     /// @notice Withdraws the balance of BNB from token creation fees
     /// @dev Reverts if the contract balance is zero
     function withdrawFee() external onlyOwner {
-        if (address(this).balance == 0) {
-            revert ZeroAmount();
+        if (address(this).balance > 0) {
+            emit TransferOutBNB(msg.sender, address(this).balance); // Emits an event indicating the transfer of BNB
+            payable(msg.sender).transfer(address(this).balance); // Transfers the entire BNB balance to the owner
         }
-        payable(msg.sender).transfer(address(this).balance); // Transfers the entire BNB balance to the owner
-        emit TransferOutBNB(msg.sender, address(this).balance); // Emits an event indicating the transfer of BNB
     }
 
     /// @notice Withdraws LP fees from the BNB Party for specified liquidity pools

@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 /// @title BNBPartyLiquidityHelper
 /// @notice This abstract contract provides helper functions for managing liquidity within the BNB Party system
 /// @dev Inherits from BNBPartyCreation and uses Uniswap's INonfungiblePositionManager for liquidity management
-abstract contract BNBPartyLiquidityHelper is BNBPartyCreation {
+abstract contract BNBPartyLiquidityHelper is BNBPartyCreation {    
     /// @notice Decreases liquidity from a position and collects the resulting tokens
     /// @param tokenId The ID of the liquidity position to decrease
     /// @param liquidity The amount of liquidity to decrease
@@ -37,21 +37,6 @@ abstract contract BNBPartyLiquidityHelper is BNBPartyCreation {
                 amount1Max: uint128(amount1) // Maximum amount of token1 to collect
             })
         );
-    }
-
-    /// @notice Approves tokens for the position manager to spend
-    /// @param token0 The address of the first token
-    /// @param token1 The address of the second token
-    /// @param amount0 The amount of token0 to approve
-    /// @param amount1 The amount of token1 to approve
-    function _approveTokens(
-        address token0,
-        address token1,
-        uint256 amount0,
-        uint256 amount1
-    ) internal {
-        IERC20(token0).approve(address(positionManager), amount0);
-        IERC20(token1).approve(address(positionManager), amount1);
     }
 
     /// @notice Burns all MEME tokens held by this contract
