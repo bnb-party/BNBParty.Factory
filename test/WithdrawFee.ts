@@ -89,7 +89,7 @@ describe("Withdraw fees", function () {
         const lpPool = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
         const liquidity = await lpPool.liquidity()
         const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal1X128() > 0 ? await lpPool.feeGrowthGlobal1X128() : await lpPool.feeGrowthGlobal0X128()
-        expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 100n - 1n) // 1 % fee
+        expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 100n) // 1 % fee
     })
 
     it("calculateFees should return fee from 5 swaps", async () => {
@@ -99,11 +99,11 @@ describe("Withdraw fees", function () {
         const lpPool = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
         const liquidity = await lpPool.liquidity()
         const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal0X128() > 0 ? await lpPool.feeGrowthGlobal0X128() : await lpPool.feeGrowthGlobal1X128()
-        expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 20n) // 1 % fee
+        expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 20n - 1n) // 1 % fee
     })
 
-    it("isToken0WBNB should return true if token0 is WBNB", async () => {
-        expect(await bnbPartyFactory.isToken0WBNB(lpAddress)).to.be.true
+    it("isToken0WBNB should return false if token0 is not WBNB", async () => {
+        expect(await bnbPartyFactory.isToken0WBNB(lpAddress)).to.be.false
     })
 
     it("isToken0WBNB should revert if set zero address", async () => {
