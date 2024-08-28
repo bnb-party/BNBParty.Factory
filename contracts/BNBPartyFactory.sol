@@ -38,6 +38,7 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
         override
         nonReentrant
         insufficientBNB
+        whenNotPaused
         notZeroAddress(address(BNBPositionManager))
         returns (IERC20 newToken)
     {
@@ -54,7 +55,7 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
 
     /// @notice Handles token swaps for the liquidity pool
     /// @param recipient The address of the entity making the exchange
-    function handleSwap(address recipient) external override onlyParty notZeroAddress(recipient) {
+    function handleSwap(address recipient) external override onlyParty notZeroAddress(recipient) whenNotPaused {
         IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
 
         uint256 WBNBBalance = WBNB.balanceOf(msg.sender);

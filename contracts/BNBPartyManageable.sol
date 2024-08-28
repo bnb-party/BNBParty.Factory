@@ -2,10 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "./BNBPartyModifiers.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /// @title BNBPartyManageable
 /// @notice This abstract contract provides management functions for setting position managers, swap routers, and withdrawing fees in the BNBParty system.
-abstract contract BNBPartyManageable is BNBPartyModifiers {
+abstract contract BNBPartyManageable is BNBPartyModifiers, Pausable {
     /// @notice Sets the non-fungible position managers for BNB Party and Pancakeswap V3
     /// @param _BNBPositionManager Address of the new BNB Party non-fungible position manager
     /// @param _positionManager Address of the new Pancakeswap V3 non-fungible position manager
@@ -58,6 +59,16 @@ abstract contract BNBPartyManageable is BNBPartyModifiers {
     /// @param liquidityPools Array of liquidity pool addresses from which fees will be withdrawn
     function withdrawLPFee(address[] calldata liquidityPools) external onlyOwner {
         _withdrawLPFees(liquidityPools, positionManager);
+    }
+
+    /// @notice Pauses the contract
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// @notice Unpauses the contract
+    function unpause() external onlyOwner {
+        _unpause();
     }
 
     /// @notice Internal function to withdraw LP fees from specified liquidity pools
