@@ -57,7 +57,7 @@ async function getTokenBalances(lpAddress: string, token: any) {
         lpPool.feeGrowthGlobal0X128(),
         lpPool.feeGrowthGlobal1X128(),
         lpPool.liquidity(),
-        bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress),
+        bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress, BNBPositionManager),
     ])
     const token0 = await lpPool.token0()
     let wbnbFee, memeFee
@@ -125,14 +125,12 @@ async function test() {
     for (let i = 1; i <= segments; ++i) {
         const swapAmount = ethers.parseUnits("5.06", 17)
         await bnbPartyFactory.joinParty(MEME, 0, { value: swapAmount })
-
-        const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
-        const slot0 = await lpContract.slot0()
-        const sqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
-        const { priceMemeInWbnb, priceWbnbInMeme } = calculatePrices(sqrtPriceX96, await lpContract.token0(), await lpContract.token1(), MEME)
-
         const isParty = await bnbPartyFactory.isTokenOnPartyLP(MEME)
         if (isParty) {
+            const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
+            const slot0 = await lpContract.slot0()
+            const sqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
+            const { priceMemeInWbnb, priceWbnbInMeme } = calculatePrices(sqrtPriceX96, await lpContract.token0(), await lpContract.token1(), MEME)
             await logData(i, MEMEAmount, WBNBAmount, sqrtPriceX96, priceMemeInWbnb, priceWbnbInMeme, initialMEMEAmount)
         }
         else { 
