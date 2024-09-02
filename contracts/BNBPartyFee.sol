@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./BNBPartyModifiers.sol";
 import "./interfaces/IUniswapV3Pool.sol";
+import "hardhat/console.sol";
 
 /// @title BNBPartyFee
 /// @notice This abstract contract provides internal functions for calculating fees in the BNB Party system.
