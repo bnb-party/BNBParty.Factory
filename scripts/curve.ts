@@ -114,17 +114,11 @@ async function test() {
     const lpAddress = await v3PartyFactory.getPool(position.token0, position.token1, FeeAmount.HIGH)
     lpContract = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
 
-    const { MEMEAmount: initialMEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
-    const slot0 = await lpContract.slot0()
-    const sqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
-    const { priceMemeInWbnb, priceWbnbInMeme } = calculatePrices(sqrtPriceX96, await lpContract.token0(), await lpContract.token1(), MEME)
-
-    await logData(0, initialMEMEAmount, WBNBAmount, sqrtPriceX96, priceMemeInWbnb, priceWbnbInMeme, initialMEMEAmount)
-
+    const { MEMEAmount: initialMEMEAmount,  } = await getTokenBalances(lpAddress, token)
     const segments = 26
-    for (let i = 1; i <= segments; ++i) {
+    for (let i = 0; i <= segments; ++i) {
         const swapAmount = ethers.parseUnits("5.06", 17)
-        await bnbPartyFactory.joinParty(MEME, 0, { value: swapAmount })
+        if( i !== 0) await bnbPartyFactory.joinParty(MEME, 0, { value: swapAmount })
         const isParty = await bnbPartyFactory.isTokenOnPartyLP(MEME)
         if (isParty) {
             const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
