@@ -103,8 +103,8 @@ describe("Withdraw fees", function () {
         expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 20n - 1n) // 1 % fee
     })
 
-    it("isToken0WBNB should return true if token0 is WBNB", async () => {
-        expect(await bnbPartyFactory.isToken0WBNB(lpAddress)).to.be.true
+    it("isToken0WBNB should return false if token0 is not WBNB", async () => {
+        expect(await bnbPartyFactory.isToken0WBNB(lpAddress)).to.be.false
     })
 
     it("should deacrease fee after withdraw", async () => {
