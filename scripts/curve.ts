@@ -53,15 +53,15 @@ async function getTokenBalances(lpAddress: string, token: any) {
     ])
 
     const lpPool = await ethers.getContractAt("UniswapV3Pool", lpAddress)
+    const token0 = await lpPool.token0()
+    const isPartyPool = await bnbPartyFactory.isTokenOnPartyLP(token0 === wethAddress ? await token.getAddress() : token0)
     const [feeGrowthGlobal0X128, feeGrowthGlobal1X128, liquidity, getFeeGlobal] = await Promise.all([
         lpPool.feeGrowthGlobal0X128(),
         lpPool.feeGrowthGlobal1X128(),
         lpPool.liquidity(),
-        bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress, BNBPositionManager),
+        bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress, isPartyPool ? BNBPositionManager : positionManager),
     ])
-    const token0 = await lpPool.token0()
     let wbnbFee, memeFee
-
     if (token0 === wethAddress) {
         wbnbFee = await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobal0X128 - getFeeGlobal.feeGrowthInside0LastX128)
         memeFee = await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobal1X128 - getFeeGlobal.feeGrowthInside1LastX128)
