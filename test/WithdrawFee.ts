@@ -72,13 +72,14 @@ describe("Withdraw fees", function () {
         const lpPool = (await ethers.getContractAt("UniswapV3Pool", secondLP)) as any as IUniswapV3Pool
         const token0 = await lpPool.token0()
         await bnbPartyFactory.withdrawLPFee([secondLP])
-        const liquidity = await lpPool.liquidity()
+        const collectedFee = await bnbPartyFactory.getFeeGrowthInsideLastX128(secondLP, positionManager)
+        const fee = collectedFee.feeGrowthInside0LastX128 == 0n ? collectedFee.feeGrowthInside1LastX128 : collectedFee.feeGrowthInside0LastX128
         if (token0 == (await weth9.getAddress())) {
             const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal0X128()
-            expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.deep.equal(ethers.parseEther("1") / 100n - 1n)
+            expect(feeGrowthGlobalX128).to.be.deep.equal(fee)
         } else {
             const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal1X128()
-            expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.deep.equal(ethers.parseEther("1") / 100n - 1n)
+            expect(feeGrowthGlobalX128).to.be.deep.equal(fee)
         }
     })
 
