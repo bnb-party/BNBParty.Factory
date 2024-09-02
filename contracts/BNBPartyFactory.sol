@@ -21,8 +21,9 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
     /// @param _WBNB The address of the Wrapped BNB (WBNB) token contract
     constructor(
         Party memory _party,
-        IWBNB _WBNB
-    ) BNBPartyState(_party, _WBNB) {}
+        IWBNB _WBNB,
+        ISqrtPriceCalculator _sqrtPriceCalculator
+    ) BNBPartyState(_party, _WBNB, _sqrtPriceCalculator) {}
 
     /// @notice Creates a new party with a custom ERC20 token and initializes its liquidity pool
     /// @param name The name of the new ERC20 token
@@ -37,6 +38,7 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
         override
         nonReentrant
         insufficientBNB
+        whenNotPaused
         notZeroAddress(address(BNBPositionManager))
         returns (IERC20 newToken)
     {
@@ -53,23 +55,14 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
 
     /// @notice Handles token swaps for the liquidity pool
     /// @param recipient The address of the entity making the exchange
-    function handleSwap(
-        address recipient
-    ) external override onlyParty notZeroAddress(recipient) {
+    function handleSwap(address recipient) external override onlyParty notZeroAddress(recipient) whenNotPaused {
         IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
 
         uint256 WBNBBalance = WBNB.balanceOf(msg.sender);
-        uint256 feeGrowthGlobal = 0;
-        if (pool.token0() == address(WBNB)) {
-            (uint256 feeGrowthInside0LastX128, ) = _getFeeGrowthInsideLastX128(pool);
-            feeGrowthGlobal = pool.feeGrowthGlobal0X128() - feeGrowthInside0LastX128;
-        } else {
-            (, uint256 feeGrowthInside1LastX128) = _getFeeGrowthInsideLastX128(pool);
-            feeGrowthGlobal = pool.feeGrowthGlobal1X128() - feeGrowthInside1LastX128;
-        }
-
+        uint256 feeGrowthGlobal = _calculateFeeGrowthGlobal(pool);
         uint256 liquidity = pool.liquidity();
         uint256 feesEarned = calculateFees(liquidity, feeGrowthGlobal);
+
         if (WBNBBalance - feesEarned < party.partyTarget) return;
         // Handle liquidity
         _handleLiquidity(recipient);

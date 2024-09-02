@@ -3,10 +3,9 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@bnb-party/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-
+import "./interfaces/ISqrtPriceCalculator.sol";
 import "./interfaces/INonfungiblePositionManager.sol";
 import "./interfaces/IBNBPartyFactory.sol";
-import "./interfaces/IUniswapV3Pool.sol";
 import "./interfaces/IWBNB.sol";
 
 /// @title BNBPartyState
@@ -20,17 +19,22 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
     mapping(address => uint256) public lpToTokenId; // Mapping from LiquidityPool to its NFT tokenId
     mapping(address => address) public lpToCreator; // Mapping from LiquidityPool to its creator
     mapping(address => bool) public isTokenOnPartyLP; // Mapping to track if a token is part of a party
+    uint256 constant FEE_GROWTH_GLOBAL_SCALE = 2**128;
 
     Party public party; // store party parameters
 
+    ISqrtPriceCalculator public immutable sqrtPriceCalculator; // Sqrt price calculator contract
     IWBNB public immutable WBNB; // Wrapped BNB token contract
 
     /// @notice Constructor to initialize the BNBPartyState contract
     /// @param _party Struct containing party parameters
     /// @param _WBNB Address of the Wrapped BNB token contract
-    constructor(Party memory _party, IWBNB _WBNB) Ownable(_msgSender()) {
+    constructor(Party memory _party, IWBNB _WBNB, ISqrtPriceCalculator _sqrtPriceCalculator) Ownable(_msgSender()) {
         if (address(_WBNB) == address(0)) {
             revert ZeroAddress(); // Reverts if the WBNB address is zero
+        }
+        if(address(_sqrtPriceCalculator) == address(0)) {
+            revert ZeroAddress(); // Reverts if the sqrt price calculator address is zero
         }
         if (_party.partyTarget == 0) {
             revert ZeroAmount(); // Reverts if the party target is zero
@@ -46,5 +50,6 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
         }
         party = _party;
         WBNB = _WBNB;
+        sqrtPriceCalculator = _sqrtPriceCalculator;
     }
 }

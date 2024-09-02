@@ -8,16 +8,19 @@ enum FeeAmount {
 
 // deploy BNBPartyFactory contract
 async function main() {
-    const partyTarget = ethers.parseEther("1.1")
-    const tokenCreationFee = ethers.parseUnits("1", 16)
-    const returnFeeAmount = ethers.parseUnits("2", 16)
-    const bonusFee = ethers.parseUnits("1", 17)
-    const initialTokenAmount = "10000000000000000000000000"
-    const sqrtPriceX96 = "25052911542910170730777872"
-    const targetReachFee = ethers.parseUnits("1", 17)
+    const tokenCreationFee = ethers.parseUnits("1", 16) // 0.01 BNB token creation fee
+    const returnFeeAmount = ethers.parseUnits("5", 16) // 0.05 BNB return fee (bonusTargetReach)
+    const bonusFee = ethers.parseUnits("1", 17) // 0.01 BNB bonus fee (bonusPartyCreator)
+    const targetReachFee = ethers.parseUnits("8.5", 17) // 0.85 BNB target reach fee
+    const initialTokenAmount = "1000000000000000000000000000"
+    const sqrtPriceX96 = "1252685732681638336686364"
     const tWBNB = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd"
     const pancakeSwapManager = "0x427bF5b37357632377eCbEC9de3626C71A5396c1"
+    const partyTarget = ethers.parseEther("13")
 
+    const sqrtPriceCalculatorContract = await ethers.getContractFactory("SqrtPriceCalculator")
+    const sqrtPriceCalculator = await sqrtPriceCalculatorContract.deploy()
+    console.log("SqrtPriceCalculator deployed to:", await sqrtPriceCalculator.getAddress())
     const BNBPartyFactoryContract = await ethers.getContractFactory("BNBPartyFactory")
     const bnbPartyFactory = await BNBPartyFactoryContract.deploy(
         {
@@ -30,10 +33,11 @@ async function main() {
             bonusTargetReach: returnFeeAmount,
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
-            tickLower: "-92200",
-            tickUpper: "0",
+            partyTicks: { tickLower: "-214200", tickUpper: "195600" },
+            lpTicks: { tickLower: "-214200", tickUpper: "201400" }
         },
-        tWBNB
+        tWBNB,
+        await sqrtPriceCalculator.getAddress()
     )
     console.log("BNBPartyFactory deployed to:", await bnbPartyFactory.getAddress())
 

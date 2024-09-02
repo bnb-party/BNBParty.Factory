@@ -36,14 +36,15 @@ abstract contract BNBPartyModifiers is BNBPartyState {
         _;
     }
 
-    /// @notice Ensures that some value (ETH) is sent with the transaction
+    /// @notice Ensures that some value (BNB) is sent with the transaction
     /// @dev Reverts if no value is sent
     modifier notZeroValue() {
         if (msg.value == 0) revert ZeroAmount();
         _;
     }
 
-    modifier SwapRouterAlreadySet(
+    /// @notice Ensures the swap router is not already set
+    modifier swapRouterAlreadySet(
         ISwapRouter _swapRouter,
         ISwapRouter _newSwapRouter
     ) {

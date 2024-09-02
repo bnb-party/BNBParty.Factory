@@ -4,11 +4,9 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { IUniswapV3Pool, MockContract } from "../typechain-types"
 import {
     FeeAmount,
-    getDataHexString,
     bnbPartyFactory,
     v3PartyFactory,
     BNBPositionManager,
-    swapRouter,
     weth9,
     deployContracts,
 } from "./helper"
@@ -25,6 +23,8 @@ describe("Withdraw fees", function () {
     const name = "Party"
     const symbol = "Token"
     const BNBToTarget: bigint = partyTarget + ethers.parseEther("1")
+    const tickLower = -214200
+    const tickUpper = 201400
 
     beforeEach(async () => {
         signers = await ethers.getSigners()
@@ -63,7 +63,7 @@ describe("Withdraw fees", function () {
         const partyLP = await v3PartyFactory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
         await bnbPartyFactory.withdrawPartyLPFee([partyLP])
         const balanceAfter = await weth9.balanceOf(await signers[0].getAddress())
-        expect(balanceAfter).to.be.equal(balanceBefore + expectedFee - 1n)
+        expect(balanceAfter).to.be.equal(balanceBefore + expectedFee)
     })
 
     it("should revert LPNotAtParty", async () => {
@@ -88,7 +88,7 @@ describe("Withdraw fees", function () {
         await bnbPartyFactory.joinParty(MEME, 0, { value: amountIn })
         const lpPool = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
         const liquidity = await lpPool.liquidity()
-        const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal1X128()
+        const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal1X128() > 0 ? await lpPool.feeGrowthGlobal1X128() : await lpPool.feeGrowthGlobal0X128()
         expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 100n) // 1 % fee
     })
 
@@ -98,7 +98,7 @@ describe("Withdraw fees", function () {
         }
         const lpPool = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
         const liquidity = await lpPool.liquidity()
-        const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal0X128()
+        const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal0X128() > 0 ? await lpPool.feeGrowthGlobal0X128() : await lpPool.feeGrowthGlobal1X128()
         expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 20n - 1n) // 1 % fee
     })
 
@@ -124,10 +124,9 @@ describe("Withdraw fees", function () {
             position.token1 == (await weth9.getAddress())
                 ? await lpPool.feeGrowthGlobal1X128()
                 : await lpPool.feeGrowthGlobal0X128()
-        const collectedFee = await bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress)
-        expect(
-            await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128 - collectedFee.feeGrowthInside0LastX128)
-        ).to.be.equal(0)
+        const collectedFee = await bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress, BNBPositionManager)
+        const fee = collectedFee.feeGrowthInside0LastX128 == 0n ? collectedFee.feeGrowthInside1LastX128 : collectedFee.feeGrowthInside0LastX128
+        expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128 - fee)).to.be.equal(0)
     })
 
     it("should revert zero lenght array", async () => {
