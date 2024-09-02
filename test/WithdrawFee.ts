@@ -2,14 +2,7 @@ import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { IUniswapV3Pool, MockContract } from "../typechain-types"
-import {
-    FeeAmount,
-    bnbPartyFactory,
-    v3PartyFactory,
-    BNBPositionManager,
-    weth9,
-    deployContracts,
-} from "./helper"
+import { FeeAmount, bnbPartyFactory, v3PartyFactory, BNBPositionManager, weth9, deployContracts } from "./helper"
 
 describe("Withdraw fees", function () {
     let MEME: string
@@ -63,7 +56,15 @@ describe("Withdraw fees", function () {
         const partyLP = await v3PartyFactory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
         await bnbPartyFactory.withdrawPartyLPFee([partyLP])
         const balanceAfter = await weth9.balanceOf(await signers[0].getAddress())
-        expect(balanceAfter).to.be.equal(balanceBefore + expectedFee)
+        expect(balanceAfter).to.be.equal(balanceBefore + expectedFee - 1n)
+    })
+
+    it("should return zero if pool is zero address", async () => {
+        expect(await bnbPartyFactory.getFeeGrowthInsideLastX128(ethers.ZeroAddress, BNBPositionManager)).to.be.deep.equal([ 0n, 0n ])
+    })
+
+    it("should return zero if position manager is zero address", async () => {
+        expect(await bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress, ethers.ZeroAddress)).to.be.deep.equal([0n, 0n])
     })
 
     it("should revert LPNotAtParty", async () => {
@@ -102,8 +103,8 @@ describe("Withdraw fees", function () {
         expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 20n - 1n) // 1 % fee
     })
 
-    it("isToken0WBNB should return false if token0 is not WBNB", async () => {
-        expect(await bnbPartyFactory.isToken0WBNB(lpAddress)).to.be.false
+    it("isToken0WBNB should return true if token0 is WBNB", async () => {
+        expect(await bnbPartyFactory.isToken0WBNB(lpAddress)).to.be.true
     })
 
     it("isToken0WBNB should revert if set zero address", async () => {

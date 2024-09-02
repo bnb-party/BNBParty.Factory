@@ -13,6 +13,7 @@ import {
     BNBSwapRouter,
     weth9,
     deployContracts,
+    deployBNBPartyFactory,
 } from "./helper"
 
 const POOL_BYTECODE_HASH = keccak256(bytecode)
@@ -77,6 +78,104 @@ describe("BNBPartyFactory", function () {
         await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
         const balanceAfter = await ethers.provider.getBalance(await bnbPartyFactory.getAddress())
         expect(balanceAfter).to.be.equal(balanceBefore + tokenCreationFee)
+    })
+
+    it("should revert WBNB zero address", async function () {
+        const sqrtAddress = "0x0000000000000000000000000000000000000001"
+        await expect(
+            deployBNBPartyFactory(
+                partyTarget,
+                tokenCreationFee,
+                returnFeeAmount,
+                bonusFee,
+                targetReachFee,
+                initialTokenAmount,
+                sqrtPriceX96,
+                ethers.ZeroAddress,
+                sqrtAddress
+            )
+        ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAddress")
+    })
+
+    it("should revert sqrtPriceCalculator zero address", async function () {
+        const WBNB = "0x0000000000000000000000000000000000000001"
+        await expect(
+            deployBNBPartyFactory(
+                partyTarget,
+                tokenCreationFee,
+                returnFeeAmount,
+                bonusFee,
+                targetReachFee,
+                initialTokenAmount,
+                sqrtPriceX96,
+                WBNB,
+                ethers.ZeroAddress
+            )
+        ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAddress")
+    })
+
+    it("should revert zero target", async function () {
+        await expect(
+            deployBNBPartyFactory(
+                0n,
+                tokenCreationFee,
+                returnFeeAmount,
+                bonusFee,
+                targetReachFee,
+                initialTokenAmount,
+                sqrtPriceX96,
+                await weth9.getAddress(),
+                await v3Factory.getAddress()
+            )
+        ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAmount")
+    })
+
+    it("should revert zero initialTokenAmount", async function () {
+        await expect(
+            deployBNBPartyFactory(
+                partyTarget,
+                tokenCreationFee,
+                returnFeeAmount,
+                bonusFee,
+                targetReachFee,
+                "0",
+                sqrtPriceX96,
+                await weth9.getAddress(),
+                await v3Factory.getAddress()
+            )
+        ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAmount")
+    })
+
+    it("should revert zero sqrtPriceX96", async function () {
+        await expect(
+            deployBNBPartyFactory(
+                partyTarget,
+                tokenCreationFee,
+                returnFeeAmount,
+                bonusFee,
+                targetReachFee,
+                initialTokenAmount,
+                "0",
+                await weth9.getAddress(),
+                await v3Factory.getAddress()
+            )
+        ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAmount")
+    })
+
+    it("should revert if target is less than fees", async function () {
+        await expect(
+            deployBNBPartyFactory(
+                bonusFee,
+                tokenCreationFee,
+                returnFeeAmount,
+                bonusFee,
+                targetReachFee,
+                initialTokenAmount,
+                sqrtPriceX96,
+                await weth9.getAddress(),
+                await v3Factory.getAddress()
+            )
+        ).to.be.revertedWithCustomError(bnbPartyFactory, "BonusGreaterThanTarget")
     })
 
     it("should revert if not enough BNB is sent", async function () {
