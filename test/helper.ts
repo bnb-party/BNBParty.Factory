@@ -63,7 +63,7 @@ export async function deployContracts(partyTarget = ethers.parseEther("90")) {
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
             partyTicks: { tickLower: "-214200", tickUpper: "195600" },
-            lpTicks: { tickLower: "-214200", tickUpper: "201400" }
+            lpTicks: { tickLower: "-214200", tickUpper: "201400" },
         },
         await weth9.getAddress(),
         await sqrtPriceCalculator.getAddress()
@@ -71,7 +71,10 @@ export async function deployContracts(partyTarget = ethers.parseEther("90")) {
 
     // Deploy Uniswap V3 Factory
     const v3PartyFactoryContract = await ethers.getContractFactory(FactoryArtifact.abi, FactoryArtifact.bytecode)
-    const v3FactoryContract = await ethers.getContractFactory(ClassicFactoryArtifact.abi, ClassicFactoryArtifact.bytecode)
+    const v3FactoryContract = await ethers.getContractFactory(
+        ClassicFactoryArtifact.abi,
+        ClassicFactoryArtifact.bytecode
+    )
     v3Factory = (await v3FactoryContract.deploy()) as UniswapV3Factory
 
     v3PartyFactory = (await v3PartyFactoryContract.deploy(await bnbPartyFactory.getAddress())) as UniswapV3Factory
@@ -81,7 +84,10 @@ export async function deployContracts(partyTarget = ethers.parseEther("90")) {
     tokenPositionDescriptor = (await TokenPositionDescriptor.deploy()) as MockNonfungibleTokenPositionDescriptor
 
     // Deploy Position Manager
-    const ManagerContract = await ethers.getContractFactory(ClassicNonfungiblePositionManager.abi, ClassicNonfungiblePositionManager.bytecode)
+    const ManagerContract = await ethers.getContractFactory(
+        ClassicNonfungiblePositionManager.abi,
+        ClassicNonfungiblePositionManager.bytecode
+    )
     positionManager = (await ManagerContract.deploy(
         await v3Factory.getAddress(),
         await weth9.getAddress(),
@@ -113,4 +119,35 @@ export async function deployContracts(partyTarget = ethers.parseEther("90")) {
     // Set Swap Router in BNBPartyFactory
     await bnbPartyFactory.setBNBPartySwapRouter(await BNBSwapRouter.getAddress())
     await bnbPartyFactory.setSwapRouter(await swapRouter.getAddress())
+}
+
+export async function deployBNBPartyFactory(
+    partyTarget: bigint,
+    tokenCreationFee: bigint,
+    returnFeeAmount: bigint,
+    bonusFee: bigint,
+    targetReachFee: bigint,
+    initialTokenAmount: string,
+    sqrtPriceX96: string,
+    WBNB: string,
+    sqrtPriceCalculator: string
+) {
+    const BNBPartyFactoryContract = await ethers.getContractFactory("BNBPartyFactory")
+    return BNBPartyFactoryContract.deploy(
+        {
+            partyTarget: partyTarget,
+            createTokenFee: tokenCreationFee,
+            partyLpFee: FeeAmount.HIGH,
+            lpFee: FeeAmount.HIGH,
+            initialTokenAmount: initialTokenAmount,
+            sqrtPriceX96: sqrtPriceX96,
+            bonusTargetReach: returnFeeAmount,
+            bonusPartyCreator: bonusFee,
+            targetReachFee: targetReachFee,
+            partyTicks: { tickLower: "-214200", tickUpper: "195600" },
+            lpTicks: { tickLower: "-214200", tickUpper: "201400" },
+        },
+        WBNB,
+        sqrtPriceCalculator
+    )
 }

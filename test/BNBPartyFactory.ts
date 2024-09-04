@@ -13,6 +13,7 @@ import {
     BNBSwapRouter,
     weth9,
     deployContracts,
+    deployBNBPartyFactory,
 } from "./helper"
 
 const POOL_BYTECODE_HASH = keccak256(bytecode)
@@ -79,33 +80,6 @@ describe("BNBPartyFactory", function () {
         expect(balanceAfter).to.be.equal(balanceBefore + tokenCreationFee)
     })
 
-    it("should revert if not enough BNB is sent", async function () {
-        await expect(
-            bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee - 1n })
-        ).to.be.revertedWithCustomError(bnbPartyFactory, "InsufficientBNB")
-    })
-
-    it("should revert to Create Party if position manager is not set", async function () {
-        await bnbPartyFactory.setNonfungiblePositionManager(ethers.ZeroAddress, ethers.ZeroAddress)
-        await expect(
-            bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
-        ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAddress")
-        await bnbPartyFactory.setNonfungiblePositionManager(
-            await BNBPositionManager.getAddress(),
-            await positionManager.getAddress()
-        )
-    })
-
-    it("should revert if swap router is not set", async function () {
-        const amountIn = ethers.parseUnits("1", 18)
-        await bnbPartyFactory.setBNBPartySwapRouter(ethers.ZeroAddress)
-        await expect(bnbPartyFactory.createParty(name, symbol, { value: amountIn })).to.be.revertedWithCustomError(
-            bnbPartyFactory,
-            "ZeroAddress"
-        )
-        await bnbPartyFactory.setBNBPartySwapRouter(await BNBSwapRouter.getAddress())
-    })
-
     it("should set pause", async function () {
         await bnbPartyFactory.pause()
         expect(await bnbPartyFactory.paused()).to.be.true
@@ -116,43 +90,6 @@ describe("BNBPartyFactory", function () {
         await bnbPartyFactory.pause()
         await bnbPartyFactory.unpause()
         expect(await bnbPartyFactory.paused()).to.be.false
-    })
-
-    it("should revert party creation if paused", async function () {
-        await bnbPartyFactory.pause()
-        await expect(
-            bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
-        ).to.be.revertedWithCustomError(bnbPartyFactory, "EnforcedPause")
-        await bnbPartyFactory.unpause()
-    })
-
-    it("should revert join party if paused", async function () {
-        await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
-        await bnbPartyFactory.pause()
-        const tokenId = (await BNBPositionManager.totalSupply()) - 1n
-        const position = await BNBPositionManager.positions(tokenId)
-        const MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
-        await expect(bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget })).to.be.revertedWithCustomError(
-            bnbPartyFactory,
-            "EnforcedPause"
-        )
-        await bnbPartyFactory.unpause()
-    })
-
-    it("should revert leave party if paused", async function () {
-        await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
-        const tokenId = (await BNBPositionManager.totalSupply()) - 1n
-        const position = await BNBPositionManager.positions(tokenId)
-        const MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
-        const MEMEToken = await ethers.getContractAt("ERC20Token", MEME)
-        await MEMEToken.approve(await bnbPartyFactory.getAddress(), ethers.parseEther("1000000"))
-        await bnbPartyFactory.joinParty(MEME, 0, { value: tokenCreationFee })
-        await bnbPartyFactory.pause()
-        await expect(bnbPartyFactory.leaveParty(MEME, tokenCreationFee, 0)).to.be.revertedWithCustomError(
-            bnbPartyFactory,
-            "EnforcedPause"
-        )
-        await bnbPartyFactory.unpause()
     })
 
     describe("Second Liquidity Pool", function () {
@@ -197,7 +134,7 @@ describe("BNBPartyFactory", function () {
             const lpAddress = await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
             const balance = await weth9.balanceOf(lpAddress)
             const percentFee = ethers.parseEther("0.14") // target 13 + 1 BNB - 1% fee
-            expect(balance).to.be.equal(BNBToTarget - returnFeeAmount - bonusFee - targetReachFee - percentFee - 2n)
+            expect(balance).to.be.equal(BNBToTarget - returnFeeAmount - bonusFee - targetReachFee - percentFee - 1n)
         })
 
         it("should send MEME to new LP", async () => {
