@@ -154,30 +154,19 @@ export async function deployBNBPartyFactory(
 }
 
 export async function maxAndMinWBNB() {
-    const deploymentCount = 100
-    let maxAddress = ethers.ZeroAddress
-    let minAddress = ethers.ZeroAddress
+    const deploymentCount = 100;
+    let maxAddress = ethers.ZeroAddress;
+    let minAddress = '0xffffffffffffffffffffffffffffffffffffffff'; // A large value to start with
 
-    // Deploy WBNB contract 100 times and collect addresses
     for (let i = 0; i < deploymentCount; i++) {
-        const wbnb = await deployWBNB()
-        const address = await wbnb.getAddress()
+        const wbnb = await deployWBNB();
+        const address = await wbnb.getAddress();
 
-        // Initialize minAddress and maxAddress during the first iteration
-        if (i === 0) {
-            maxAddress = address
-            minAddress = address
-        } else {
-            // Update maxAddress and minAddress
-            if (address > maxAddress) {
-                maxAddress = address
-            }
-            if (address < minAddress) {
-                minAddress = address
-            }
-        }
+        // Update maxAddress and minAddress based on comparison
+        maxAddress = address > maxAddress ? address : maxAddress;
+        minAddress = address < minAddress ? address : minAddress;
     }
-    return { maxAddress: maxAddress, minAddress: minAddress }
+    return { maxAddress: maxAddress, minAddress: minAddress };
 }
 
 async function deployWBNB(): Promise<IWBNB> {
