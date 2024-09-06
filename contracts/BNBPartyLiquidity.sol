@@ -23,6 +23,10 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
         // Decrease liquidity and collect tokens
         (uint256 amount0, uint256 amount1) = _decreaseAndCollect(lpToTokenId[msg.sender], liquidity);
 
+        // Approve tokens for the new liquidity pool creation
+        IERC20(token0).safeIncreaseAllowance(address(positionManager), amount0);
+        IERC20(token1).safeIncreaseAllowance(address(positionManager), amount1);
+        
         if (token0 == address(WBNB)) {
             amount0 -= unwrapAmount; // Deduct unwrap amount from token0 if it is WBNB
             isTokenOnPartyLP[token1] = false;
@@ -32,6 +36,7 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
                 unwrapAmount,
                 false
             );
+        _createLPAndBurnMemeToken(token0, token1, amount0, amount1, newSqrtPriceX96, party.lpTicksPos1);
         } else {
             amount1 -= unwrapAmount; // Deduct unwrap amount from token1 if it is WBNB
             isTokenOnPartyLP[token0] = false;
@@ -41,17 +46,25 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
                 unwrapAmount / 2,
                 false
             );
+            _createLPAndBurnMemeToken(token0, token1, amount0, amount1, newSqrtPriceX96, party.lpTicksPos0);
         }
-
-        // Approve tokens for the new liquidity pool creation
-        IERC20(token0).safeIncreaseAllowance(address(positionManager), amount0);
-        IERC20(token1).safeIncreaseAllowance(address(positionManager), amount1);
-        // Create new Liquidity Pool
-        _createLP(positionManager, token0, token1, amount0, amount1, newSqrtPriceX96, party.lpFee, token0 == address(WBNB) ? party.lpTicksPos1 : party.lpTicksPos0);
 
         // Send bonuses
         _unwrapAndSendBNB(recipient, unwrapAmount);
+    }
+
+    function _createLPAndBurnMemeToken(
+        address token0,
+        address token1,
+        uint256 amount0,
+        uint256 amount1,
+        uint160 sqrtPriceX96,
+        Ticks memory ticks
+    ) internal {
+        // Create new Liquidity Pool
+        _createLP(positionManager, token0, token1, amount0, amount1, sqrtPriceX96, party.lpFee, ticks);
+
         // burn meme tokens
-        _burnMemeToken(token0 == address(WBNB) ? token1 : token0);
+        _burnMemeToken(token0);
     }
 }
