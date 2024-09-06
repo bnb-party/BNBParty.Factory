@@ -25,13 +25,13 @@ const csv = createCsvWriter({
     ],
 })
 
-async function createLiquidityPool(wethAddress: string) {
+async function createLiquidityPool(wbnbAddress: string) {
     const tokenCreationFee = ethers.parseUnits("1", 16)
     await bnbPartyFactory.createParty("MEME", "MEME", { value: tokenCreationFee })
     const tokenId = await BNBPositionManager.totalSupply()
     const position = await BNBPositionManager.positions(tokenId)
 
-    const MEME = position.token1 === wethAddress ? position.token0 : position.token1
+    const MEME = position.token1 === wbnbAddress ? position.token0 : position.token1
     return { MEME, position }
 }
 
