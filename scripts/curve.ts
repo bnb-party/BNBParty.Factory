@@ -1,5 +1,5 @@
 import { ethers } from "hardhat"
-import { FeeAmount, v3PartyFactory, deployContracts, weth9, bnbPartyFactory, BNBPositionManager, v3Factory, positionManager } from "../test/helper"
+import { FeeAmount, v3PartyFactory, deployContracts, bnbPartyFactory, BNBPositionManager, v3Factory, positionManager, maxAndMinWBNB } from "../test/helper"
 import { IUniswapV3Pool } from "../typechain-types"
 import BigNumber from "bignumber.js"
 import * as csvWriter from "csv-writer"
@@ -25,14 +25,13 @@ const csv = createCsvWriter({
     ],
 })
 
-async function createLiquidityPool() {
+async function createLiquidityPool(wbnbAddress: string) {
     const tokenCreationFee = ethers.parseUnits("1", 16)
     await bnbPartyFactory.createParty("MEME", "MEME", { value: tokenCreationFee })
     const tokenId = await BNBPositionManager.totalSupply()
     const position = await BNBPositionManager.positions(tokenId)
 
-    const wethAddress = await weth9.getAddress()
-    const MEME = position.token1 === wethAddress ? position.token0 : position.token1
+    const MEME = position.token1 === wbnbAddress ? position.token0 : position.token1
     return { MEME, position }
 }
 
@@ -45,11 +44,12 @@ function calculatePrices(sqrtPriceX96: BigNumber, token0: string, token1: string
         : { priceMemeInWbnb: priceToken1InToken0, priceWbnbInMeme: priceToken0InToken1 }
 }
 
-async function getTokenBalances(lpAddress: string, token: any) {
+async function getTokenBalances(lpAddress: string, token: any, wbnbAddress: string) {
+    const wbnb = await ethers.getContractAt("IWBNB", wbnbAddress)
     const [MEMEAmount, WBNBAmount, wethAddress] = await Promise.all([
         token.balanceOf(lpAddress),
-        weth9.balanceOf(lpAddress),
-        weth9.getAddress(),
+        wbnb.balanceOf(lpAddress),
+        wbnb.getAddress(),
     ])
 
     const lpPool = await ethers.getContractAt("UniswapV3Pool", lpAddress)
@@ -108,32 +108,34 @@ async function logData(
 
 async function test() {
     const target = ethers.parseEther("13")
-    await deployContracts(target)
-    const { MEME, position } = await createLiquidityPool()
+    const wbnbAddresses = await maxAndMinWBNB()
+    const wbnbAddress = wbnbAddresses.maxAddress
+    await deployContracts(target, wbnbAddress)
+    const { MEME, position } = await createLiquidityPool(wbnbAddress)
     const token = await ethers.getContractAt("ERC20Token", MEME)
     const lpAddress = await v3PartyFactory.getPool(position.token0, position.token1, FeeAmount.HIGH)
     lpContract = (await ethers.getContractAt("UniswapV3Pool", lpAddress)) as any as IUniswapV3Pool
 
-    const { MEMEAmount: initialMEMEAmount,  } = await getTokenBalances(lpAddress, token)
+    const { MEMEAmount: initialMEMEAmount,  } = await getTokenBalances(lpAddress, token, wbnbAddress)
     const segments = 26
     for (let i = 0; i <= segments; ++i) {
         const swapAmount = ethers.parseUnits("5.06", 17)
         if( i !== 0) await bnbPartyFactory.joinParty(MEME, 0, { value: swapAmount })
         const isParty = await bnbPartyFactory.isTokenOnPartyLP(MEME)
         if (isParty) {
-            const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token)
+            const { MEMEAmount, WBNBAmount } = await getTokenBalances(lpAddress, token, wbnbAddress)
             const slot0 = await lpContract.slot0()
             const sqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
             const { priceMemeInWbnb, priceWbnbInMeme } = calculatePrices(sqrtPriceX96, await lpContract.token0(), await lpContract.token1(), MEME)
             await logData(i, MEMEAmount, WBNBAmount, sqrtPriceX96, priceMemeInWbnb, priceWbnbInMeme, initialMEMEAmount)
         }
         else { 
-            const newLPPool = await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
+            const newLPPool = await v3Factory.getPool(wbnbAddress, MEME, FeeAmount.HIGH)
             const lpContract = (await ethers.getContractAt("UniswapV3Pool", newLPPool)) as any as IUniswapV3Pool
             const slot0 = await lpContract.slot0()
             const sqrtPriceX96 = new BigNumber(slot0.sqrtPriceX96.toString())
             const { priceMemeInWbnb, priceWbnbInMeme } = calculatePrices(sqrtPriceX96, await lpContract.token0(), await lpContract.token1(), MEME)
-            const { MEMEAmount, WBNBAmount } = await getTokenBalances(newLPPool, token)
+            const { MEMEAmount, WBNBAmount } = await getTokenBalances(newLPPool, token, wbnbAddress)
             await logData(i, MEMEAmount, WBNBAmount, sqrtPriceX96, priceMemeInWbnb, priceWbnbInMeme, initialMEMEAmount)
         }
     }

@@ -51,6 +51,12 @@ npx truffle dashboard
 npx hardhat run ./scripts/deploy.ts --network truffleDashboard
 ```
 
+**Run Curve tests:**
+
+```
+npx hardhat run ./scripts/curve.ts
+```
+
 ## Create Party
 
 Welcome to the exciting world of liquidity and token creation! With the `Create Party`, you can effortlessly launch your very own liquidity party, complete with a fresh new token and an initial liquidity pool. Here’s how it works:

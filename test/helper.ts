@@ -1,5 +1,4 @@
 import { ethers } from "hardhat"
-import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { BNBPartyFactory } from "../typechain-types/contracts/BNBPartyFactory"
 import { UniswapV3Factory } from "../typechain-types/@bnb-party/v3-core/contracts/UniswapV3Factory"
 import { NonfungiblePositionManager } from "../typechain-types/@bnb-party/v3-periphery/contracts/NonfungiblePositionManager"
@@ -35,18 +34,20 @@ export let BNBPositionManager: NonfungiblePositionManager
 export let tokenPositionDescriptor: MockNonfungibleTokenPositionDescriptor
 export let BNBSwapRouter: SwapRouter
 export let swapRouter: SwapRouter
-export let weth9: IWBNB
+export let wbnb: IWBNB
 
-export async function deployContracts(partyTarget = ethers.parseEther("90")) {
+export async function deployContracts(partyTarget = ethers.parseEther("90"), wbnbAddress: string = "") {
     const tokenCreationFee = ethers.parseUnits("1", 16) // 0.01 BNB token creation fee
     const returnFeeAmount = ethers.parseUnits("5", 16) // 0.05 BNB return fee (bonusTargetReach)
-    const bonusFee = ethers.parseUnits("1", 17) // 0.01 BNB bonus fee (bonusPartyCreator)
+    const bonusFee = ethers.parseUnits("1", 17) // 0.1 BNB bonus fee (bonusPartyCreator)
     const targetReachFee = ethers.parseUnits("8.5", 17) // 0.85 BNB target reach fee
     const initialTokenAmount = "1000000000000000000000000000"
     const sqrtPriceX96 = "1252685732681638336686364"
-    // Deploy WETH9
-    const WETH9 = await ethers.getContractFactory(WETH9Artifact.abi, WETH9Artifact.bytecode)
-    weth9 = (await WETH9.deploy()) as IWBNB
+    // Deploy WBNB if not provided
+    if (wbnbAddress === "") {
+        wbnb = await deployWBNB()
+        wbnbAddress = await wbnb.getAddress()
+    }
     const sqrtPriceCalculatorContract = await ethers.getContractFactory("SqrtPriceCalculator")
     const sqrtPriceCalculator = (await sqrtPriceCalculatorContract.deploy()) as SqrtPriceCalculator
     // Deploy BNBPartyFactory
@@ -65,7 +66,7 @@ export async function deployContracts(partyTarget = ethers.parseEther("90")) {
             partyTicks: { tickLower: "-214200", tickUpper: "195600" },
             lpTicks: { tickLower: "-214200", tickUpper: "201400" },
         },
-        await weth9.getAddress(),
+        wbnbAddress,
         await sqrtPriceCalculator.getAddress()
     )) as BNBPartyFactory
 
@@ -90,14 +91,14 @@ export async function deployContracts(partyTarget = ethers.parseEther("90")) {
     )
     positionManager = (await ManagerContract.deploy(
         await v3Factory.getAddress(),
-        await weth9.getAddress(),
+        wbnbAddress,
         await tokenPositionDescriptor.getAddress()
     )) as NonfungiblePositionManager
 
     const PositionManagerContract = await ethers.getContractFactory("NonfungiblePositionManager")
     BNBPositionManager = (await PositionManagerContract.deploy(
         await v3PartyFactory.getAddress(),
-        await weth9.getAddress(),
+        wbnbAddress,
         await tokenPositionDescriptor.getAddress()
     )) as NonfungiblePositionManager
 
@@ -105,11 +106,11 @@ export async function deployContracts(partyTarget = ethers.parseEther("90")) {
     const SwapRouterContract = await ethers.getContractFactory("SwapRouter")
     BNBSwapRouter = (await SwapRouterContract.deploy(
         await v3PartyFactory.getAddress(),
-        await weth9.getAddress()
+        wbnbAddress
     )) as SwapRouter
 
     const routerContract = await ethers.getContractFactory(ClassicSwapRouter.abi, ClassicSwapRouter.bytecode)
-    swapRouter = (await routerContract.deploy(await v3Factory.getAddress(), await weth9.getAddress())) as SwapRouter
+    swapRouter = (await routerContract.deploy(await v3Factory.getAddress(), wbnbAddress)) as SwapRouter
 
     // Set Position Manager in BNBPartyFactory
     await bnbPartyFactory.setNonfungiblePositionManager(
@@ -150,4 +151,25 @@ export async function deployBNBPartyFactory(
         WBNB,
         sqrtPriceCalculator
     )
+}
+
+export async function maxAndMinWBNB() {
+    const deploymentCount = 100;
+    let maxAddress = ethers.ZeroAddress;
+    let minAddress = '0xffffffffffffffffffffffffffffffffffffffff'; // A large value to start with
+
+    for (let i = 0; i < deploymentCount; i++) {
+        const wbnb = await deployWBNB();
+        const address = await wbnb.getAddress();
+
+        // Update maxAddress and minAddress based on comparison
+        maxAddress = address > maxAddress ? address : maxAddress;
+        minAddress = address < minAddress ? address : minAddress;
+    }
+    return { maxAddress: maxAddress, minAddress: minAddress };
+}
+
+async function deployWBNB(): Promise<IWBNB> {
+    const WBNBFactory = await ethers.getContractFactory(WETH9Artifact.abi, WETH9Artifact.bytecode)
+    return (await WBNBFactory.deploy()) as IWBNB
 }
