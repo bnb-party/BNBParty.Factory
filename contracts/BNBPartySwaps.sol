@@ -57,13 +57,14 @@ abstract contract BNBPartySwaps is BNBPartyView {
     /// @return token0 Address of the first token in the pair
     /// @return token1 Address of the second token in the pair
     /// @return sqrtPriceX96 The sqrt price of the token pair
+    /// @return ticks The ticks for the token pair
     function _getTokenPairAndPrice(
         address _token
-    ) internal view returns (address token0, address token1, uint160 sqrtPriceX96) {
+    ) internal view returns (address token0, address token1, uint160 sqrtPriceX96, Ticks memory ticks) {
         if (_token < address(WBNB)) {
-            return (_token, address(WBNB), party.sqrtPriceX96);
+            return (_token, address(WBNB), party.sqrtPriceX96, party.partyTicksPos0);
         } else {
-            return (address(WBNB), _token, _reverseSqrtPrice(party.sqrtPriceX96));
+            return (address(WBNB), _token, _reverseSqrtPrice(party.sqrtPriceX96), party.partyTicksPos1);
         }
     }
 

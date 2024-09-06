@@ -47,7 +47,7 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
         IERC20(token0).safeIncreaseAllowance(address(positionManager), amount0);
         IERC20(token1).safeIncreaseAllowance(address(positionManager), amount1);
         // Create new Liquidity Pool
-        _createLP(positionManager, token0, token1, amount0, amount1, newSqrtPriceX96, party.lpFee, party.lpTicksPos0);
+        _createLP(positionManager, token0, token1, amount0, amount1, newSqrtPriceX96, party.lpFee, token0 == address(WBNB) ? party.lpTicksPos1 : party.lpTicksPos0);
 
         // Send bonuses
         _unwrapAndSendBNB(recipient, unwrapAmount);

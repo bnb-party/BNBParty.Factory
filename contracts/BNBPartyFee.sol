@@ -21,19 +21,35 @@ abstract contract BNBPartyFee is BNBPartyModifiers {
             uint256 feeGrowthInside1LastX128
         )
     {
-        (
-            feeGrowthInside0LastX128,
-            feeGrowthInside1LastX128
-        ) = _getFeeGrowthInsideLastX128(
-            pool,
-            keccak256(
-                abi.encodePacked(
-                    address(positionManager),
-                    party.lpTicksPos0.tickLower,
-                    party.lpTicksPos0.tickUpper
+        if (address(WBNB) == pool.token0()) {
+            (
+                feeGrowthInside0LastX128,
+                feeGrowthInside1LastX128
+            ) = _getFeeGrowthInsideLastX128(
+                pool,
+                keccak256(
+                    abi.encodePacked(
+                        address(positionManager),
+                        party.lpTicksPos1.tickLower,
+                        party.lpTicksPos1.tickUpper
+                    )
                 )
-            )
-        );
+            );
+        } else {
+            (
+                feeGrowthInside0LastX128,
+                feeGrowthInside1LastX128
+            ) = _getFeeGrowthInsideLastX128(
+                pool,
+                keccak256(
+                    abi.encodePacked(
+                        address(positionManager),
+                        party.lpTicksPos0.tickLower,
+                        party.lpTicksPos0.tickUpper
+                    )
+                )
+            );
+        }
     }
 
     /// @notice Internal function to retrieve the fee growth inside the position from the last observation
@@ -48,19 +64,35 @@ abstract contract BNBPartyFee is BNBPartyModifiers {
             uint256 feeGrowthInside1LastX128
         )
     {
-        (
-            feeGrowthInside0LastX128,
-            feeGrowthInside1LastX128
-        ) = _getFeeGrowthInsideLastX128(
-            pool,
-            keccak256(
-                abi.encodePacked(
-                    address(BNBPositionManager),
-                    party.partyTicksPos0.tickLower,
-                    party.partyTicksPos0.tickUpper
+        if (address(WBNB) == pool.token0()) {
+            (
+                feeGrowthInside0LastX128,
+                feeGrowthInside1LastX128
+            ) = _getFeeGrowthInsideLastX128(
+                pool,
+                keccak256(
+                    abi.encodePacked(
+                        address(BNBPositionManager),
+                        party.partyTicksPos1.tickLower,
+                        party.partyTicksPos1.tickUpper
+                    )
                 )
-            )
-        );
+            );
+        } else {
+            (
+                feeGrowthInside0LastX128,
+                feeGrowthInside1LastX128
+            ) = _getFeeGrowthInsideLastX128(
+                pool,
+                keccak256(
+                    abi.encodePacked(
+                        address(BNBPositionManager),
+                        party.partyTicksPos0.tickLower,
+                        party.partyTicksPos0.tickUpper
+                    )
+                )
+            );
+        }
     }
 
     /// @notice Internal function to retrieve the fee growth inside the position from the last observation
