@@ -7,7 +7,7 @@ import {
     BNBPositionManager,
     BNBSwapRouter,
     swapRouter,
-    weth9,
+    wbnb,
     deployContracts,
     deployBNBPartyFactory,
 } from "./helper"
@@ -72,7 +72,7 @@ describe("BNBPartyFactory reverts", function () {
                 targetReachFee,
                 initialTokenAmount,
                 sqrtPriceX96,
-                await weth9.getAddress(),
+                await wbnb.getAddress(),
                 await v3Factory.getAddress()
             )
         ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAmount")
@@ -88,7 +88,7 @@ describe("BNBPartyFactory reverts", function () {
                 targetReachFee,
                 "0",
                 sqrtPriceX96,
-                await weth9.getAddress(),
+                await wbnb.getAddress(),
                 await v3Factory.getAddress()
             )
         ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAmount")
@@ -104,7 +104,7 @@ describe("BNBPartyFactory reverts", function () {
                 targetReachFee,
                 initialTokenAmount,
                 "0",
-                await weth9.getAddress(),
+                await wbnb.getAddress(),
                 await v3Factory.getAddress()
             )
         ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAmount")
@@ -120,7 +120,7 @@ describe("BNBPartyFactory reverts", function () {
                 targetReachFee,
                 initialTokenAmount,
                 sqrtPriceX96,
-                await weth9.getAddress(),
+                await wbnb.getAddress(),
                 await v3Factory.getAddress()
             )
         ).to.be.revertedWithCustomError(bnbPartyFactory, "BonusGreaterThanTarget")
@@ -202,7 +202,7 @@ describe("BNBPartyFactory reverts", function () {
         await bnbPartyFactory.pause()
         const tokenId = await BNBPositionManager.totalSupply()
         const position = await BNBPositionManager.positions(tokenId)
-        const MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
+        const MEME = position.token1 == (await wbnb.getAddress()) ? position.token0 : position.token1
         await expect(bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget })).to.be.revertedWithCustomError(
             bnbPartyFactory,
             "EnforcedPause"
@@ -214,7 +214,7 @@ describe("BNBPartyFactory reverts", function () {
         await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
         const tokenId = await BNBPositionManager.totalSupply()
         const position = await BNBPositionManager.positions(tokenId)
-        const MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
+        const MEME = position.token1 == (await wbnb.getAddress()) ? position.token0 : position.token1
         const MEMEToken = await ethers.getContractAt("ERC20Token", MEME)
         await MEMEToken.approve(await bnbPartyFactory.getAddress(), ethers.parseEther("1000000"))
         await bnbPartyFactory.joinParty(MEME, 0, { value: tokenCreationFee })

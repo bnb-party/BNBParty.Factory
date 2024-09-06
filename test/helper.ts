@@ -34,19 +34,19 @@ export let BNBPositionManager: NonfungiblePositionManager
 export let tokenPositionDescriptor: MockNonfungibleTokenPositionDescriptor
 export let BNBSwapRouter: SwapRouter
 export let swapRouter: SwapRouter
-export let weth9: IWBNB
+export let wbnb: IWBNB
 
-export async function deployContracts(partyTarget = ethers.parseEther("90"), weth9Address: string = "") {
+export async function deployContracts(partyTarget = ethers.parseEther("90"), wbnbAddress: string = "") {
     const tokenCreationFee = ethers.parseUnits("1", 16) // 0.01 BNB token creation fee
     const returnFeeAmount = ethers.parseUnits("5", 16) // 0.05 BNB return fee (bonusTargetReach)
     const bonusFee = ethers.parseUnits("1", 17) // 0.1 BNB bonus fee (bonusPartyCreator)
     const targetReachFee = ethers.parseUnits("8.5", 17) // 0.85 BNB target reach fee
     const initialTokenAmount = "1000000000000000000000000000"
     const sqrtPriceX96 = "1252685732681638336686364"
-    // Deploy WETH9
-    if (weth9Address === "") {
-        weth9 = await deployWBNB()
-        weth9Address = await weth9.getAddress()
+    // Deploy WBNB if not provided
+    if (wbnbAddress === "") {
+        wbnb = await deployWBNB()
+        wbnbAddress = await wbnb.getAddress()
     }
     const sqrtPriceCalculatorContract = await ethers.getContractFactory("SqrtPriceCalculator")
     const sqrtPriceCalculator = (await sqrtPriceCalculatorContract.deploy()) as SqrtPriceCalculator
@@ -66,7 +66,7 @@ export async function deployContracts(partyTarget = ethers.parseEther("90"), wet
             partyTicks: { tickLower: "-214200", tickUpper: "195600" },
             lpTicks: { tickLower: "-214200", tickUpper: "201400" },
         },
-        weth9Address,
+        wbnbAddress,
         await sqrtPriceCalculator.getAddress()
     )) as BNBPartyFactory
 
@@ -91,14 +91,14 @@ export async function deployContracts(partyTarget = ethers.parseEther("90"), wet
     )
     positionManager = (await ManagerContract.deploy(
         await v3Factory.getAddress(),
-        weth9Address,
+        wbnbAddress,
         await tokenPositionDescriptor.getAddress()
     )) as NonfungiblePositionManager
 
     const PositionManagerContract = await ethers.getContractFactory("NonfungiblePositionManager")
     BNBPositionManager = (await PositionManagerContract.deploy(
         await v3PartyFactory.getAddress(),
-        weth9Address,
+        wbnbAddress,
         await tokenPositionDescriptor.getAddress()
     )) as NonfungiblePositionManager
 
@@ -106,11 +106,11 @@ export async function deployContracts(partyTarget = ethers.parseEther("90"), wet
     const SwapRouterContract = await ethers.getContractFactory("SwapRouter")
     BNBSwapRouter = (await SwapRouterContract.deploy(
         await v3PartyFactory.getAddress(),
-        weth9Address
+        wbnbAddress
     )) as SwapRouter
 
     const routerContract = await ethers.getContractFactory(ClassicSwapRouter.abi, ClassicSwapRouter.bytecode)
-    swapRouter = (await routerContract.deploy(await v3Factory.getAddress(), weth9Address)) as SwapRouter
+    swapRouter = (await routerContract.deploy(await v3Factory.getAddress(), wbnbAddress)) as SwapRouter
 
     // Set Position Manager in BNBPartyFactory
     await bnbPartyFactory.setNonfungiblePositionManager(
