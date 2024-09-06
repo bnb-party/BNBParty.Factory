@@ -11,7 +11,7 @@ import {
     positionManager,
     BNBPositionManager,
     BNBSwapRouter,
-    weth9,
+    wbnb,
     deployContracts,
     deployBNBPartyFactory,
 } from "./helper"
@@ -41,7 +41,7 @@ describe("BNBPartyFactory", function () {
         expect((await bnbPartyFactory.party()).partyTarget).to.equal(partyTarget)
         expect((await bnbPartyFactory.party()).initialTokenAmount).to.equal(initialTokenAmount)
         expect((await bnbPartyFactory.party()).sqrtPriceX96).to.equal(sqrtPriceX96)
-        expect(await bnbPartyFactory.WBNB()).to.equal(await weth9.getAddress())
+        expect(await bnbPartyFactory.WBNB()).to.equal(await wbnb.getAddress())
         expect((await bnbPartyFactory.party()).bonusTargetReach).to.equal(returnFeeAmount)
         expect((await bnbPartyFactory.party()).bonusPartyCreator).to.equal(bonusFee)
         expect((await bnbPartyFactory.party()).lpFee).to.equal(FeeAmount.HIGH)
@@ -101,7 +101,7 @@ describe("BNBPartyFactory", function () {
             await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
             tokenId = ((await BNBPositionManager.totalSupply()) - 1n).toString()
             position = await BNBPositionManager.positions(tokenId)
-            MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
+            MEME = position.token1 == (await wbnb.getAddress()) ? position.token0 : position.token1
         })
 
         it("should create second liquidity pool", async () => {
@@ -131,18 +131,18 @@ describe("BNBPartyFactory", function () {
 
         it("should send WBNB to new LP", async () => {
             await bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget })
-            const lpAddress = await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
-            const balance = await weth9.balanceOf(lpAddress)
+            const lpAddress = await v3Factory.getPool(await wbnb.getAddress(), MEME, FeeAmount.HIGH)
+            const balance = await wbnb.balanceOf(lpAddress)
             const percentFee = ethers.parseEther("0.14") // target 13 + 1 BNB - 1% fee
             expect(balance).to.be.equal(BNBToTarget - returnFeeAmount - bonusFee - targetReachFee - percentFee - 1n)
         })
 
         it("should send MEME to new LP", async () => {
             const token = await ethers.getContractAt("ERC20Token", MEME)
-            const oldLPPool = await v3PartyFactory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
+            const oldLPPool = await v3PartyFactory.getPool(await wbnb.getAddress(), MEME, FeeAmount.HIGH)
             await bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget })
             const oldPoolBalance = await token.balanceOf(oldLPPool)
-            const newLPPool = await v3Factory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
+            const newLPPool = await v3Factory.getPool(await wbnb.getAddress(), MEME, FeeAmount.HIGH)
             const newBalance = await token.balanceOf(newLPPool)
             const userBalance = await token.balanceOf(await signers[0].getAddress())
             const totalSupply = await token.totalSupply()

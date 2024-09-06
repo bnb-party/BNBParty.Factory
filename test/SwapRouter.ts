@@ -9,7 +9,7 @@ import {
     v3PartyFactory,
     BNBPositionManager,
     BNBSwapRouter,
-    weth9,
+    wbnb,
     deployContracts,
 } from "./helper"
 
@@ -33,8 +33,8 @@ describe("Smart Router", function () {
         tokenId = (await BNBPositionManager.totalSupply()).toString()
         deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
         position = await BNBPositionManager.positions(tokenId)
-        MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
-        lpAddress = await v3PartyFactory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
+        MEME = position.token1 == (await wbnb.getAddress()) ? position.token0 : position.token1
+        lpAddress = await v3PartyFactory.getPool(await wbnb.getAddress(), MEME, FeeAmount.HIGH)
         MEMEToken = await ethers.getContractAt("ERC20", MEME)
         await MEMEToken.approve(await bnbPartyFactory.getAddress(), ethers.parseEther("1000000"))
         await MEMEToken.approve(await BNBSwapRouter.getAddress(), ethers.parseEther("10000000"))
@@ -42,9 +42,9 @@ describe("Smart Router", function () {
 
     it("should increase wbnb on party lp after join party", async () => {
         const amountIn = ethers.parseUnits("5", 17)
-        const lpBalanceBefore = await weth9.balanceOf(lpAddress)
+        const lpBalanceBefore = await wbnb.balanceOf(lpAddress)
         await bnbPartyFactory.joinParty(MEME, 0, { value: amountIn })
-        const lpBalanceAfter = await weth9.balanceOf(lpAddress)
+        const lpBalanceAfter = await wbnb.balanceOf(lpAddress)
         expect(lpBalanceAfter).to.be.equal(lpBalanceBefore + amountIn)
     })
 
@@ -75,16 +75,16 @@ describe("Smart Router", function () {
     it("should deacrease wbnb on party lp after leave party", async () => {
         const amountIn = ethers.parseUnits("1", 16)
 
-        const lpBalanceBefore = await weth9.balanceOf(lpAddress)
+        const lpBalanceBefore = await wbnb.balanceOf(lpAddress)
         await bnbPartyFactory.leaveParty(MEME, amountIn, 0)
-        const lpBalanceAfter = await weth9.balanceOf(lpAddress)
+        const lpBalanceAfter = await wbnb.balanceOf(lpAddress)
 
         expect(lpBalanceBefore).to.be.gt(lpBalanceAfter)
     })
 
     it("BNB -> WBNB -> MEME exactInput call", async () => {
         const amountIn = ethers.parseUnits("1", 18)
-        const path = getDataHexString(await weth9.getAddress(), MEME)
+        const path = getDataHexString(await wbnb.getAddress(), MEME)
 
         const params = {
             path: path,
@@ -95,7 +95,7 @@ describe("Smart Router", function () {
         }
 
         const balanceBefore = await MEMEToken.balanceOf(await signers[0].getAddress())
-        await expect(await BNBSwapRouter.exactInput(params, { value: amountIn })).to.emit(weth9, "Deposit")
+        await expect(await BNBSwapRouter.exactInput(params, { value: amountIn })).to.emit(wbnb, "Deposit")
         const balanceAfter = await MEMEToken.balanceOf(await signers[0].getAddress())
 
         expect(balanceAfter).to.be.gt(balanceBefore)
@@ -103,8 +103,8 @@ describe("Smart Router", function () {
 
     it("MEME -> WBNB -> BNB multicall", async function () {
         const amountIn = ethers.parseUnits("1", 17)
-        const MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
-        const path = getDataHexString(MEME, await weth9.getAddress())
+        const MEME = position.token1 == (await wbnb.getAddress()) ? position.token0 : position.token1
+        const path = getDataHexString(MEME, await wbnb.getAddress())
 
         const params = {
             path: path,
@@ -121,7 +121,7 @@ describe("Smart Router", function () {
             await signers[1].getAddress(),
         ])
         const balanceBefore = await ethers.provider.getBalance(await signers[1].getAddress())
-        await expect(await BNBSwapRouter.multicall([exactInputData, unwrapWETH9Data])).to.emit(weth9, "Withdrawal")
+        await expect(await BNBSwapRouter.multicall([exactInputData, unwrapWETH9Data])).to.emit(wbnb, "Withdrawal")
         const balanceAfter = await ethers.provider.getBalance(await signers[1].getAddress())
         expect(balanceAfter).to.be.gt(balanceBefore)
     })
@@ -129,11 +129,11 @@ describe("Smart Router", function () {
     it("WBNB -> MEME exactInput call", async () => {
         const amountIn = ethers.parseUnits("1", 17)
         const amountOutMinimum = 0 // For testing, accept any amount out
-        const path = getDataHexString(await weth9.getAddress(), MEME)
+        const path = getDataHexString(await wbnb.getAddress(), MEME)
 
         const deadline = Math.floor(Date.now() / 1000) + 60 * 20 // 20 minutes from now
-        await weth9.deposit({ value: amountIn })
-        await weth9.approve(await BNBSwapRouter.getAddress(), amountIn)
+        await wbnb.deposit({ value: amountIn })
+        await wbnb.approve(await BNBSwapRouter.getAddress(), amountIn)
 
         const params = {
             path: path,
@@ -156,9 +156,9 @@ describe("Smart Router", function () {
         await tx.wait()
         const events = await bnbPartyFactory.queryFilter(bnbPartyFactory.filters["StartParty(address,address,address)"])
         const tokenAddress = events[events.length - 1].args.tokenAddress
-        const lpAddress = await v3PartyFactory.getPool(await weth9.getAddress(), tokenAddress, FeeAmount.HIGH)
+        const lpAddress = await v3PartyFactory.getPool(await wbnb.getAddress(), tokenAddress, FeeAmount.HIGH)
         // check liquidity pool balance
-        const liquidityPoolBalance = await weth9.balanceOf(lpAddress)
+        const liquidityPoolBalance = await wbnb.balanceOf(lpAddress)
         expect(liquidityPoolBalance).to.be.equal(amountIn - tokenCreationFee)
     })
 

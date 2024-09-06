@@ -2,7 +2,7 @@ import { expect } from "chai"
 import { ethers } from "hardhat"
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
 import { IUniswapV3Pool } from "../typechain-types"
-import { FeeAmount, bnbPartyFactory, v3PartyFactory, BNBPositionManager, weth9, deployContracts, v3Factory, positionManager } from "./helper"
+import { FeeAmount, bnbPartyFactory, v3PartyFactory, BNBPositionManager, wbnb, deployContracts, v3Factory, positionManager } from "./helper"
 
 describe("Withdraw fees", function () {
     let MEME: string
@@ -23,8 +23,8 @@ describe("Withdraw fees", function () {
         await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
         tokenId = (await BNBPositionManager.totalSupply()).toString()
         position = await BNBPositionManager.positions(tokenId)
-        MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
-        lpAddress = await v3PartyFactory.getPool(MEME, await weth9.getAddress(), FeeAmount.HIGH)
+        MEME = position.token1 == (await wbnb.getAddress()) ? position.token0 : position.token1
+        lpAddress = await v3PartyFactory.getPool(MEME, await wbnb.getAddress(), FeeAmount.HIGH)
     })
 
     it("should withdraw token creation fee", async () => {
@@ -45,15 +45,15 @@ describe("Withdraw fees", function () {
         await bnbPartyFactory.connect(signers[1]).createParty(name, symbol, { value: tokenCreationFee })
         tokenId = (await BNBPositionManager.totalSupply()).toString()
         position = await BNBPositionManager.positions(tokenId)
-        MEME = position.token1 == (await weth9.getAddress()) ? position.token0 : position.token1
+        MEME = position.token1 == (await wbnb.getAddress()) ? position.token0 : position.token1
         await bnbPartyFactory.connect(signers[1]).joinParty(MEME, 0, { value: ethers.parseEther("10") })
         position = await BNBPositionManager.positions(tokenId)
         // 1% bnb party fee 10 ether = 0.1 ether
         const expectedFee = ethers.parseEther("0.1")
-        const balanceBefore = await weth9.balanceOf(await signers[0].getAddress())
-        const partyLP = await v3PartyFactory.getPool(await weth9.getAddress(), MEME, FeeAmount.HIGH)
+        const balanceBefore = await wbnb.balanceOf(await signers[0].getAddress())
+        const partyLP = await v3PartyFactory.getPool(await wbnb.getAddress(), MEME, FeeAmount.HIGH)
         await bnbPartyFactory.withdrawPartyLPFee([partyLP])
-        const balanceAfter = await weth9.balanceOf(await signers[0].getAddress())
+        const balanceAfter = await wbnb.balanceOf(await signers[0].getAddress())
         expect(balanceAfter).to.be.equal(balanceBefore + expectedFee)
     })
 
@@ -68,13 +68,13 @@ describe("Withdraw fees", function () {
     it("should return fee from second lp", async () => {
         await bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget }) // create second lp
         await bnbPartyFactory.joinParty(MEME, 0, { value: ethers.parseEther("1") }) // make swap for fee
-        const secondLP = await v3Factory.getPool(MEME, await weth9.getAddress(), FeeAmount.HIGH)
+        const secondLP = await v3Factory.getPool(MEME, await wbnb.getAddress(), FeeAmount.HIGH)
         const lpPool = (await ethers.getContractAt("UniswapV3Pool", secondLP)) as any as IUniswapV3Pool
         const token0 = await lpPool.token0()
         await bnbPartyFactory.withdrawLPFee([secondLP])
         const collectedFee = await bnbPartyFactory.getFeeGrowthInsideLastX128(secondLP, positionManager)
         const fee = collectedFee.feeGrowthInside0LastX128 == 0n ? collectedFee.feeGrowthInside1LastX128 : collectedFee.feeGrowthInside0LastX128
-        if (token0 == (await weth9.getAddress())) {
+        if (token0 == (await wbnb.getAddress())) {
             const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal0X128()
             expect(feeGrowthGlobalX128).to.be.deep.equal(fee)
         } else {
@@ -134,7 +134,7 @@ describe("Withdraw fees", function () {
         await bnbPartyFactory.withdrawPartyLPFee([lpAddress])
         let liquidity = await lpPool.liquidity()
         let feeGrowthGlobalX128 =
-            position.token1 == (await weth9.getAddress())
+            position.token1 == (await wbnb.getAddress())
                 ? await lpPool.feeGrowthGlobal1X128()
                 : await lpPool.feeGrowthGlobal0X128()
         const collectedFee = await bnbPartyFactory.getFeeGrowthInsideLastX128(lpAddress, BNBPositionManager)
