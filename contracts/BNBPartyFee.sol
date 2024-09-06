@@ -29,8 +29,8 @@ abstract contract BNBPartyFee is BNBPartyModifiers {
             keccak256(
                 abi.encodePacked(
                     address(positionManager),
-                    party.lpTicks.tickLower,
-                    party.lpTicks.tickUpper
+                    party.lpTicksPos0.tickLower,
+                    party.lpTicksPos0.tickUpper
                 )
             )
         );
@@ -56,8 +56,8 @@ abstract contract BNBPartyFee is BNBPartyModifiers {
             keccak256(
                 abi.encodePacked(
                     address(BNBPositionManager),
-                    party.partyTicks.tickLower,
-                    party.partyTicks.tickUpper
+                    party.partyTicksPos0.tickLower,
+                    party.partyTicksPos0.tickUpper
                 )
             )
         );

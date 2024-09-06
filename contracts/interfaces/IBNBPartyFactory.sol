@@ -30,8 +30,10 @@ interface IBNBPartyFactory {
         uint256 bonusTargetReach; // Bonus amount given if the party target is reached.
         uint256 bonusPartyCreator; // Bonus amount for the party creator.
         uint256 targetReachFee; // Fee charged upon reaching the target.
-        Ticks partyTicks; // The tick range for the party's liquidity pool.
-        Ticks lpTicks; // The tick range for the second liquidity pool.
+        Ticks partyTicksPos0; // The tick range for the party's liquidity pool, when WBNB position 0.
+        Ticks partyTicksPos1; // The tick range for the party's liquidity pool, when WBNB position 1.
+        Ticks lpTicksPos0; // The tick range for the second liquidity pool, when WBNB position 0.
+        Ticks lpTicksPos1; // The tick range for the second liquidity pool, when WBNB position 1.
     }
 
     struct Ticks {

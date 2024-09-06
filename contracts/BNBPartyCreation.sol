@@ -26,7 +26,7 @@ abstract contract BNBPartyCreation is BNBPartySwaps {
             amount1,
             sqrtPrice,
             party.partyLpFee,
-            party.partyTicks
+            party.partyTicksPos0
         );
         isParty[liquidityPool] = true; // Mark the liquidity pool as a party pool
         isTokenOnPartyLP[_token] = true; // Mark the token as part of the party LP
