@@ -33,8 +33,8 @@ async function main() {
             bonusTargetReach: returnFeeAmount,
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
-            partyTicks: { tickLower: "-214200", tickUpper: "195600" },
-            lpTicks: { tickLower: "-214200", tickUpper: "201400" }
+            partyTicks: { tickLower: "-195600", tickUpper: "214200" },
+            lpTicks: { tickLower: "-201400", tickUpper: "214200" }
         },
         tWBNB,
         await sqrtPriceCalculator.getAddress()

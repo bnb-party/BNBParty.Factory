@@ -14,7 +14,7 @@ abstract contract BNBPartyCreation is BNBPartySwaps {
     /// @return liquidityPool Address of the newly created liquidity pool
     /// @dev Sets the token amounts based on the balance and initializes the pool
     function _createFLP(address _token) internal returns (address liquidityPool) {
-        (address token0, address token1, uint160 sqrtPrice) = _getTokenPairAndPrice(_token);
+        (address token0, address token1, uint160 sqrtPrice, Ticks memory ticks) = _getTokenPairAndPrice(_token);
         // Determine the token amounts
         (uint256 amount0, uint256 amount1) = _calculateAmounts(token0);
         IERC20(_token).safeIncreaseAllowance(address(BNBPositionManager), party.initialTokenAmount);
@@ -26,7 +26,7 @@ abstract contract BNBPartyCreation is BNBPartySwaps {
             amount1,
             sqrtPrice,
             party.partyLpFee,
-            party.partyTicks
+            ticks
         );
         isParty[liquidityPool] = true; // Mark the liquidity pool as a party pool
         isTokenOnPartyLP[_token] = true; // Mark the token as part of the party LP
