@@ -145,7 +145,7 @@ export async function deployBNBPartyFactory(
             bonusTargetReach: returnFeeAmount,
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
-            partyTicks: { tickLower: "-214200", tickUpper: "195600" },
+            partyTicks: { tickLower: "-195600", tickUpper: "214200" },
             lpTicks: { tickLower: "-214200", tickUpper: "201400" }
         },
         WBNB,
