@@ -63,10 +63,8 @@ export async function deployContracts(partyTarget = ethers.parseEther("90"), wbn
             bonusTargetReach: returnFeeAmount,
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
-            partyTicksPos0: { tickLower: "-214200", tickUpper: "195600" },
-            partyTicksPos1: { tickLower: "-214200", tickUpper: "195600" },
-            lpTicksPos0: { tickLower: "-214200", tickUpper: "201400" },
-            lpTicksPos1: { tickLower: "-214200", tickUpper: "201400" },
+            partyTicks: { tickLower: "-214200", tickUpper: "195600" },
+            lpTicks: { tickLower: "-214200", tickUpper: "201400" }
         },
         wbnbAddress,
         await sqrtPriceCalculator.getAddress()
@@ -147,10 +145,8 @@ export async function deployBNBPartyFactory(
             bonusTargetReach: returnFeeAmount,
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
-            partyTicksPos0: { tickLower: "-214200", tickUpper: "195600" },
-            partyTicksPos1: { tickLower: "-214200", tickUpper: "195600" },
-            lpTicksPos0: { tickLower: "-214200", tickUpper: "201400" },
-            lpTicksPos1: { tickLower: "-214200", tickUpper: "201400" },
+            partyTicks: { tickLower: "-214200", tickUpper: "195600" },
+            lpTicks: { tickLower: "-214200", tickUpper: "201400" }
         },
         WBNB,
         sqrtPriceCalculator

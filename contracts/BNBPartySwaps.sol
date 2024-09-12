@@ -62,9 +62,9 @@ abstract contract BNBPartySwaps is BNBPartyView {
         address _token
     ) internal view returns (address token0, address token1, uint160 sqrtPriceX96, Ticks memory ticks) {
         if (_token < address(WBNB)) {
-            return (_token, address(WBNB), party.sqrtPriceX96, party.partyTicksPos0);
+            return (_token, address(WBNB), party.sqrtPriceX96, _invertTicks(party.partyTicks.tickLower, party.partyTicks.tickUpper));
         } else {
-            return (address(WBNB), _token, _reverseSqrtPrice(party.sqrtPriceX96), party.partyTicksPos1);
+            return (address(WBNB), _token, _reverseSqrtPrice(party.sqrtPriceX96), Ticks(party.partyTicks.tickLower, party.partyTicks.tickUpper));
         }
     }
 

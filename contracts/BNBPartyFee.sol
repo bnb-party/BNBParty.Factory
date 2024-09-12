@@ -21,35 +21,29 @@ abstract contract BNBPartyFee is BNBPartyModifiers {
             uint256 feeGrowthInside1LastX128
         )
     {
+        Ticks memory ticks;
         if (address(WBNB) == pool.token0()) {
-            (
-                feeGrowthInside0LastX128,
-                feeGrowthInside1LastX128
-            ) = _getFeeGrowthInsideLastX128(
-                pool,
-                keccak256(
-                    abi.encodePacked(
-                        address(positionManager),
-                        party.lpTicksPos1.tickLower,
-                        party.lpTicksPos1.tickUpper
-                    )
-                )
-            );
+            ticks.tickLower = party.lpTicks.tickLower;
+            ticks.tickUpper = party.lpTicks.tickUpper;
         } else {
-            (
-                feeGrowthInside0LastX128,
-                feeGrowthInside1LastX128
-            ) = _getFeeGrowthInsideLastX128(
-                pool,
-                keccak256(
-                    abi.encodePacked(
-                        address(positionManager),
-                        party.lpTicksPos0.tickLower,
-                        party.lpTicksPos0.tickUpper
-                    )
-                )
+            ticks = _invertTicks(
+                party.lpTicks.tickLower,
+                party.lpTicks.tickUpper
             );
         }
+        (
+            feeGrowthInside0LastX128,
+            feeGrowthInside1LastX128
+        ) = _getFeeGrowthInsideLastX128(
+            pool,
+            keccak256(
+                abi.encodePacked(
+                    address(positionManager),
+                    ticks.tickLower,
+                    ticks.tickUpper
+                )
+            )
+        );
     }
 
     /// @notice Internal function to retrieve the fee growth inside the position from the last observation
@@ -64,35 +58,29 @@ abstract contract BNBPartyFee is BNBPartyModifiers {
             uint256 feeGrowthInside1LastX128
         )
     {
+        Ticks memory ticks;
         if (address(WBNB) == pool.token0()) {
-            (
-                feeGrowthInside0LastX128,
-                feeGrowthInside1LastX128
-            ) = _getFeeGrowthInsideLastX128(
-                pool,
-                keccak256(
-                    abi.encodePacked(
-                        address(BNBPositionManager),
-                        party.partyTicksPos1.tickLower,
-                        party.partyTicksPos1.tickUpper
-                    )
-                )
-            );
+            ticks.tickLower = party.partyTicks.tickLower;
+            ticks.tickUpper = party.partyTicks.tickUpper;
         } else {
-            (
-                feeGrowthInside0LastX128,
-                feeGrowthInside1LastX128
-            ) = _getFeeGrowthInsideLastX128(
-                pool,
-                keccak256(
-                    abi.encodePacked(
-                        address(BNBPositionManager),
-                        party.partyTicksPos0.tickLower,
-                        party.partyTicksPos0.tickUpper
-                    )
-                )
+            ticks = _invertTicks(
+                party.partyTicks.tickLower,
+                party.partyTicks.tickUpper
             );
         }
+        (
+            feeGrowthInside0LastX128,
+            feeGrowthInside1LastX128
+        ) = _getFeeGrowthInsideLastX128(
+            pool,
+            keccak256(
+                abi.encodePacked(
+                    address(BNBPositionManager),
+                    ticks.tickLower,
+                    ticks.tickUpper
+                )
+            )
+        );
     }
 
     /// @notice Internal function to retrieve the fee growth inside the position from the last observation
@@ -113,13 +101,23 @@ abstract contract BNBPartyFee is BNBPartyModifiers {
 
     /// @notice Internal function to calculate the global fee growth
     /// @param pool Address of the Uniswap V3 pool
-    function _calculateFeeGrowthGlobal(IUniswapV3Pool pool) internal view returns (uint256 feeGrowthGlobal) {
+    function _calculateFeeGrowthGlobal(
+        IUniswapV3Pool pool
+    ) internal view returns (uint256 feeGrowthGlobal) {
         if (pool.token0() == address(WBNB)) {
-            (uint256 feeGrowthInside0LastX128,) = _getPartyFeeGrowthInsideLastX128(pool);
-            feeGrowthGlobal = pool.feeGrowthGlobal0X128() - feeGrowthInside0LastX128;
+            (uint256 feeGrowthInside0LastX128 , ) = _getPartyFeeGrowthInsideLastX128(pool);
+            feeGrowthGlobal = pool.feeGrowthGlobal0X128() -feeGrowthInside0LastX128;
         } else {
-            (,uint256 feeGrowthInside1LastX128) = _getPartyFeeGrowthInsideLastX128(pool);
+            ( , uint256 feeGrowthInside1LastX128) = _getPartyFeeGrowthInsideLastX128(pool);
             feeGrowthGlobal = pool.feeGrowthGlobal1X128() - feeGrowthInside1LastX128;
         }
+    }
+
+    function _invertTicks(
+        int24 tickLower,
+        int24 tickUpper
+    ) internal pure returns (Ticks memory ticks) {
+        ticks.tickLower = -tickUpper;
+        ticks.tickUpper = -tickLower;
     }
 }
