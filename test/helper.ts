@@ -146,7 +146,7 @@ export async function deployBNBPartyFactory(
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
             partyTicks: { tickLower: "-195600", tickUpper: "214200" },
-            lpTicks: { tickLower: "-214200", tickUpper: "201400" }
+            lpTicks: { tickLower: "-201400", tickUpper: "214200" }
         },
         WBNB,
         sqrtPriceCalculator
