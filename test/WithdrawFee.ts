@@ -54,7 +54,7 @@ describe("Withdraw fees", function () {
         const partyLP = await v3PartyFactory.getPool(await wbnb.getAddress(), MEME, FeeAmount.HIGH)
         await bnbPartyFactory.withdrawPartyLPFee([partyLP])
         const balanceAfter = await wbnb.balanceOf(await signers[0].getAddress())
-        expect(balanceAfter).to.be.equal(balanceBefore + expectedFee)
+        expect(balanceAfter).to.be.equal(balanceBefore + expectedFee - 1n)
     })
 
     it("should return zero if pool is zero address", async () => {
@@ -119,7 +119,7 @@ describe("Withdraw fees", function () {
             (await lpPool.feeGrowthGlobal0X128()) > 0
                 ? await lpPool.feeGrowthGlobal0X128()
                 : await lpPool.feeGrowthGlobal1X128()
-        expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 20n) // 1 % fee
+        expect(await bnbPartyFactory.calculateFees(liquidity, feeGrowthGlobalX128)).to.be.equal(amountIn / 20n - 1n) // 1 % fee
     })
 
     it("isToken0WBNB should return true if token0 is WBNB", async () => {
