@@ -68,11 +68,11 @@ describe("Withdraw fees", function () {
     it("should return fee from second lp", async () => {
         await bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget }) // create second lp
         await bnbPartyFactory.joinParty(MEME, 0, { value: ethers.parseEther("1") }) // make swap for fee
-        const secondLP = await v3Factory.getPool(MEME, await wbnb.getAddress(), FeeAmount.HIGH)
+        const secondLP = await v3Factory.getPool(await wbnb.getAddress(), MEME, FeeAmount.HIGH)
         const lpPool = (await ethers.getContractAt("UniswapV3Pool", secondLP)) as any as IUniswapV3Pool
         const token0 = await lpPool.token0()
         await bnbPartyFactory.withdrawLPFee([secondLP])
-        const collectedFee = await bnbPartyFactory.getFeeGrowthInsideLastX128(secondLP, positionManager)
+        const collectedFee = await bnbPartyFactory.getFeeGrowthInsideLastX128(secondLP, await positionManager.getAddress())
         const fee = collectedFee.feeGrowthInside0LastX128 == 0n ? collectedFee.feeGrowthInside1LastX128 : collectedFee.feeGrowthInside0LastX128
         if (token0 == (await wbnb.getAddress())) {
             const feeGrowthGlobalX128 = await lpPool.feeGrowthGlobal0X128()

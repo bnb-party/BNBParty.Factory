@@ -21,16 +21,7 @@ abstract contract BNBPartyFee is BNBPartyModifiers {
             uint256 feeGrowthInside1LastX128
         )
     {
-        Ticks memory ticks;
-        if (address(WBNB) == pool.token0()) {
-            ticks.tickLower = party.lpTicks.tickLower;
-            ticks.tickUpper = party.lpTicks.tickUpper;
-        } else {
-            ticks = _invertTicks(
-                party.lpTicks.tickLower,
-                party.lpTicks.tickUpper
-            );
-        }
+        Ticks memory ticks = _getTicks(pool.token0(), party.lpTicks);
         (
             feeGrowthInside0LastX128,
             feeGrowthInside1LastX128
@@ -58,16 +49,7 @@ abstract contract BNBPartyFee is BNBPartyModifiers {
             uint256 feeGrowthInside1LastX128
         )
     {
-        Ticks memory ticks;
-        if (address(WBNB) == pool.token0()) {
-            ticks.tickLower = party.partyTicks.tickLower;
-            ticks.tickUpper = party.partyTicks.tickUpper;
-        } else {
-            ticks = _invertTicks(
-                party.partyTicks.tickLower,
-                party.partyTicks.tickUpper
-            );
-        }
+        Ticks memory ticks = _getTicks(pool.token0(), party.partyTicks);
         (
             feeGrowthInside0LastX128,
             feeGrowthInside1LastX128
@@ -113,11 +95,34 @@ abstract contract BNBPartyFee is BNBPartyModifiers {
         }
     }
 
+    /// @notice Invert the ticks
+    /// @param tickLower Lower tick
+    /// @param tickUpper Upper tick
+    /// @return ticks struct with inverted ticks
     function _invertTicks(
         int24 tickLower,
         int24 tickUpper
     ) internal pure returns (Ticks memory ticks) {
         ticks.tickLower = -tickUpper;
         ticks.tickUpper = -tickLower;
+    }
+
+    /// @notice Internal function to retrieve the Ticks based on the token address
+    /// @param token0 Address of the token0
+    /// @param ticks The Ticks struct with lower and upper ticks
+    /// @return adjustedTicks The Ticks struct adjusted based on token address
+    function _getTicks(
+        address token0,
+        Ticks memory ticks
+    )
+        internal
+        view
+        returns (Ticks memory adjustedTicks)
+    {
+        if (address(WBNB) == token0) {
+            adjustedTicks = _invertTicks(ticks.tickLower, ticks.tickUpper);
+        } else {
+            adjustedTicks = ticks;
+        }
     }
 }

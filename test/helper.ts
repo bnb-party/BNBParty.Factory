@@ -63,8 +63,8 @@ export async function deployContracts(partyTarget = ethers.parseEther("90"), wbn
             bonusTargetReach: returnFeeAmount,
             bonusPartyCreator: bonusFee,
             targetReachFee: targetReachFee,
-            partyTicks: { tickLower: "-214200", tickUpper: "195600" },
-            lpTicks: { tickLower: "-214200", tickUpper: "201400" }
+            partyTicks: { tickLower: "-195600", tickUpper: "214200" },
+            lpTicks: { tickLower: "-201400", tickUpper: "214200" }
         },
         wbnbAddress,
         await sqrtPriceCalculator.getAddress()
