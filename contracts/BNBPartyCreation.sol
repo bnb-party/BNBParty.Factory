@@ -13,12 +13,12 @@ abstract contract BNBPartyCreation is BNBPartySwaps {
     /// @param _token Address of the token to be used in the liquidity pool
     /// @return liquidityPool Address of the newly created liquidity pool
     /// @dev Sets the token amounts based on the balance and initializes the pool
-    function _createFLP(address _token) internal returns (address liquidityPool) {
+    function _createFLP(address _token) internal returns (address liquidityPool, uint256 tokenId) {
         (address token0, address token1, uint160 sqrtPrice, Ticks memory ticks) = _getTokenPairAndPrice(_token);
         // Determine the token amounts
         (uint256 amount0, uint256 amount1) = _calculateAmounts(token0);
         IERC20(_token).safeIncreaseAllowance(address(BNBPositionManager), party.initialTokenAmount);
-        liquidityPool = _createLP(
+        (liquidityPool, tokenId) = _createLP(
             BNBPositionManager,
             token0,
             token1,
@@ -28,8 +28,6 @@ abstract contract BNBPartyCreation is BNBPartySwaps {
             party.partyLpFee,
             ticks
         );
-        isParty[liquidityPool] = true; // Mark the liquidity pool as a party pool
-        isTokenOnPartyLP[_token] = true; // Mark the token as part of the party LP
     }
 
     /// @notice Creates a new liquidity pool and mints liquidity positions.
@@ -51,7 +49,7 @@ abstract contract BNBPartyCreation is BNBPartySwaps {
         uint160 sqrtPriceX96,
         uint24 fee,
         Ticks memory ticks
-    ) internal returns (address liquidityPool) {
+    ) internal returns (address liquidityPool, uint256 tokenId) {
         // Create LP
         liquidityPool = liquidityManager.createAndInitializePoolIfNecessary(
             token0,
@@ -61,7 +59,7 @@ abstract contract BNBPartyCreation is BNBPartySwaps {
         );
 
         // Mint LP
-        (lpToTokenId[liquidityPool], , , ) = liquidityManager.mint(
+        (tokenId, , , ) = liquidityManager.mint(
             INonfungiblePositionManager.MintParams({
                 token0: token0,
                 token1: token1,
