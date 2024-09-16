@@ -45,8 +45,9 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
         // Create new token
         newToken = new ERC20Token(name, symbol, party.initialTokenAmount);
         // Create First Liquidity Pool
-        address liquidityPool = _createFLP(address(newToken));
+        (address liquidityPool, uint256 tokenId) = _createFLP(address(newToken));
         lpToCreator[liquidityPool] = msg.sender;
+        lpToTokenId[liquidityPool] = tokenId;
         if (msg.value > party.createTokenFee) {
             _executeSwap(address(newToken));
         }
@@ -65,7 +66,8 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
 
         if (WBNBBalance - feesEarned < party.partyTarget) return;
         // Handle liquidity
-        _handleLiquidity(recipient);
+        (address liquidityPool, uint256 tokenId) = _handleLiquidity(recipient);
+        lpToTokenId[liquidityPool] = tokenId;
     }
 
     /// @notice Allows users to join the party by swapping BNB for the specified token

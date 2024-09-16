@@ -11,7 +11,7 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
     /// @notice Handles liquidity by decreasing the liquidity, collecting tokens, and creating a new liquidity pool.
     /// @param recipient Address receiving the bonus BNB
     /// @dev Decreases liquidity, collects tokens, creates a new pool, and sends bonuses
-    function _handleLiquidity(address recipient) internal {
+    function _handleLiquidity(address recipient) internal returns (address liquidityPool, uint256 tokenId){
         IUniswapV3Pool pool = IUniswapV3Pool(msg.sender);
         (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         address token0 = pool.token0();
@@ -47,7 +47,7 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
         IERC20(token0).safeIncreaseAllowance(address(positionManager), amount0);
         IERC20(token1).safeIncreaseAllowance(address(positionManager), amount1);
         // Create new Liquidity Pool
-        _createLP(positionManager, token0, token1, amount0, amount1, newSqrtPriceX96, party.lpFee, _getTicks(token0, party.lpTicks));
+        (liquidityPool, tokenId) = _createLP(positionManager, token0, token1, amount0, amount1, newSqrtPriceX96, party.lpFee, _getTicks(token0, party.lpTicks));
 
         // Send bonuses
         _unwrapAndSendBNB(recipient, unwrapAmount);
