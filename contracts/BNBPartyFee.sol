@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./BNBPartyModifiers.sol";
+import "./BNBPartyState.sol";
 import "./interfaces/IUniswapV3Pool.sol";
 
 /// @title BNBPartyFee
 /// @notice This abstract contract provides internal functions for calculating fees in the BNB Party system.
-abstract contract BNBPartyFee is BNBPartyModifiers {
+abstract contract BNBPartyFee is BNBPartyState {
     /// @notice Internal function to retrieve the fee growth inside the position from the last observation
     /// @param pool Address of the Uniswap V3 pool
     /// @return feeGrowthInside0LastX128 Fee growth inside for token0 from the last observation
