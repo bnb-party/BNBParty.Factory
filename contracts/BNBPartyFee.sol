@@ -21,19 +21,10 @@ abstract contract BNBPartyFee is BNBPartyModifiers {
             uint256 feeGrowthInside1LastX128
         )
     {
-        Ticks memory ticks = _getTicks(pool.token0(), party.lpTicks);
-        (
-            feeGrowthInside0LastX128,
-            feeGrowthInside1LastX128
-        ) = _getFeeGrowthInsideLastX128(
+        (feeGrowthInside0LastX128, feeGrowthInside1LastX128) = _getFeeGrowthInsideLastX128(
+            positionManager,
             pool,
-            keccak256(
-                abi.encodePacked(
-                    address(positionManager),
-                    ticks.tickLower,
-                    ticks.tickUpper
-                )
-            )
+            party.lpTicks
         );
     }
 
@@ -49,15 +40,25 @@ abstract contract BNBPartyFee is BNBPartyModifiers {
             uint256 feeGrowthInside1LastX128
         )
     {
-        Ticks memory ticks = _getTicks(pool.token0(), party.partyTicks);
-        (
-            feeGrowthInside0LastX128,
-            feeGrowthInside1LastX128
-        ) = _getFeeGrowthInsideLastX128(
+        (feeGrowthInside0LastX128, feeGrowthInside1LastX128) = _getFeeGrowthInsideLastX128(
+            BNBPositionManager,
+            pool,
+            party.partyTicks
+        );
+    }
+
+    /// @notice Internal function to retrieve the fee growth inside the position from the last observation
+    function _getFeeGrowthInsideLastX128(
+        INonfungiblePositionManager manager,
+        IUniswapV3Pool pool,
+        Ticks memory lpTicks
+    ) internal view returns (uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128) {
+        Ticks memory ticks = _getTicks(pool.token0(), lpTicks);
+        (feeGrowthInside0LastX128, feeGrowthInside1LastX128) = _getFeeGrowthInsideLastX128(
             pool,
             keccak256(
                 abi.encodePacked(
-                    address(BNBPositionManager),
+                    address(manager),
                     ticks.tickLower,
                     ticks.tickUpper
                 )
