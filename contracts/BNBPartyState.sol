@@ -33,13 +33,13 @@ abstract contract BNBPartyState is BNBPartyModifiers, Ownable {
         IWBNB _WBNB,
         ISqrtPriceCalculator _sqrtPriceCalculator
     ) Ownable(_msgSender()) {
-        constructorValidation(_party, _WBNB, _sqrtPriceCalculator);
+        _constructorValidation(_party, _WBNB, _sqrtPriceCalculator);
         party = _party;
         WBNB = _WBNB;
         sqrtPriceCalculator = _sqrtPriceCalculator;
     }
 
-    function constructorValidation(
+    function _constructorValidation(
         Party memory _party,
         IWBNB _WBNB,
         ISqrtPriceCalculator _sqrtPriceCalculator
