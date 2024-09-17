@@ -49,7 +49,6 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
         lpToCreator[liquidityPool] = msg.sender; // Set the creator of the liquidity pool
         lpToTokenId[liquidityPool] = tokenId; // Set the token ID of the liquidity pool
         isParty[liquidityPool] = true; // Mark the liquidity pool as a party pool
-        isTokenOnPartyLP[address(newToken)] = true; // Mark the token as part of the party LP
         if (msg.value > party.createTokenFee) {
             _executeSwap(address(newToken));
         }

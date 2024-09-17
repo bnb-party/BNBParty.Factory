@@ -18,8 +18,8 @@ abstract contract BNBPartyState is IBNBPartyFactory, Ownable {
     mapping(address => bool) public isParty; // Mapping to track if a LiquidityPool is a party
     mapping(address => uint256) public lpToTokenId; // Mapping from LiquidityPool to its NFT tokenId
     mapping(address => address) public lpToCreator; // Mapping from LiquidityPool to its creator
-    mapping(address => bool) public isTokenOnPartyLP; // Mapping to track if a token is part of a party
-    uint256 constant FEE_GROWTH_GLOBAL_SCALE = 2**128;
+    mapping(address => bool) public isTokenTargetReached; // Mapping to track if a token has reached its target
+    uint256 constant public FEE_GROWTH_GLOBAL_SCALE = 2**128;
 
     Party public party; // store party parameters
 

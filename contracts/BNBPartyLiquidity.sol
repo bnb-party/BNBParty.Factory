@@ -25,7 +25,7 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
 
         if (token0 == address(WBNB)) {
             amount0 -= unwrapAmount; // Deduct unwrap amount from token0 if it is WBNB
-            isTokenOnPartyLP[token1] = false;
+            isTokenTargetReached[token1] = true;
             newSqrtPriceX96 = sqrtPriceCalculator.getNextSqrtPriceFromAmount0RoundingUp(
                 sqrtPriceX96,
                 liquidity,
@@ -34,7 +34,7 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
             );
         } else {
             amount1 -= unwrapAmount; // Deduct unwrap amount from token1 if it is WBNB
-            isTokenOnPartyLP[token0] = false;
+            isTokenTargetReached[token0] = true;
             newSqrtPriceX96 = sqrtPriceCalculator.getNextSqrtPriceFromAmount1RoundingDown(
                 sqrtPriceX96,
                 liquidity,
