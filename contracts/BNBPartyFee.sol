@@ -125,4 +125,38 @@ abstract contract BNBPartyFee is BNBPartyState {
             adjustedTicks = ticks;
         }
     }
+    
+    /// @notice Internal function to withdraw LP fees from specified liquidity pools
+    /// @param liquidityPools Array of liquidity pool addresses from which fees will be withdrawn
+    /// @param manager The non-fungible position manager used to collect fees
+    /// @dev Reverts if the liquidity pools array is empty
+    function _withdrawLPFees(
+        address[] calldata liquidityPools,
+        INonfungiblePositionManager manager
+    ) internal {
+        if (liquidityPools.length == 0) {
+            revert ZeroLength();
+        }
+        for (uint256 i = 0; i < liquidityPools.length; ++i) {
+            _collectFee(liquidityPools[i], manager); // Collects fees from each specified liquidity pool
+        }
+    }
+
+    /// @notice Internal function to collect LP fees from a specific liquidity pool
+    /// @param liquidityPool Address of the liquidity pool from which fees will be collected
+    /// @param manager The non-fungible position manager used to collect fees
+    /// @dev Reverts if the provided liquidity pool address is zero
+    function _collectFee(
+        address liquidityPool,
+        INonfungiblePositionManager manager
+    ) internal notZeroAddress(liquidityPool) {
+        manager.collect(
+            INonfungiblePositionManager.CollectParams({
+                tokenId: lpToTokenId[liquidityPool],
+                recipient: msg.sender,
+                amount0Max: type(uint128).max,
+                amount1Max: type(uint128).max
+            })
+        ); // Collects fees from the specified liquidity pool
+    }
 }
