@@ -44,7 +44,7 @@ abstract contract BNBPartyState is BNBPartyModifiers, Ownable {
         IWBNB _WBNB,
         ISqrtPriceCalculator _sqrtPriceCalculator
     )
-        internal
+        private
         pure
         notZeroAddress(address(_WBNB))
         notZeroAddress(address(_sqrtPriceCalculator))
