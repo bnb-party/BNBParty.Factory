@@ -19,27 +19,17 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
 
         (address token0, address token1, address memeToken) = _getTokens(pool);
         
-        (uint256 memeAmount, uint256 wbnbAmount, uint160 newSqrtPriceX96) = _decreaseLiquidityAndCollect(
-            liquidity, sqrtPriceX96, unwrapAmount, token0
-        );
+        (uint256 amount0, uint256 amount1) = _decreaseAndCollect(lpToTokenId[msg.sender], liquidity);
+        uint160 newSqrtPriceX96 = _getNewSqrtPrice(liquidity, sqrtPriceX96, unwrapAmount, token0);
 
-        wbnbAmount -= unwrapAmount;
+        _isToken0WBNB(token0) ? amount0 -= unwrapAmount : amount1 -= unwrapAmount;
         isTokenOnPartyLP[memeToken] = false;
 
         // Approve tokens for the new liquidity pool creation
-        _approveTokensForLP(wbnbAmount, memeAmount, memeToken);
+        _approveTokensForLP(token0, token1, amount0, amount1);
 
         // Create new Liquidity Pool
-        (liquidityPool, tokenId) = _createLP(
-            positionManager,
-            token0,
-            token1,
-            _isToken0WBNB(token0) ? wbnbAmount : memeAmount,
-            _isToken0WBNB(token0) ? memeAmount : wbnbAmount,
-            newSqrtPriceX96,
-            party.lpFee,
-            _getTicks(token0, party.lpTicks)
-        );
+        (liquidityPool, tokenId) = _createLP(positionManager, token0, token1, amount0, amount1, newSqrtPriceX96, party.lpFee, _getTicks(token0, party.lpTicks));
 
         // Send bonuses and burn meme tokens
         _unwrapAndSendBNB(recipient, unwrapAmount);
@@ -52,30 +42,29 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
         memeToken = _isToken0WBNB(token0) ? token1 : token0;
     }
 
-    function _decreaseLiquidityAndCollect(
+    function _getNewSqrtPrice(
         uint128 liquidity,
         uint160 sqrtPriceX96,
         uint256 unwrapAmount,
         address token0
     )
         internal
-        returns (uint256 memeAmount, uint256 wbnbAmount, uint160 newSqrtPriceX96)
+        view
+        returns (uint160 newSqrtPriceX96)
     {
         if (_isToken0WBNB(token0)) {
-            (wbnbAmount, memeAmount) = _decreaseAndCollect(lpToTokenId[msg.sender], liquidity);
             newSqrtPriceX96 = sqrtPriceCalculator.getNextSqrtPriceFromAmount0RoundingUp(
                 sqrtPriceX96, liquidity, unwrapAmount, false
             );
         } else {
-            (memeAmount, wbnbAmount) = _decreaseAndCollect(lpToTokenId[msg.sender], liquidity);
             newSqrtPriceX96 = sqrtPriceCalculator.getNextSqrtPriceFromAmount1RoundingDown(
                 sqrtPriceX96, liquidity, unwrapAmount, false
             );
         }
     }
 
-    function _approveTokensForLP(uint256 wbnbAmount, uint256 memeAmount, address memeToken) internal {
-        IERC20(address(WBNB)).safeIncreaseAllowance(address(positionManager), wbnbAmount);
-        IERC20(memeToken).safeIncreaseAllowance(address(positionManager), memeAmount);
+    function _approveTokensForLP(address token0, address token1, uint256 amount0, uint256 amount1) internal {
+        IERC20(token0).safeIncreaseAllowance(address(positionManager), amount0);
+        IERC20(token1).safeIncreaseAllowance(address(positionManager), amount1);
     }
 }
