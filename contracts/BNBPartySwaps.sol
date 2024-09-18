@@ -81,12 +81,12 @@ abstract contract BNBPartySwaps is BNBPartyView {
     /// @return router The address of the swap router
     /// @return fee The fee amount for the swap
     function _getRouterAndFee(address token) internal view returns (ISwapRouter router, uint24 fee) {
-        if (isTokenOnPartyLP[token]) {
-            router = BNBSwapRouter;
-            fee = party.partyLpFee;
-        } else {
+        if (isTokenTargetReached[token]) {
             router = swapRouter;
             fee = party.lpFee;
+        } else {
+            router = BNBSwapRouter;
+            fee = party.partyLpFee;
         }
     }
 }
