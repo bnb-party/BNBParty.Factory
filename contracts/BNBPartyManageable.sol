@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./BNBPartyModifiers.sol";
+import "./BNBPartyFee.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /// @title BNBPartyManageable
 /// @notice This abstract contract provides management functions for setting position managers, swap routers, and withdrawing fees in the BNBParty system.
-abstract contract BNBPartyManageable is BNBPartyModifiers, Pausable {
+abstract contract BNBPartyManageable is BNBPartyFee, Pausable {
     /// @notice Sets the non-fungible position managers for BNB Party and Pancakeswap V3
     /// @param _BNBPositionManager Address of the new BNB Party non-fungible position manager
     /// @param _positionManager Address of the new Pancakeswap V3 non-fungible position manager
