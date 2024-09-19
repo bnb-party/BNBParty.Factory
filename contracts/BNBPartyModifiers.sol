@@ -1,18 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./BNBPartyState.sol";
+import "./interfaces/IBNBPartyFactory.sol";
+import "@bnb-party/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 /// @title BNBPartyModifiers
 /// @notice This abstract contract provides various modifiers used in the BNBParty system to enforce conditions on function calls.
-abstract contract BNBPartyModifiers is BNBPartyState {
-    /// @notice Restricts function access to liquidity pools that are part of a party
-    /// @dev Reverts if the caller is not a registered party liquidity pool
-    modifier onlyParty() {
-        if (!isParty[msg.sender]) revert LPNotAtParty();
-        _;
-    }
-
+abstract contract BNBPartyModifiers is IBNBPartyFactory{
     /// @notice Ensures the provided address is not a zero address
     /// @param _address Address to be checked
     /// @dev Reverts if the address is zero
@@ -23,8 +17,8 @@ abstract contract BNBPartyModifiers is BNBPartyState {
 
     /// @notice Ensures the amount of BNB sent is sufficient to cover the token creation fee
     /// @dev Reverts if the sent BNB is less than the required fee
-    modifier insufficientBNB() {
-        if (msg.value < party.createTokenFee) revert InsufficientBNB();
+    modifier insufficientBNB(uint256 fee) {
+        if (msg.value < fee) revert InsufficientBNB();
         _;
     }
 
