@@ -3,14 +3,13 @@ pragma solidity ^0.8.0;
 
 import "./token/ERC20Token.sol";
 import "./BNBPartyLiquidity.sol";
-import "./BNBPartyManageable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@bnb-party/v3-periphery/contracts/interfaces/IPeripheryPayments.sol";
 
 /// @title BNBPartyFactory
 /// @notice This contract is used for creating and managing liquidity pools and custom ERC20 tokens on the Binance Smart Chain (BSC) using Uniswap V3 system.
-contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageable {
+contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @notice Allows the contract to receive BNB
