@@ -36,6 +36,7 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard, BNBPartyManageab
         external
         payable
         override
+        firewallProtected
         nonReentrant
         insufficientBNB(party.createTokenFee)
         whenNotPaused

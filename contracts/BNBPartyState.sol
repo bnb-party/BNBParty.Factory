@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@ironblocks/firewall-consumer/contracts/FirewallConsumer.sol";
 import "./interfaces/ISqrtPriceCalculator.sol";
 import "./interfaces/INonfungiblePositionManager.sol";
 import "./interfaces/IWBNB.sol";
@@ -9,7 +10,7 @@ import "./BNBPartyModifiers.sol";
 
 /// @title BNBPartyState
 /// @notice This abstract contract handles the state variables and initial setup for the BNBParty system.
-abstract contract BNBPartyState is BNBPartyModifiers, Ownable {
+abstract contract BNBPartyState is BNBPartyModifiers, Ownable, FirewallConsumer {
     INonfungiblePositionManager public BNBPositionManager; // BNB Party position manager
     INonfungiblePositionManager public positionManager; // Default Pancakeswap V3 position manager
     ISwapRouter public BNBSwapRouter; // V3 swap router
