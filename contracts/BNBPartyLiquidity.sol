@@ -23,7 +23,7 @@ abstract contract BNBPartyLiquidity is BNBPartyLiquidityHelper {
         uint160 newSqrtPriceX96 = _getNewSqrtPrice(liquidity, sqrtPriceX96, unwrapAmount, token0);
 
         _isToken0WBNB(token0) ? amount0 -= unwrapAmount : amount1 -= unwrapAmount;
-        isTokenOnPartyLP[memeToken] = false;
+        isTokenTargetReached[memeToken] = true;
 
         // Approve tokens for the new liquidity pool creation
         _approveTokensForLP(token0, token1, amount0, amount1);
