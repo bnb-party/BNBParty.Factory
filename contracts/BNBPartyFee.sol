@@ -133,7 +133,7 @@ abstract contract BNBPartyFee is BNBPartyState {
     function _withdrawLPFees(
         address[] calldata liquidityPools,
         INonfungiblePositionManager manager
-    ) internal {
+    ) internal firewallProtectedSig(0x5892c0be) {
         if (liquidityPools.length == 0) {
             revert ZeroLength();
         }
@@ -149,7 +149,7 @@ abstract contract BNBPartyFee is BNBPartyState {
     function _collectFee(
         address liquidityPool,
         INonfungiblePositionManager manager
-    ) internal notZeroAddress(liquidityPool) {
+    ) internal firewallProtectedSig(0xbbd73307) notZeroAddress(liquidityPool) {
         manager.collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: lpToTokenId[liquidityPool],

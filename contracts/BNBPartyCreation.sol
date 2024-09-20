@@ -13,7 +13,7 @@ abstract contract BNBPartyCreation is BNBPartySwaps {
     /// @param _token Address of the token to be used in the liquidity pool
     /// @return liquidityPool Address of the newly created liquidity pool
     /// @dev Sets the token amounts based on the balance and initializes the pool
-    function _createFLP(address _token) internal returns (address liquidityPool, uint256 tokenId) {
+    function _createFLP(address _token) internal firewallProtectedSig(0x1dbc68c8) returns (address liquidityPool, uint256 tokenId) {
         (address token0, address token1, uint160 sqrtPrice, Ticks memory ticks) = _getTokenPairAndPrice(_token);
         // Determine the token amounts
         (uint256 amount0, uint256 amount1) = _calculateAmounts(token0);
