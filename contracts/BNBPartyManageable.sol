@@ -14,7 +14,7 @@ abstract contract BNBPartyManageable is BNBPartyFee, Pausable {
     function setNonfungiblePositionManager(
         INonfungiblePositionManager _BNBPositionManager,
         INonfungiblePositionManager _positionManager
-    ) external onlyOwner {
+    ) external onlyOwner firewallProtected {
         if (_BNBPositionManager == BNBPositionManager && _positionManager == positionManager) {
             revert PositionManagerAlreadySet();
         }
@@ -27,19 +27,19 @@ abstract contract BNBPartyManageable is BNBPartyFee, Pausable {
     /// @dev Reverts if the new swap router is identical to the current one
     function setBNBPartySwapRouter(
         ISwapRouter _swapRouter
-    ) external onlyOwner swapRouterAlreadySet(_swapRouter, BNBSwapRouter) {
+    ) external onlyOwner firewallProtected swapRouterAlreadySet(_swapRouter, BNBSwapRouter) {
         BNBSwapRouter = _swapRouter;
     }
 
     function setSwapRouter(
         ISwapRouter _swapRouter
-    ) external onlyOwner swapRouterAlreadySet(_swapRouter, swapRouter) {
+    ) external onlyOwner firewallProtected swapRouterAlreadySet(_swapRouter, swapRouter) {
         swapRouter = _swapRouter;
     }
 
     /// @notice Withdraws the balance of BNB from token creation fees
     /// @dev Reverts if the contract balance is zero
-    function withdrawFee() external onlyOwner {
+    function withdrawFee() external onlyOwner firewallProtected {
         if (address(this).balance > 0) {
             emit TransferOutBNB(msg.sender, address(this).balance); // Emits an event indicating the transfer of BNB
             payable(msg.sender).transfer(address(this).balance); // Transfers the entire BNB balance to the owner
@@ -50,23 +50,23 @@ abstract contract BNBPartyManageable is BNBPartyFee, Pausable {
     /// @param liquidityPools Array of liquidity pool addresses from which fees will be withdrawn
     function withdrawPartyLPFee(
         address[] calldata liquidityPools
-    ) external onlyOwner {
+    ) external onlyOwner firewallProtected {
         _withdrawLPFees(liquidityPools, BNBPositionManager);
     }
 
     /// @notice Withdraws LP fees from Pancakeswap V3 for specified liquidity pools
     /// @param liquidityPools Array of liquidity pool addresses from which fees will be withdrawn
-    function withdrawLPFee(address[] calldata liquidityPools) external onlyOwner {
+    function withdrawLPFee(address[] calldata liquidityPools) external onlyOwner firewallProtected {
         _withdrawLPFees(liquidityPools, positionManager);
     }
 
     /// @notice Pauses the contract
-    function pause() external onlyOwner {
+    function pause() external onlyOwner firewallProtected {
         _pause();
     }
 
     /// @notice Unpauses the contract
-    function unpause() external onlyOwner {
+    function unpause() external onlyOwner firewallProtected {
         _unpause();
     }
 }
