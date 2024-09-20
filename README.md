@@ -13,6 +13,7 @@
 -   [Join Party](#join-liquidity-party)
 -   [Leave Party](#leave-party)
 -   [Swap Router](#swap-router)
+-   [UML diagram](#uml-diagram)
 -   [License](#license)
 
 ## Installation
@@ -207,6 +208,10 @@ await BNBSwapRouter.multicall([exactInputData, unwrapWETH9Data])
 7. The `multicall` method of the **BNBSwapRouter** contract is called with the encoded `exactInput` and `unwrapWETH9` data, performing both operations in a single transaction. This results in swapping **MEME** to **WBNB** and then converting **WBNB** to **BNB**, which is sent to the recipient.
 
 This section demonstrates how to efficiently perform token swaps using the **Swap Router**, providing an alternative to the `joinParty` and `leaveParty` functions while saving on gas costs
+
+## UML Diagram
+
+![classDiagram](https://github.com/user-attachments/assets/8c102041-7e2a-4804-a7d1-fef2acfefdef)
 
 ## License
 
