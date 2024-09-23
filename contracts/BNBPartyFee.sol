@@ -8,46 +8,6 @@ import "./interfaces/IUniswapV3Pool.sol";
 /// @notice This abstract contract provides internal functions for calculating fees in the BNB Party system.
 abstract contract BNBPartyFee is BNBPartyState {
     /// @notice Internal function to retrieve the fee growth inside the position from the last observation
-    /// @param pool Address of the Uniswap V3 pool
-    /// @return feeGrowthInside0LastX128 Fee growth inside for token0 from the last observation
-    /// @return feeGrowthInside1LastX128 Fee growth inside for token1 from the last observation
-    function _getFeeGrowthInsideLastX128(
-        IUniswapV3Pool pool
-    )
-        internal
-        view
-        returns (
-            uint256 feeGrowthInside0LastX128,
-            uint256 feeGrowthInside1LastX128
-        )
-    {
-        (feeGrowthInside0LastX128, feeGrowthInside1LastX128) = _getFeeGrowthInsideLastX128(
-            positionManager,
-            pool,
-            party.lpTicks
-        );
-    }
-
-    /// @notice Internal function to retrieve the fee growth inside the position from the last observation
-    /// @param pool Address of the Uniswap V3 pool
-    function _getPartyFeeGrowthInsideLastX128(
-        IUniswapV3Pool pool
-    )
-        internal
-        view
-        returns (
-            uint256 feeGrowthInside0LastX128,
-            uint256 feeGrowthInside1LastX128
-        )
-    {
-        (feeGrowthInside0LastX128, feeGrowthInside1LastX128) = _getFeeGrowthInsideLastX128(
-            BNBPositionManager,
-            pool,
-            party.partyTicks
-        );
-    }
-
-    /// @notice Internal function to retrieve the fee growth inside the position from the last observation
     function _getFeeGrowthInsideLastX128(
         INonfungiblePositionManager manager,
         IUniswapV3Pool pool,
@@ -88,10 +48,18 @@ abstract contract BNBPartyFee is BNBPartyState {
         IUniswapV3Pool pool
     ) internal view returns (uint256 feeGrowthGlobal) {
         if (pool.token0() == address(WBNB)) {
-            (uint256 feeGrowthInside0LastX128 , ) = _getPartyFeeGrowthInsideLastX128(pool);
+            (uint256 feeGrowthInside0LastX128 , ) = _getFeeGrowthInsideLastX128(
+                BNBPositionManager,
+                pool,
+                party.partyTicks
+            );
             feeGrowthGlobal = pool.feeGrowthGlobal0X128() -feeGrowthInside0LastX128;
         } else {
-            ( , uint256 feeGrowthInside1LastX128) = _getPartyFeeGrowthInsideLastX128(pool);
+            ( , uint256 feeGrowthInside1LastX128) = _getFeeGrowthInsideLastX128(
+                BNBPositionManager,
+                pool,
+                party.partyTicks
+            );
             feeGrowthGlobal = pool.feeGrowthGlobal1X128() - feeGrowthInside1LastX128;
         }
     }
