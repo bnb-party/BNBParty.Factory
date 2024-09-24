@@ -82,7 +82,7 @@ abstract contract BNBPartySwaps is BNBPartyView {
     /// @return router The address of the swap router
     /// @return fee The fee amount for the swap
     function _getRouterAndFee(address token) internal view returns (ISwapRouter router, uint24 fee) {
-        if (!_isValidParty(token)) revert LPNotAtParty();
+        if (!isParty[_getPartyPool(token)]) revert LPNotAtParty();
         if (isTokenTargetReached[token]) {
             router = swapRouter;
             fee = party.lpFee;
@@ -92,9 +92,8 @@ abstract contract BNBPartySwaps is BNBPartyView {
         }
     }
 
-    function _isValidParty(address token) internal view returns (bool) {
+    function _getPartyPool(address token) internal view returns (address pool) {
         address factory = BNBPositionManager.factory();
-        address pool = IUniswapV3Factory(factory).getPool(token, address(WBNB), party.partyLpFee);// getPool implements position checking by itself
-        return isParty[pool];
+        pool = IUniswapV3Factory(factory).getPool(token, address(WBNB), party.partyLpFee);// getPool implements position checking by itself
     }
 }
