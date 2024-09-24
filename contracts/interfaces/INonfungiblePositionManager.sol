@@ -182,4 +182,7 @@ interface INonfungiblePositionManager is IPoolInitializer {
     function burn(uint256 tokenId) external payable;
 
     function WETH9() external view returns (address);
+
+    ///@notice Returns the address of the v3-factory
+    function factory() external view returns (address);
 }
