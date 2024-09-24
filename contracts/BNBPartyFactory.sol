@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "./token/ERC20Token.sol";
 import "./BNBPartyLiquidity.sol";
-import "./interfaces/IUniswapV3Factory.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@bnb-party/v3-periphery/contracts/interfaces/IPeripheryPayments.sol";
@@ -80,7 +79,6 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard {
         address tokenOut,
         uint256 amountOutMinimum
     ) external payable notZeroAddress(tokenOut) notZeroValue {
-        _tokenValidation(tokenOut);
         (ISwapRouter router, uint24 fee) = _getRouterAndFee(tokenOut);
         ISwapRouter.ExactInputParams memory params = ISwapRouter
             .ExactInputParams({
@@ -102,7 +100,6 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard {
         uint256 amountIn,
         uint256 amountOutMinimum
     ) external notZeroAddress(tokenIn) notZeroAmount(amountIn) {
-        _tokenValidation(tokenIn);
         IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
         (ISwapRouter router, uint24 fee) = _getRouterAndFee(tokenIn);
         IERC20(tokenIn).safeIncreaseAllowance(address(router), amountIn);
@@ -117,11 +114,5 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard {
             });
         _executeSwap(router, params);
         IPeripheryPayments(address(router)).unwrapWETH9(amountOutMinimum, msg.sender);
-    }
-
-    function _tokenValidation(address token) internal view {
-        address factory = INonfungiblePositionManager(BNBPositionManager).factory();
-        address pool = IUniswapV3Factory(factory).getPool(token, address(WBNB), party.partyLpFee);// getPool implements position checking by itself
-        if (!isParty[pool]) revert LPNotAtParty();
     }
 }
