@@ -81,19 +81,30 @@ abstract contract BNBPartySwaps is BNBPartyView {
     /// @param token The address of the token to determine the router and fee for
     /// @return router The address of the swap router
     /// @return fee The fee amount for the swap
-    function _getRouterAndFee(address token) internal view returns (ISwapRouter router, uint24 fee) {
-        if (!isParty[_getPartyPool(token)]) revert LPNotAtParty();
+    function _getRouterAndFee(
+        address token
+    ) internal view returns (ISwapRouter router, uint24 fee) {
+        address factory;
         if (isTokenTargetReached[token]) {
-            router = swapRouter;
             fee = party.lpFee;
+            router = swapRouter;
+            factory = positionManager.factory();
         } else {
-            router = BNBSwapRouter;
             fee = party.partyLpFee;
+            router = BNBSwapRouter;
+            factory = BNBPositionManager.factory();
+        }
+        if (!isParty[_getPool(token, factory, fee)]) {
+            revert LPNotAtParty();
         }
     }
 
-    function _getPartyPool(address token) internal view returns (address pool) {
-        address factory = BNBPositionManager.factory();
-        pool = IUniswapV3Factory(factory).getPool(token, address(WBNB), party.partyLpFee);// getPool implements position checking by itself
+    /// @notice Retrieves the pool address for a given token, factory, and fee
+    /// @param token The token for which the pool is to be retrieved
+    /// @param factory The address of the factory
+    /// @param fee The fee tier for the pool
+    /// @return pool The address of the pool
+    function _getPool(address token, address factory, uint24 fee) internal view returns (address pool) {
+        pool = IUniswapV3Factory(factory).getPool(token, address(WBNB), fee);
     }
 }

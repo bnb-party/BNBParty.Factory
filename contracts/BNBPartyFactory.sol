@@ -70,6 +70,7 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard {
         // Handle liquidity
         (address liquidityPool, uint256 tokenId) = _handleLiquidity(recipient);
         lpToTokenId[liquidityPool] = tokenId;
+        isParty[liquidityPool] = true; // Mark the second liquidity pool as a party pool
     }
 
     /// @notice Allows users to join the party by swapping BNB for the specified token
