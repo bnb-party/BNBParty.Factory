@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "./BNBPartyView.sol";
-import "./interfaces/IUniswapV3Factory.sol";
 
 /// @title BNBPartySwaps
 /// @notice This abstract contract provides internal functions for swapping tokens and managing BNB in the BNB Party system.
@@ -81,30 +80,13 @@ abstract contract BNBPartySwaps is BNBPartyView {
     /// @param token The address of the token to determine the router and fee for
     /// @return router The address of the swap router
     /// @return fee The fee amount for the swap
-    function _getRouterAndFee(
-        address token
-    ) internal view returns (ISwapRouter router, uint24 fee) {
-        address factory;
+    function _getRouterAndFee(address token) internal view returns (ISwapRouter router, uint24 fee) {
         if (isTokenTargetReached[token]) {
-            fee = party.lpFee;
             router = swapRouter;
-            factory = positionManager.factory();
+            fee = party.lpFee;
         } else {
-            fee = party.partyLpFee;
             router = BNBSwapRouter;
-            factory = BNBPositionManager.factory();
+            fee = party.partyLpFee;
         }
-        if (!isParty[_getPool(token, factory, fee)]) {
-            revert LPNotAtParty();
-        }
-    }
-
-    /// @notice Retrieves the pool address for a given token, factory, and fee
-    /// @param token The token for which the pool is to be retrieved
-    /// @param factory The address of the factory
-    /// @param fee The fee tier for the pool
-    /// @return pool The address of the pool
-    function _getPool(address token, address factory, uint24 fee) internal view returns (address pool) {
-        pool = IUniswapV3Factory(factory).getPool(token, address(WBNB), fee);
     }
 }

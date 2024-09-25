@@ -70,7 +70,6 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard {
         // Handle liquidity
         (address liquidityPool, uint256 tokenId) = _handleLiquidity(recipient);
         lpToTokenId[liquidityPool] = tokenId;
-        isParty[liquidityPool] = true; // Mark the second liquidity pool as a party pool
     }
 
     /// @notice Allows users to join the party by swapping BNB for the specified token
@@ -101,8 +100,8 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard {
         uint256 amountIn,
         uint256 amountOutMinimum
     ) external notZeroAddress(tokenIn) notZeroAmount(amountIn) {
-        IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
         (ISwapRouter router, uint24 fee) = _getRouterAndFee(tokenIn);
+        IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
         IERC20(tokenIn).safeIncreaseAllowance(address(router), amountIn);
 
         ISwapRouter.ExactInputParams memory params = ISwapRouter

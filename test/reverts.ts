@@ -10,9 +10,14 @@ import {
     wbnb,
     deployContracts,
     deployBNBPartyFactory,
+    getDataHexString,
+    setupTokenAndPool,
 } from "./helper"
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers"
+import { ERC20Token } from "../typechain-types"
 
 describe("BNBPartyFactory reverts", function () {
+    let signers: SignerWithAddress[]
     const partyTarget = ethers.parseEther("13") // 13 BNB target
     const tokenCreationFee = ethers.parseUnits("1", 16) // 0.01 BNB token creation fee
     const returnFeeAmount = ethers.parseUnits("5", 16) // 0.05 BNB return fee (bonusTargetReach)
@@ -108,6 +113,43 @@ describe("BNBPartyFactory reverts", function () {
                 await v3Factory.getAddress()
             )
         ).to.be.revertedWithCustomError(bnbPartyFactory, "ZeroAmount")
+    })
+
+    it("should revert join Party not from Party pool", async function () {
+        const { token } = await setupTokenAndPool()
+
+        await expect(
+            bnbPartyFactory.joinParty(await token.getAddress(), 0, { value: ethers.parseEther("1") })
+        ).to.be.revertedWithCustomError(bnbPartyFactory, "LPNotAtParty")
+    })
+
+    it("should revert swap not from Party pool", async function () {
+        const { token: token } = await setupTokenAndPool()
+        const amountIn = ethers.parseUnits("1", 17)
+        const amountOutMinimum = 0
+        const path = getDataHexString(await wbnb.getAddress(), await token.getAddress())
+        const deadline = Math.floor(Date.now() / 1000) + 60 * 20
+
+        await wbnb.deposit({ value: amountIn })
+        await wbnb.approve(await BNBSwapRouter.getAddress(), amountIn)
+
+        const params = {
+            path: path,
+            recipient: (await ethers.getSigners())[0],
+            deadline: deadline,
+            amountIn: amountIn,
+            amountOutMinimum: amountOutMinimum,
+        }
+
+        await expect(BNBSwapRouter.exactInput(params)).to.be.revertedWithCustomError(bnbPartyFactory, "LPNotAtParty")
+    })
+
+    it("should revert leave party not from Party pool", async function () {
+        const { token } = await setupTokenAndPool()
+
+        await expect(
+            bnbPartyFactory.leaveParty(await token.getAddress(), ethers.parseEther("1"), 0)
+        ).to.be.reverted
     })
 
     it("should revert if target is less than fees", async function () {
