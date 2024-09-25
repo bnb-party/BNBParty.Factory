@@ -8,56 +8,17 @@ import "./interfaces/IUniswapV3Pool.sol";
 /// @notice This abstract contract provides internal functions for calculating fees in the BNB Party system.
 abstract contract BNBPartyFee is BNBPartyState {
     /// @notice Internal function to retrieve the fee growth inside the position from the last observation
-    /// @param pool Address of the Uniswap V3 pool
-    /// @return feeGrowthInside0LastX128 Fee growth inside for token0 from the last observation
-    /// @return feeGrowthInside1LastX128 Fee growth inside for token1 from the last observation
     function _getFeeGrowthInsideLastX128(
-        IUniswapV3Pool pool
-    )
-        internal
-        view
-        returns (
-            uint256 feeGrowthInside0LastX128,
-            uint256 feeGrowthInside1LastX128
-        )
-    {
-        Ticks memory ticks = _getTicks(pool.token0(), party.lpTicks);
-        (
-            feeGrowthInside0LastX128,
-            feeGrowthInside1LastX128
-        ) = _getFeeGrowthInsideLastX128(
+        INonfungiblePositionManager manager,
+        IUniswapV3Pool pool,
+        Ticks memory lpTicks
+    ) internal view returns (uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128) {
+        Ticks memory ticks = _getTicks(pool.token0(), lpTicks);
+        (feeGrowthInside0LastX128, feeGrowthInside1LastX128) = _getFeeGrowthInsideLastX128(
             pool,
             keccak256(
                 abi.encodePacked(
-                    address(positionManager),
-                    ticks.tickLower,
-                    ticks.tickUpper
-                )
-            )
-        );
-    }
-
-    /// @notice Internal function to retrieve the fee growth inside the position from the last observation
-    /// @param pool Address of the Uniswap V3 pool
-    function _getPartyFeeGrowthInsideLastX128(
-        IUniswapV3Pool pool
-    )
-        internal
-        view
-        returns (
-            uint256 feeGrowthInside0LastX128,
-            uint256 feeGrowthInside1LastX128
-        )
-    {
-        Ticks memory ticks = _getTicks(pool.token0(), party.partyTicks);
-        (
-            feeGrowthInside0LastX128,
-            feeGrowthInside1LastX128
-        ) = _getFeeGrowthInsideLastX128(
-            pool,
-            keccak256(
-                abi.encodePacked(
-                    address(BNBPositionManager),
+                    address(manager),
                     ticks.tickLower,
                     ticks.tickUpper
                 )
@@ -87,10 +48,18 @@ abstract contract BNBPartyFee is BNBPartyState {
         IUniswapV3Pool pool
     ) internal view returns (uint256 feeGrowthGlobal) {
         if (pool.token0() == address(WBNB)) {
-            (uint256 feeGrowthInside0LastX128 , ) = _getPartyFeeGrowthInsideLastX128(pool);
+            (uint256 feeGrowthInside0LastX128 , ) = _getFeeGrowthInsideLastX128(
+                BNBPositionManager,
+                pool,
+                party.partyTicks
+            );
             feeGrowthGlobal = pool.feeGrowthGlobal0X128() -feeGrowthInside0LastX128;
         } else {
-            ( , uint256 feeGrowthInside1LastX128) = _getPartyFeeGrowthInsideLastX128(pool);
+            ( , uint256 feeGrowthInside1LastX128) = _getFeeGrowthInsideLastX128(
+                BNBPositionManager,
+                pool,
+                party.partyTicks
+            );
             feeGrowthGlobal = pool.feeGrowthGlobal1X128() - feeGrowthInside1LastX128;
         }
     }
@@ -133,7 +102,7 @@ abstract contract BNBPartyFee is BNBPartyState {
     function _withdrawLPFees(
         address[] calldata liquidityPools,
         INonfungiblePositionManager manager
-    ) internal {
+    ) internal firewallProtectedSig(0x5892c0be) {
         if (liquidityPools.length == 0) {
             revert ZeroLength();
         }
@@ -149,7 +118,7 @@ abstract contract BNBPartyFee is BNBPartyState {
     function _collectFee(
         address liquidityPool,
         INonfungiblePositionManager manager
-    ) internal notZeroAddress(liquidityPool) {
+    ) internal firewallProtectedSig(0xbbd73307) notZeroAddress(liquidityPool) {
         manager.collect(
             INonfungiblePositionManager.CollectParams({
                 tokenId: lpToTokenId[liquidityPool],

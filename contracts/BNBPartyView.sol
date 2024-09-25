@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./BNBPartyFee.sol";
+import "./BNBPartyManageable.sol";
 
 /// @title BNBPartyView
 /// @notice This abstract contract provides view functions for the BNB Party system, including fee calculations and token checks.
-abstract contract BNBPartyView is BNBPartyFee {
+abstract contract BNBPartyView is BNBPartyManageable {
     /// @notice Checks if WBNB is the token0 in the provided Uniswap V3 pool
     /// @param liquidityPool Address of the Uniswap V3 pool to check
     /// @return True if WBNB is token0, false otherwise
@@ -59,6 +59,15 @@ abstract contract BNBPartyView is BNBPartyFee {
         (
             feeGrowthInside0LastX128,
             feeGrowthInside1LastX128
-        ) = manager == BNBPositionManager ? _getPartyFeeGrowthInsideLastX128(pool) : _getFeeGrowthInsideLastX128(pool);
+        ) = manager == BNBPositionManager ? _getFeeGrowthInsideLastX128(
+                BNBPositionManager,
+                pool,
+                party.partyTicks
+        ) : 
+            _getFeeGrowthInsideLastX128(
+                positionManager,
+                pool,
+                party.lpTicks
+        );
     }
 }

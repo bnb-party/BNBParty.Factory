@@ -38,6 +38,7 @@
   "dependencies": {
     "@bnb-party/v3-core": "^1.0.4",
     "@bnb-party/v3-periphery": "^1.0.5",
+    "@ironblocks/firewall-consumer": "^1.0.17",
     "@openzeppelin/contracts": "^5.0.2",
     "@uniswap/lib": "^4.0.1-alpha",
     "@uniswap/v3-core": "^1.0.0",

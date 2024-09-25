@@ -10,10 +10,9 @@ import {
     v3PartyFactory,
     positionManager,
     BNBPositionManager,
-    BNBSwapRouter,
+    setupTokenAndPool,
     wbnb,
     deployContracts,
-    deployBNBPartyFactory,
 } from "./helper"
 
 const POOL_BYTECODE_HASH = keccak256(bytecode)
@@ -54,6 +53,25 @@ describe("BNBPartyFactory", function () {
     it("should create party LP", async function () {
         await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
         expect(await BNBPositionManager.totalSupply()).to.equal(1)
+    })
+
+    it("should create a pool if a pancakeswap pool has already been created before target reached", async function () {
+        // create party LP
+        await bnbPartyFactory.createParty(name, symbol, { value: tokenCreationFee })
+        // buy some party tokens
+        const tokenId = (await BNBPositionManager.totalSupply()).toString()
+        const position = await BNBPositionManager.positions(tokenId)
+        const MEME = position.token1 == (await wbnb.getAddress()) ? position.token0 : position.token1
+        await bnbPartyFactory.joinParty(MEME, 0, { value: ethers.parseEther("5") })
+        // create pancakeswap pool
+        const token = await ethers.getContractAt("ERC20Token", MEME)
+        const sqrt = "8602843886007566775194646947"
+
+        await wbnb.deposit({ value: ethers.parseEther("13") }) // wrap 13 BNB
+        await wbnb.approve(await positionManager.getAddress(), ethers.MaxUint256)
+        await setupTokenAndPool(token, positionManager, sqrt, "1150000000000000000", "92529783317606807806")
+        // target reached
+        await expect(bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget })).to.be.not.reverted
     })
 
     it("should create a token with a name ending with ' Party'", async function () {
@@ -105,8 +123,9 @@ describe("BNBPartyFactory", function () {
         })
 
         it("should create second liquidity pool", async () => {
+            const beforeTotalSupply = await positionManager.totalSupply()
             await bnbPartyFactory.joinParty(MEME, 0, { value: BNBToTarget })
-            expect(await positionManager.totalSupply()).to.equal(1)
+            expect(await positionManager.totalSupply()).to.equal(beforeTotalSupply + 1n)
         })
 
         it("should have a MEME balance of 0 on BNBPartyFactory", async () => {

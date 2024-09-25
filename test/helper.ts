@@ -6,6 +6,7 @@ import { MockNonfungibleTokenPositionDescriptor } from "../typechain-types/contr
 import { SwapRouter } from "../typechain-types/@bnb-party/v3-periphery/contracts/SwapRouter"
 import { IWBNB } from "../typechain-types/contracts/interfaces/IWBNB"
 import WETH9Artifact from "./WETH9/WETH9.json"
+import ERC20Token from "./ERC20Token"
 import FactoryArtifact from "@bnb-party/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json"
 import ClassicFactoryArtifact from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json"
 import ClassicNonfungiblePositionManager from "@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json"
@@ -35,13 +36,16 @@ export let tokenPositionDescriptor: MockNonfungibleTokenPositionDescriptor
 export let BNBSwapRouter: SwapRouter
 export let swapRouter: SwapRouter
 export let wbnb: IWBNB
+const initialTokenAmount = "1000000000000000000000000000"
+const name = "Party"
+const symbol = "Token"
+const sqrtPriceX96 = "1252685732681638336686364"
 
 export async function deployContracts(partyTarget = ethers.parseEther("90"), wbnbAddress: string = "") {
     const tokenCreationFee = ethers.parseUnits("1", 16) // 0.01 BNB token creation fee
     const returnFeeAmount = ethers.parseUnits("5", 16) // 0.05 BNB return fee (bonusTargetReach)
     const bonusFee = ethers.parseUnits("1", 17) // 0.1 BNB bonus fee (bonusPartyCreator)
     const targetReachFee = ethers.parseUnits("8.5", 17) // 0.85 BNB target reach fee
-    const initialTokenAmount = "1000000000000000000000000000"
     const sqrtPriceX96 = "1252685732681638336686364"
     // Deploy WBNB if not provided
     if (wbnbAddress === "") {
@@ -172,4 +176,40 @@ export async function maxAndMinWBNB() {
 async function deployWBNB(): Promise<IWBNB> {
     const WBNBFactory = await ethers.getContractFactory(WETH9Artifact.abi, WETH9Artifact.bytecode)
     return (await WBNBFactory.deploy()) as IWBNB
+}
+
+export async function setupTokenAndPool(token: ERC20Token = null, manager = BNBPositionManager, poolSqrtPriceX96 = "0", amountA = initialTokenAmount, amountB = initialTokenAmount) {
+    const Token = await ethers.getContractFactory("ERC20Token")
+    if (token === null)
+        token = await Token.deploy(name, symbol, amountA)
+    await token.approve(await manager.getAddress(), amountA)
+
+    const tokenAddress = await token.getAddress()
+    const wbnbAddress = await wbnb.getAddress()
+    const [tokenA, tokenB] = tokenAddress < wbnbAddress ? [tokenAddress, wbnbAddress] : [wbnbAddress, tokenAddress]
+    if (poolSqrtPriceX96 === "0")
+        poolSqrtPriceX96 = tokenAddress < wbnbAddress ? sqrtPriceX96 : reverseSqrtPriceX96(sqrtPriceX96)
+    await manager.createAndInitializePoolIfNecessary(tokenA, tokenB, FeeAmount.HIGH, poolSqrtPriceX96)
+
+    const timestamp = Math.floor(Date.now() / 1000) + 1000
+    await manager.mint({
+        token0: tokenA,
+        token1: tokenB,
+        fee: FeeAmount.HIGH,
+        tickLower: "-195600",
+        tickUpper: "214200",
+        amount0Desired: amountA,
+        amount1Desired: amountB,
+        amount0Min: 0,
+        amount1Min: 0,
+        recipient: (await ethers.getSigners())[0],
+        deadline: timestamp,
+    })
+
+    return { token, tokenA, tokenB }
+}
+
+function reverseSqrtPriceX96(sqrtPriceX96: string): string {
+    const precision = BigInt(1) << BigInt(192); // Equivalent to 1 << 192 in Solidity
+    return (precision / BigInt(sqrtPriceX96)).toString();
 }
