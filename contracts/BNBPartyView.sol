@@ -53,6 +53,15 @@ abstract contract BNBPartyView is BNBPartyManageable {
         (
             feeGrowthInside0LastX128,
             feeGrowthInside1LastX128
-        ) = manager == BNBPositionManager ? _getPartyFeeGrowthInsideLastX128(pool) : _getFeeGrowthInsideLastX128(pool);
+        ) = manager == BNBPositionManager ? _getFeeGrowthInsideLastX128(
+                BNBPositionManager,
+                pool,
+                party.partyTicks
+        ) : 
+            _getFeeGrowthInsideLastX128(
+                positionManager,
+                pool,
+                party.lpTicks
+        );
     }
 }
