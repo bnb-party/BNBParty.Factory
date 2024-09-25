@@ -87,6 +87,11 @@ Simply call the `createParty` function with the desired token **name** and **sym
 
 So, why wait? Start your liquidity party today and take the first step towards exciting new financial opportunities!
 
+> **Note**
+> 
+> While the contract allows for multiple tokens to be created using a external cover contract, our internal service only supports the creation of one token per transaction. This design choice ensures consistency and simplifies the interaction process when managing tokens in the system.
+> So if create multiple parties in a single transaction, they may not be processed in our system.
+
 ## Join Liquidity Party
 
 Ready to dive into the action? You can effortlessly become part of the excitement by swapping your BNB for the party’s token.
