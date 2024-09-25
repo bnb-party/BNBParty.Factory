@@ -6,6 +6,7 @@ import { MockNonfungibleTokenPositionDescriptor } from "../typechain-types/contr
 import { SwapRouter } from "../typechain-types/@bnb-party/v3-periphery/contracts/SwapRouter"
 import { IWBNB } from "../typechain-types/contracts/interfaces/IWBNB"
 import WETH9Artifact from "./WETH9/WETH9.json"
+import ERC20Token from "./ERC20Token"
 import FactoryArtifact from "@bnb-party/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json"
 import ClassicFactoryArtifact from "@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json"
 import ClassicNonfungiblePositionManager from "@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json"
@@ -177,27 +178,28 @@ async function deployWBNB(): Promise<IWBNB> {
     return (await WBNBFactory.deploy()) as IWBNB
 }
 
-export async function setupTokenAndPool() {
+export async function setupTokenAndPool(token: ERC20Token = null, manager = BNBPositionManager, poolSqrtPriceX96 = "0", amountA = initialTokenAmount, amountB = initialTokenAmount) {
     const Token = await ethers.getContractFactory("ERC20Token")
-    const token = await Token.deploy(name, symbol, initialTokenAmount)
-    await token.approve(await BNBPositionManager.getAddress(), initialTokenAmount)
+    if (token === null)
+        token = await Token.deploy(name, symbol, amountA)
+    await token.approve(await manager.getAddress(), amountA)
 
     const tokenAddress = await token.getAddress()
     const wbnbAddress = await wbnb.getAddress()
     const [tokenA, tokenB] = tokenAddress < wbnbAddress ? [tokenAddress, wbnbAddress] : [wbnbAddress, tokenAddress]
-    const poolSqrtPriceX96 = tokenAddress < wbnbAddress ? sqrtPriceX96 : "5010915005752655123270620512177423"
-
-    await BNBPositionManager.createAndInitializePoolIfNecessary(tokenA, tokenB, FeeAmount.HIGH, poolSqrtPriceX96)
+    if (poolSqrtPriceX96 === "0")
+        poolSqrtPriceX96 = tokenAddress < wbnbAddress ? sqrtPriceX96 : reverseSqrtPriceX96(sqrtPriceX96)
+    await manager.createAndInitializePoolIfNecessary(tokenA, tokenB, FeeAmount.HIGH, poolSqrtPriceX96)
 
     const timestamp = Math.floor(Date.now() / 1000) + 1000
-    await BNBPositionManager.mint({
+    await manager.mint({
         token0: tokenA,
         token1: tokenB,
         fee: FeeAmount.HIGH,
         tickLower: "-195600",
         tickUpper: "214200",
-        amount0Desired: initialTokenAmount,
-        amount1Desired: initialTokenAmount,
+        amount0Desired: amountA,
+        amount1Desired: amountB,
         amount0Min: 0,
         amount1Min: 0,
         recipient: (await ethers.getSigners())[0],
@@ -205,4 +207,9 @@ export async function setupTokenAndPool() {
     })
 
     return { token, tokenA, tokenB }
+}
+
+function reverseSqrtPriceX96(sqrtPriceX96: string): string {
+    const precision = BigInt(1) << BigInt(192); // Equivalent to 1 << 192 in Solidity
+    return (precision / BigInt(sqrtPriceX96)).toString();
 }
