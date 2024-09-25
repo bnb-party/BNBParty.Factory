@@ -100,8 +100,8 @@ contract BNBPartyFactory is BNBPartyLiquidity, ReentrancyGuard {
         uint256 amountIn,
         uint256 amountOutMinimum
     ) external notZeroAddress(tokenIn) notZeroAmount(amountIn) {
-        IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
         (ISwapRouter router, uint24 fee) = _getRouterAndFee(tokenIn);
+        IERC20(tokenIn).safeTransferFrom(msg.sender, address(this), amountIn);
         IERC20(tokenIn).safeIncreaseAllowance(address(router), amountIn);
 
         ISwapRouter.ExactInputParams memory params = ISwapRouter
