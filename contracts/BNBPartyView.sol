@@ -16,13 +16,7 @@ abstract contract BNBPartyView is BNBPartyManageable {
         if (liquidityPool == IUniswapV3Pool(address(0))) {
             revert ZeroAddress();
         }
-        return _isToken0WBNB(liquidityPool.token0()); // Checks if WBNB is token0
-    }
-
-    function _isToken0WBNB(
-        address token0
-    ) internal view returns (bool) {
-        return token0 == address(WBNB); // Checks if WBNB is token0
+        return liquidityPool.token0() == address(WBNB); // Checks if WBNB is token0
     }
 
     /// @notice Calculates the fees earned based on liquidity and global fee growth
